@@ -1,0 +1,4 @@
+django==2.2.16
+django_cors_headers
+graphene_django==2.8.2
+pyjwt
