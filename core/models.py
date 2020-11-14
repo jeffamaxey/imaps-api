@@ -4,6 +4,9 @@ from django.contrib.auth.hashers import make_password
 class User(models.Model):
     """The user model."""
 
+    class Meta:
+        db_table = "users"
+
     username = models.SlugField(max_length=30, unique=True)
     email = models.EmailField(max_length=200, unique=True)
     password = models.CharField(max_length=128)
@@ -20,3 +23,18 @@ class User(models.Model):
 
         self.password = make_password(password)
         self.save()
+
+
+
+class Group(models.Model):
+    """A group that a user belongs to."""
+
+    class Meta:
+        db_table = "groups"
+    
+    name = models.CharField(max_length=50, unique=True)
+    users = models.ManyToManyField(User, related_name="groups")
+    admins = models.ManyToManyField(User, related_name="admin_groups")
+
+    def __str__(self):
+        return self.name

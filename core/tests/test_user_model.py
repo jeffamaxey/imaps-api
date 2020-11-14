@@ -13,6 +13,8 @@ class UserCreationTests(TestCase):
         self.assertIsNone(user.last_login)
         self.assertEqual(str(user), "John Locke (locke)")
         self.assertEqual(user.password, "")
+        self.assertFalse(user.groups.count())
+        self.assertFalse(user.admin_groups.count())
     
 
     def test_user_uniqueness(self):
