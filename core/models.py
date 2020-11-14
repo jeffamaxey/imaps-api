@@ -1,7 +1,9 @@
+from random import randint
+from django_random_id_model import RandomIDModel
 from django.db import models
 from django.contrib.auth.hashers import make_password
 
-class User(models.Model):
+class User(RandomIDModel):
     """The user model."""
 
     class Meta:
@@ -26,7 +28,7 @@ class User(models.Model):
 
 
 
-class Group(models.Model):
+class Group(RandomIDModel):
     """A group that a user belongs to."""
 
     class Meta:

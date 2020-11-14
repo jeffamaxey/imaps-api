@@ -10,6 +10,7 @@ class GroupCreationTests(TestCase):
         group = Group.objects.create(name="Locke Lab")
         self.assertFalse(group.users.count())
         self.assertFalse(group.admins.count())
+        self.assertNotEqual(group.id, 1)
     
 
     def test_group_uniqueness(self):

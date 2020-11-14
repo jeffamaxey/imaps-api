@@ -15,6 +15,7 @@ class UserCreationTests(TestCase):
         self.assertEqual(user.password, "")
         self.assertFalse(user.groups.count())
         self.assertFalse(user.admin_groups.count())
+        self.assertNotEqual(user.id, 1)
     
 
     def test_user_uniqueness(self):
