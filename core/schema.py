@@ -6,6 +6,7 @@ class Mutation(graphene.ObjectType):
     login = LoginMutation.Field()
     refresh_token = RefreshMutation.Field()
 
+    update_password = UpdatePasswordMutation.Field()
     delete_user = DeleteUserMutation.Field()
 
 schema = graphene.Schema(mutation=Mutation)

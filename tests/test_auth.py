@@ -5,6 +5,7 @@ import jwt
 import json
 import time
 from django.conf import settings
+from django.contrib.auth.hashers import check_password
 from .base import FunctionalTest, TokenFunctionaltest
 from core.models import User
 
@@ -202,6 +203,61 @@ class TokenRefreshTests(FunctionalTest):
         self.check_query_error(
             "mutation { refreshToken { accessToken } }", message="Refresh token not valid"
         )
+
+
+
+class UserModificationTests(TokenFunctionaltest):
+
+    def test_can_update_password(self):
+        # Send new password
+        result = self.client.execute("""mutation { updatePassword(
+            current: "livetogetha", new: "warwick96"
+        ) { success } }""")
+
+        # Password is changed
+        self.assertEqual(result["data"], {"updatePassword": {"success": True}})
+        self.user.refresh_from_db()
+        self.assertTrue(check_password("warwick96", self.user.password))
+    
+
+    def test_can_validate_updated_password(self):
+        # Password must be 9 or more characters
+        self.check_query_error("""mutation { updatePassword(
+            current: "livetogetha", new: "arwick96"
+        ) { success } }""", message="too short")
+        self.user.refresh_from_db()
+        self.assertFalse(check_password("arwick96", self.user.password))
+        self.assertTrue(check_password("livetogetha", self.user.password))
+
+        # Password can't be numeric
+        self.check_query_error("""mutation { updatePassword(
+            current: "livetogetha", new: "27589234759879230"
+        ) { success } }""", message="numeric")
+        self.user.refresh_from_db()
+        self.assertFalse(check_password("27589234759879230", self.user.password))
+        self.assertTrue(check_password("livetogetha", self.user.password))
+
+        # Password must be reasonably uncommon
+        self.check_query_error("""mutation { updatePassword(
+            current: "livetogetha", new: "password1"
+        ) { success } }""", message="too common")
+        self.user.refresh_from_db()
+        self.assertFalse(check_password("password1", self.user.password))
+        self.assertTrue(check_password("livetogetha", self.user.password))
+
+        # Password must be correct
+        self.check_query_error("""mutation { updatePassword(
+            current: "livetogetha123", new: "warwick96"
+        ) { success } }""", message="password not correct")
+        self.user.refresh_from_db()
+        self.assertFalse(check_password("warwick96", self.user.password))
+        self.assertTrue(check_password("livetogetha", self.user.password))
+
+        # Token must be given
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation { updatePassword(
+            current: "livetogetha", new: "warwick96"
+        ) { success } }""", message="Not authorized")
 
 
 

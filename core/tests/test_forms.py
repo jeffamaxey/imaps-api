@@ -1,3 +1,5 @@
+from mixer.backend.django import mixer
+from django.contrib.auth.hashers import check_password
 from django.test import TestCase
 from core.forms import *
 
@@ -34,3 +36,37 @@ class SignupFormTests(TestCase):
         })
         self.assertFalse(form.is_valid())
         self.assertIn("too common", form.errors["password"][0])
+
+
+
+class UpdatePasswordFormTests(TestCase):
+
+    def test_form_can_update_password(self):
+        john = mixer.blend(User, email="john@gmail.com")
+        john.set_password("password")
+        form = UpdatePasswordForm({"current": "password", "new": "warwick96"}, instance=john)
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertTrue(check_password("warwick96", john.password))
+    
+
+    def test_form_can_reject_current_password(self):
+        john = mixer.blend(User, email="john@gmail.com")
+        john.set_password("password")
+        form = UpdatePasswordForm({"current": "xxxxxxxxx", "new": "warwick96"}, instance=john)
+        self.assertFalse(form.is_valid())
+        self.assertIn("password not correct", form.errors["current"][0])
+    
+
+    def test_form_can_reject_new_password(self):
+        john = mixer.blend(User, email="john@gmail.com")
+        john.set_password("password")
+        form = UpdatePasswordForm({"current": "password", "new": "arwick96"}, instance=john)
+        self.assertFalse(form.is_valid())
+        self.assertIn("9 characters", form.errors["new"][0])
+        form = UpdatePasswordForm({"current": "password", "new": "3738426578326"}, instance=john)
+        self.assertFalse(form.is_valid())
+        self.assertIn("numeric", form.errors["new"][0])
+        form = UpdatePasswordForm({"current": "password", "new": "password1"}, instance=john)
+        self.assertFalse(form.is_valid())
+        self.assertIn("too common", form.errors["new"][0])
