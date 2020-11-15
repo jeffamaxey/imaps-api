@@ -93,3 +93,50 @@ class SignupTests(FunctionalTest):
 
 
 
+class LoginTests(FunctionalTest):
+
+    def test_can_login(self):
+        # Send credentials
+        result = self.client.execute("""mutation { login(
+            username: "jack", password: "livetogetha",
+        ) { accessToken } }""")
+
+        # An access token has been returned
+        access_token = result["data"]["login"]["accessToken"]
+        algorithm, payload, secret = access_token.split(".")
+        payload = json.loads(base64.b64decode(payload + "==="))
+        self.assertEqual(payload["sub"], self.user.id)
+        self.assertLess(time.time() - payload["iat"], 10)
+
+        # A HTTP-only cookie has been set with the refresh token
+        refresh_token = self.client.session.cookies["refresh_token"]
+        algorithm, payload, secret = access_token.split(".")
+        payload = json.loads(base64.b64decode(payload + "==="))
+        self.assertEqual(payload["sub"], self.user.id)
+        self.assertLess(time.time() - payload["iat"], 10)
+
+        # Last login has been updated
+        self.user.refresh_from_db()
+        self.assertLess(time.time() - self.user.last_login, 10)
+    
+
+    def test_login_can_fail(self):
+        # Incorrect username
+        self.check_query_error("""mutation { login(
+            username: "claire", password: "livetogetha"
+        ) { accessToken} }""", message="Invalid credentials")
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.last_login)
+
+        # Incorrect password
+        self.check_query_error("""mutation { login(
+            username: "jack", password: "wrongpassword"
+        ) { accessToken} }""", message="Invalid credentials")
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.user.refresh_from_db()
+        self.assertIsNone(self.user.last_login)
+
+
+
+

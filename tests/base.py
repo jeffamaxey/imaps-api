@@ -14,6 +14,8 @@ class FunctionalTest(StaticLiveServerTestCase):
     ]
 
     def setUp(self):
+        self.user = User.objects.get(username="jack")
+        self.user.set_password("livetogetha")
         self.client = kirjava.Client(self.live_server_url + "/graphql")
         self.client.headers["Accept"] = "application/json"
         self.client.headers["Content-Type"] = "application/json"
