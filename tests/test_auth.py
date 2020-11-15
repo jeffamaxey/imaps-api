@@ -73,6 +73,15 @@ class SignupTests(FunctionalTest):
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
 
+        # Username must be short enough
+        self.check_query_error("""mutation { signup(
+            email: "kate@gmail.com", password: "sw0rdfish123",
+            name: "Kate Austen",
+            username: "0001112223334445556667778889990"
+        ) { accessToken } }""", message="30 characters")
+        self.assertEqual(User.objects.count(), users_at_start)
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+
         # Password must be 9 or more characters
         self.check_query_error("""mutation { signup(
             email: "kate@gmail.com", password: "sw0rd123",
@@ -206,7 +215,7 @@ class TokenRefreshTests(FunctionalTest):
 
 
 
-class UserModificationTests(TokenFunctionaltest):
+class PasswordUpdateTests(TokenFunctionaltest):
 
     def test_can_update_password(self):
         # Send new password
@@ -258,6 +267,34 @@ class UserModificationTests(TokenFunctionaltest):
         self.check_query_error("""mutation { updatePassword(
             current: "livetogetha", new: "warwick96"
         ) { success } }""", message="Not authorized")
+
+
+
+class UserModificationTests(TokenFunctionaltest):
+
+    def test_can_update_user_info(self):
+        # Update info
+        result = self.client.execute("""mutation { updateUser(
+            email: "jack@island.com", username: "dr_j", name: "Dr Jack"
+        ) { user { email username name } } }""")
+
+        # The new user info is returned
+        self.assertEqual(result["data"]["updateUser"]["user"], {
+            "email": "jack@island.com", "name": "Dr Jack", "username": "dr_j"
+        })
+
+        # The user has updated
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.email, "jack@island.com")
+        self.assertEqual(self.user.username, "dr_j")
+        self.assertEqual(self.user.name, "Dr Jack")
+    
+
+    def test_cant_edit_user_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation { updateUser(
+            email: "jack@island.com", username: "dr_j", name: "Dr Jack"
+        ) { user { email username name } } }""", message="Not authorized")
 
 
 

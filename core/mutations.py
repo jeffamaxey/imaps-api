@@ -60,6 +60,23 @@ class RefreshMutation(graphene.Mutation):
 
 
 
+class UpdateUserMutation(graphene.Mutation):
+
+    Arguments = create_mutation_arguments(UpdateUserForm)
+    
+    user = graphene.Field("core.queries.UserType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        form = UpdateUserForm(kwargs, instance=info.context.user)
+        if form.is_valid():
+            form.save()
+            return UpdateUserMutation(user=form.instance)
+        raise GraphQLError(json.dumps(form.errors))
+
+
+
 class UpdatePasswordMutation(graphene.Mutation):
 
     Arguments = create_mutation_arguments(UpdatePasswordForm)

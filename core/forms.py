@@ -30,6 +30,15 @@ class SignupForm(ModelForm):
 
 
 
+class UpdateUserForm(ModelForm):
+    """Edits the basid fields of a user."""
+
+    class Meta:
+        model = User
+        fields = ["username", "name", "email"]
+
+
+
 class UpdatePasswordForm(ModelForm):
     """Edits the password field of a user, and nothing else. Requires the
     current password."""
