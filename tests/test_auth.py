@@ -215,6 +215,29 @@ class TokenRefreshTests(FunctionalTest):
 
 
 
+class UserQueryTests(TokenFunctionaltest):
+
+    def test_can_get_user(self):
+        # Get user
+        result = self.client.execute("""{ user {
+            username email name lastLogin
+        } }""")
+
+        # Everything is correct
+        self.assertEqual(result["data"]["user"], {
+            "username": "jack", "email": "jack@gmail.com",
+            "name": "Jack Shephard", "lastLogin": None
+        })
+    
+
+    def test_must_be_logged_in_to_get_user(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error("""{ user {
+            username email name lastLogin
+        } }""", message="Not authorized")
+
+
+
 class PasswordUpdateTests(TokenFunctionaltest):
 
     def test_can_update_password(self):
