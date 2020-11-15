@@ -19,6 +19,7 @@ class UserCreationTests(TestCase):
         self.assertLess(abs(time.time() - user.creation_time), 1)
         self.assertFalse(user.groups.count())
         self.assertFalse(user.admin_groups.count())
+        self.assertFalse(user.group_invitations.count())
         self.assertNotEqual(user.id, 1)
     
 
@@ -39,6 +40,16 @@ class UserCreationTests(TestCase):
             with transaction.atomic():
                 User.objects.create(username="locke", email="john2@gmail.com")
         self.assertEqual(User.objects.count(), 1)
+
+
+
+class UserOrderingTests(TestCase):
+
+    def test_users_ordered_by_creation_time(self):
+        user1 = mixer.blend(User, id=2)
+        user2 = mixer.blend(User, id=1)
+        user3 = mixer.blend(User, id=3)
+        self.assertEqual(list(User.objects.all()), [user1, user2, user3])
 
 
 

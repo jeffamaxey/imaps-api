@@ -11,6 +11,7 @@ class User(RandomIDModel):
 
     class Meta:
         db_table = "users"
+        ordering = ["creation_time"]
 
     username = models.SlugField(max_length=30, unique=True)
     email = models.EmailField(max_length=200, unique=True)
@@ -83,8 +84,34 @@ class Group(RandomIDModel):
         db_table = "groups"
     
     name = models.CharField(max_length=50, unique=True)
+    description = models.CharField(max_length=200)
     users = models.ManyToManyField(User, related_name="groups")
     admins = models.ManyToManyField(User, related_name="admin_groups")
 
     def __str__(self):
         return self.name
+
+
+
+class GroupInvitation(RandomIDModel):
+    """An invitation to a group."""
+
+    class Meta:
+        db_table = "group_invitations"
+        ordering = ["creation_time"]
+
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="group_invitations")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="group_invitations")
+    creation_time = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.group.name} invitation to {self.user.name}"
+    
+
+    def save(self, *args, **kwargs):
+        """If the model is being saved for the first time, set the creation
+        time."""
+        
+        if not self.id:
+            self.creation_time = int(time.time())
+        super(GroupInvitation, self).save(*args, **kwargs)

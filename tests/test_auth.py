@@ -27,8 +27,8 @@ class SignupTests(FunctionalTest):
         self.assertEqual(new_user.email, "kate@gmail.com")
         self.assertEqual(new_user.name, "Kate Austen")
         self.assertNotEqual(new_user.password, "sw0rdfish123")
-        self.assertLess(abs(time.time() - new_user.last_login), 1)
-        self.assertLess(abs(time.time() - new_user.creation_time), 1)
+        self.assertLess(abs(time.time() - new_user.last_login), 3)
+        self.assertLess(abs(time.time() - new_user.creation_time), 3)
 
         # An access token has been returned
         access_token = result["data"]["signup"]["accessToken"]
@@ -222,12 +222,16 @@ class UserQueryTests(TokenFunctionaltest):
         # Get user
         result = self.client.execute("""{ user {
             username email name lastLogin creationTime
+            groups { name } adminGroups { name } invitations { group { name } }
         } }""")
 
         # Everything is correct
         self.assertEqual(result["data"]["user"], {
             "username": "jack", "email": "jack@gmail.com",
-            "name": "Jack Shephard", "lastLogin": None, "creationTime": 946684800
+            "name": "Jack Shephard", "lastLogin": None, "creationTime": 946684800,
+            "groups": [{"name": "Shephard Lab"}, {"name": "The Others"}],
+            "adminGroups": [{"name": "Shephard Lab"}],
+            "invitations": [{"group": {"name": "The Others"}}],
         })
     
 
@@ -236,6 +240,32 @@ class UserQueryTests(TokenFunctionaltest):
         self.check_query_error("""{ user {
             username email name lastLogin
         } }""", message="Not authorized")
+    
+
+    def test_can_get_group(self):
+        # Get group
+        result = self.client.execute("""{ group(id: "2") {
+            name description users { username } admins { username }
+            invitations { user { username } }
+        } }""")
+
+        # Everything is correct
+        self.assertEqual(result["data"]["group"], {
+            "name": "The Others", "description": "",
+            "users": [
+                {"username": "ben"}, {"username": "juliette"},
+                {"username": "ethan"}, {"username": "jack"}
+            ],
+            "admins": [{"username": "ben"}],
+            "invitations": [{"user": {"username": "jack"}}],
+        })
+    
+
+    def test_invalid_group_requests(self):
+        # Incorrect ID
+        self.check_query_error("""{ group(id: "10000") {
+            name description
+        } }""", message="Does not exist")
 
 
 
