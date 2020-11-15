@@ -5,14 +5,19 @@ from django.http import JsonResponse
 from .models import User
 
 class AuthenticationMiddleware:
-    """Outgoing responses set a HTTP-only refresh token cookie if the request
-    has had one added to it at some point."""
+    """Incoming requests will be annotated with a User, or None, based on the
+    access token provided. Outgoing responses set a HTTP-only refresh token
+    cookie if the request has had one added to it at some point."""
     
     def __init__(self, get_response):
         self.get_response = get_response
     
 
     def __call__(self, request):
+        request.user = User.from_token(
+            request.META.get("HTTP_AUTHORIZATION", "").replace("Bearer ", "")
+        )
+
         response = self.get_response(request)
 
         try:

@@ -57,3 +57,21 @@ class RefreshMutation(graphene.Mutation):
             info.context.refresh_token = user.make_refresh_jwt()
             return RefreshMutation(access_token=user.make_access_jwt())
         raise GraphQLError(json.dumps({"token": "Refresh token not valid"}))
+
+
+
+class DeleteUserMutation(graphene.Mutation):
+
+    class Arguments:
+        password = graphene.String(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        user = info.context.user
+        if user:
+            if check_password(kwargs["password"], user.password):
+                user.delete()
+                return DeleteUserMutation(success=True)
+            raise GraphQLError(json.dumps({"username": "Invalid credentials"}))
+        raise GraphQLError(json.dumps({"username": "Invalid or missing token"}))

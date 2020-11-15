@@ -29,3 +29,11 @@ class FunctionalTest(StaticLiveServerTestCase):
             with redirect_stderr(fnull) as err:
                 result = self.client.execute(query)
                 self.assertIn(message, result["errors"][0]["message"])
+
+
+
+class TokenFunctionaltest(FunctionalTest):
+
+    def setUp(self):
+        FunctionalTest.setUp(self)
+        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"

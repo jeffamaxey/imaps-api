@@ -11,6 +11,14 @@ class ApiAuthMiddlewareTests(TestCase):
         self.callback = MagicMock()
         self.mw = AuthenticationMiddleware(self.callback)
         self.user = mixer.blend(User, username="john")
+    
+
+    @patch("core.middleware.User.from_token")
+    def test_middleware_uses_access_token_to_assign_user(self, from_token):
+        self.request.META = {"HTTP_AUTHORIZATION": "Bearer 12345"}
+        response = self.mw(self.request)
+        from_token.assert_called_with("12345")
+        self.request.user = from_token.return_value
 
 
     def test_middleware_does_not_set_cookie_if_no_refresh_token_added(self):

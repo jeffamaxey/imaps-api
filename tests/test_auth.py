@@ -5,7 +5,7 @@ import jwt
 import json
 import time
 from django.conf import settings
-from .base import FunctionalTest
+from .base import FunctionalTest, TokenFunctionaltest
 from core.models import User
 
 class SignupTests(FunctionalTest):
@@ -202,3 +202,44 @@ class TokenRefreshTests(FunctionalTest):
         self.check_query_error(
             "mutation { refreshToken { accessToken } }", message="Refresh token not valid"
         )
+
+
+
+class UserDeletionTests(TokenFunctionaltest):
+
+    def test_can_delete_account(self):
+        # Send deletion mutation
+        users_at_start = User.objects.count()
+        result = self.client.execute("""mutation { deleteUser(
+            password: "livetogetha"
+        ) { success } }""")
+
+        # It works
+        self.assertTrue(result["data"]["deleteUser"]["success"])
+        self.assertEqual(User.objects.count(), users_at_start - 1)
+        self.assertFalse(User.objects.filter(username="jack").count())
+    
+
+    def test_account_deletion_can_fail(self):
+        users_at_start = User.objects.count()
+
+        # Wrong password
+        self.check_query_error("""mutation { deleteUser(
+            password: "wrongpassword"
+        ) { success } }""", message="Invalid credentials")
+        self.assertEqual(User.objects.count(), users_at_start)
+
+        # Invalid token
+        self.client.headers["Authorization"] = "Bearer qwerty"
+        self.check_query_error("""mutation { deleteUser(
+            password: "livetogetha"
+        ) { success } }""", message="Invalid or missing token")
+        self.assertEqual(User.objects.count(), users_at_start)
+
+        # No token
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation { deleteUser(
+            password: "livetogetha"
+        ) { success } }""", message="Invalid or missing token")
+        self.assertEqual(User.objects.count(), users_at_start)
+
