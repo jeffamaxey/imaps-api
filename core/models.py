@@ -16,6 +16,7 @@ class User(RandomIDModel):
     email = models.EmailField(max_length=200, unique=True)
     password = models.CharField(max_length=128)
     last_login = models.IntegerField(null=True, default=None)
+    creation_time = models.IntegerField(default=0)
     name = models.CharField(max_length=50)
 
     def __str__(self):
@@ -33,6 +34,15 @@ class User(RandomIDModel):
             user = User.objects.get(id=token["sub"])
         except: user = None
         return user
+    
+
+    def save(self, *args, **kwargs):
+        """If the model is being saved for the first time, set the creation
+        time."""
+        
+        if not self.id:
+            self.creation_time = int(time.time())
+        super(User, self).save(*args, **kwargs)
     
 
     def set_password(self, password):

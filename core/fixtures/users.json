@@ -5,7 +5,8 @@
         "fields": {
             "email": "jack@gmail.com",
             "username": "jack",
-            "name": "Jack Shephard"
+            "name": "Jack Shephard",
+            "creation_time": 946684800
         }
     },
     {
@@ -14,7 +15,8 @@
         "fields": {
             "email": "ben@gmail.com",
             "username": "ben",
-            "name": "Ben Linus"
+            "name": "Ben Linus",
+            "creation_time": 631152000
         }
     }
 ]

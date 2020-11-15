@@ -16,9 +16,17 @@ class UserCreationTests(TestCase):
         self.assertIsNone(user.last_login)
         self.assertEqual(str(user), "John Locke (locke)")
         self.assertEqual(user.password, "")
+        self.assertLess(abs(time.time() - user.creation_time), 1)
         self.assertFalse(user.groups.count())
         self.assertFalse(user.admin_groups.count())
         self.assertNotEqual(user.id, 1)
+    
+
+    def test_editing_user_doesnt_change_creation_time(self):
+        user = mixer.blend(User, username="locke", creation_time=10000)
+        user.name = "Hurley"
+        user.save()
+        self.assertEqual(user.creation_time, 10000)
     
 
     def test_user_uniqueness(self):

@@ -27,7 +27,8 @@ class SignupTests(FunctionalTest):
         self.assertEqual(new_user.email, "kate@gmail.com")
         self.assertEqual(new_user.name, "Kate Austen")
         self.assertNotEqual(new_user.password, "sw0rdfish123")
-        self.assertLess(time.time() - new_user.last_login, 10)
+        self.assertLess(abs(time.time() - new_user.last_login), 1)
+        self.assertLess(abs(time.time() - new_user.creation_time), 1)
 
         # An access token has been returned
         access_token = result["data"]["signup"]["accessToken"]
@@ -220,13 +221,13 @@ class UserQueryTests(TokenFunctionaltest):
     def test_can_get_user(self):
         # Get user
         result = self.client.execute("""{ user {
-            username email name lastLogin
+            username email name lastLogin creationTime
         } }""")
 
         # Everything is correct
         self.assertEqual(result["data"]["user"], {
             "username": "jack", "email": "jack@gmail.com",
-            "name": "Jack Shephard", "lastLogin": None
+            "name": "Jack Shephard", "lastLogin": None, "creationTime": 946684800
         })
     
 
