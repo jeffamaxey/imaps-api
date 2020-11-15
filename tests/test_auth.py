@@ -1,7 +1,10 @@
 import kirjava
 import base64
+import requests
+import jwt
 import json
 import time
+from django.conf import settings
 from .base import FunctionalTest
 from core.models import User
 
@@ -31,6 +34,7 @@ class SignupTests(FunctionalTest):
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], new_user.id)
         self.assertLess(time.time() - payload["iat"], 10)
+        self.assertLess(time.time() - payload["expires"] - 900, 10)
 
         # A HTTP-only cookie has been set with the refresh token
         refresh_token = self.client.session.cookies["refresh_token"]
@@ -38,6 +42,7 @@ class SignupTests(FunctionalTest):
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], new_user.id)
         self.assertLess(time.time() - payload["iat"], 10)
+        self.assertLess(time.time() - payload["expires"] - 31536000, 10)
     
 
     def test_signup_validation(self):
@@ -107,6 +112,7 @@ class LoginTests(FunctionalTest):
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
+        self.assertLess(time.time() - payload["expires"] - 900, 10)
 
         # A HTTP-only cookie has been set with the refresh token
         refresh_token = self.client.session.cookies["refresh_token"]
@@ -114,6 +120,7 @@ class LoginTests(FunctionalTest):
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
+        self.assertLess(time.time() - payload["expires"] - 31536000, 10)
 
         # Last login has been updated
         self.user.refresh_from_db()
@@ -139,4 +146,59 @@ class LoginTests(FunctionalTest):
 
 
 
+class TokenRefreshTests(FunctionalTest):
 
+    def test_can_refresh_token(self):
+        # Send mutation with cookie
+        original_refresh_token = self.user.make_refresh_jwt()
+        cookie_obj = requests.cookies.create_cookie(
+            domain="localhost.local", name="refresh_token",
+            value=original_refresh_token
+        )
+        self.client.session.cookies.set_cookie(cookie_obj)
+        result = self.client.execute("mutation { refreshToken { accessToken } }")
+
+        # An access token has been returned
+        access_token = result["data"]["refreshToken"]["accessToken"]
+        algorithm, payload, secret = access_token.split(".")
+        payload = json.loads(base64.b64decode(payload + "==="))
+        self.assertEqual(payload["sub"], self.user.id)
+        self.assertLess(time.time() - payload["iat"], 10)
+        self.assertLess(time.time() - payload["expires"] - 900, 10)
+
+        # A new HTTP-only cookie has been set with the refresh token
+        refresh_token = self.client.session.cookies["refresh_token"]
+        algorithm, payload, secret = access_token.split(".")
+        payload = json.loads(base64.b64decode(payload + "==="))
+        self.assertEqual(payload["sub"], self.user.id)
+        self.assertLess(time.time() - payload["iat"], 10)
+        self.assertLess(time.time() - payload["expires"] - 31536000, 10)
+    
+
+    def test_token_refresh_can_fail(self):
+        # No cookies
+        self.check_query_error(
+            "mutation { refreshToken { accessToken } }", message="No refresh token"
+        )
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+
+        # Refresh token garbled
+        cookie_obj = requests.cookies.create_cookie(
+            domain="localhost.local", name="refresh_token", value="sadafasdf"
+        )
+        self.client.session.cookies.set_cookie(cookie_obj)
+        self.check_query_error(
+            "mutation { refreshToken { accessToken } }", message="Refresh token not valid"
+        )
+        
+        # Refresh token expired
+        token = jwt.encode({
+            "sub": self.user.id, "iat": 1000000000000, "expires": 2000
+        }, settings.SECRET_KEY, algorithm="HS256").decode()
+        cookie_obj = requests.cookies.create_cookie(
+            domain="localhost.local", name="refresh_token", value=token
+        )
+        self.client.session.cookies.set_cookie(cookie_obj)
+        self.check_query_error(
+            "mutation { refreshToken { accessToken } }", message="Refresh token not valid"
+        )

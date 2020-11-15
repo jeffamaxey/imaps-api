@@ -22,6 +22,19 @@ class User(RandomIDModel):
         return f"{self.name} ({self.username})"
     
 
+    @staticmethod
+    def from_token(token):
+        """Takes a JWT, and if it's signed properly, isn't expired, and points
+        to an actual user, returns that user."""
+
+        try:
+            token = jwt.decode(token, settings.SECRET_KEY)
+            assert token["expires"] > time.time()
+            user = User.objects.get(id=token["sub"])
+        except: user = None
+        return user
+    
+
     def set_password(self, password):
         """"Sets the user's password, salting and hashing whatever is given
         using Django's built in functions."""
@@ -30,12 +43,25 @@ class User(RandomIDModel):
         self.save()
     
 
-    def make_jwt(self):
-        """Creates and signs a token indicating the user who signed and the time
-        it was signed."""
+    def make_access_jwt(self):
+        """Creates and signs an access token indicating the user who signed and
+        the time it was signed. It will also indicate that it expires in 15
+        minutes."""
         
+        now = int(time.time())
         return jwt.encode({
-            "sub": self.id, "iat": int(time.time())
+            "sub": self.id, "iat": now, "expires": now + 900
+        }, settings.SECRET_KEY, algorithm="HS256").decode()
+    
+
+    def make_refresh_jwt(self):
+        """Creates and signs an refresh token indicating the user who signed and
+        the time it was signed. It will also indicate that it expires in 365
+        days."""
+        
+        now = int(time.time())
+        return jwt.encode({
+            "sub": self.id, "iat": now, "expires": now + 31536000
         }, settings.SECRET_KEY, algorithm="HS256").decode()
 
 

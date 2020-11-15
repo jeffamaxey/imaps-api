@@ -50,10 +50,56 @@ class UserPasswordTests(TestCase):
 
 class UserTokenTests(TestCase):
 
-    def test_jwt_creation(self):
+    def test_access_jwt_creation(self):
         user = mixer.blend(User)
-        token = user.make_jwt()
+        token = user.make_access_jwt()
         token = jwt.decode(token, settings.SECRET_KEY)
         self.assertEqual(token["sub"], user.id)
         self.assertLessEqual(time.time() - token["iat"], 2)
+        self.assertLessEqual(time.time() - token["expires"] - 900, 2)
+    
+
+    def test_refresh_jwt_creation(self):
+        user = mixer.blend(User)
+        token = user.make_refresh_jwt()
+        token = jwt.decode(token, settings.SECRET_KEY)
+        self.assertEqual(token["sub"], user.id)
+        self.assertLessEqual(time.time() - token["iat"], 2)
+        self.assertLessEqual(time.time() - token["expires"] - 31536000, 2)
+
+
+
+class UserFromTokenTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+
+
+    def test_no_token_returns_no_user(self):
+        self.assertIsNone(User.from_token(None))
+    
+
+    def test_invalid_token_returns_no_user(self):
+        self.assertIsNone(User.from_token("sdsfsfd"))
+    
+
+    def test_expired_token_returns_no_user(self):
+        token = jwt.encode({
+            "sub": self.user.id, "expires": 100, "iat": 1000000000000
+        }, settings.SECRET_KEY, algorithm="HS256").decode()
+        self.assertIsNone(User.from_token(token))
+    
+
+    def test_unknown_user_token_returns_no_user(self):
+        token = jwt.encode({
+            "sub": 23, "expires": 1000000000000, "iat": 100
+        }, settings.SECRET_KEY, algorithm="HS256").decode()
+        self.assertIsNone(User.from_token(token))
+    
+
+    def test_valid_token_returns_user(self):
+        token = jwt.encode({
+            "sub": self.user.id, "expires": 1000000000000, "iat": 100
+        }, settings.SECRET_KEY, algorithm="HS256").decode()
+        self.assertEqual(User.from_token(token), self.user)
         
