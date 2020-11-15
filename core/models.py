@@ -1,6 +1,9 @@
+import time
+import jwt
 from random import randint
 from django_random_id_model import RandomIDModel
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.hashers import make_password
 
 class User(RandomIDModel):
@@ -25,6 +28,15 @@ class User(RandomIDModel):
 
         self.password = make_password(password)
         self.save()
+    
+
+    def make_jwt(self):
+        """Creates and signs a token indicating the user who signed and the time
+        it was signed."""
+        
+        return jwt.encode({
+            "sub": self.id, "iat": int(time.time())
+        }, settings.SECRET_KEY, algorithm="HS256").decode()
 
 
 

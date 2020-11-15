@@ -17,5 +17,5 @@ class ReadableErrorGraphQLView(GraphQLView):
         return GraphQLView.format_error(error)
 
 urlpatterns = [
-
+    path("graphql", ReadableErrorGraphQLView.as_view()),
 ]

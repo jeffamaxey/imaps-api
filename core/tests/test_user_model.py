@@ -1,7 +1,10 @@
+import jwt
+import time
 from mixer.backend.django import mixer
 from django.test import TestCase
 from django.db.utils import IntegrityError
 from django.db import transaction
+from django.conf import settings
 from core.models import User
 
 class UserCreationTests(TestCase):
@@ -42,4 +45,15 @@ class UserPasswordTests(TestCase):
         self.assertNotEqual(user.password, "sw0rdfish")
         algorithm, iterations, salt, hash_ = user.password.split("$")
         self.assertGreaterEqual(int(iterations), 100000)
+
+
+
+class UserTokenTests(TestCase):
+
+    def test_jwt_creation(self):
+        user = mixer.blend(User)
+        token = user.make_jwt()
+        token = jwt.decode(token, settings.SECRET_KEY)
+        self.assertEqual(token["sub"], user.id)
+        self.assertLessEqual(time.time() - token["iat"], 2)
         
