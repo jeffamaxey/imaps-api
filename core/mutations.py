@@ -196,3 +196,23 @@ class InviteUserToGroup(graphene.Mutation):
             user=user.first(), group=group.first()
         )
         return InviteUserToGroup(invitation=invitation)
+
+
+
+class DeleteGroupInvitationMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        invitation = GroupInvitation.objects.filter(id=kwargs["id"])
+        if not invitation: raise GraphQLError('{"invitation": ["Does not exist"]}')
+        if invitation.first().user != info.context.user:
+            if not invitation.first().group.admins.filter(id=info.context.user.id):
+                raise GraphQLError('{"invitation": ["Does not exist"]}')
+        invitation.first().delete()
+        return DeleteGroupInvitationMutation(success=True)

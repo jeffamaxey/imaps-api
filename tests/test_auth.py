@@ -7,7 +7,7 @@ import time
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from .base import FunctionalTest, TokenFunctionaltest
-from core.models import User, Group
+from core.models import User, Group, GroupInvitation
 
 class SignupTests(FunctionalTest):
 
@@ -573,3 +573,55 @@ class GroupInvitingTests(TokenFunctionaltest):
                 user { username } group { name }
             } }
         }""", message="Not authorized")
+
+
+
+class GroupInvitationDeletingTests(TokenFunctionaltest):
+
+    def test_can_delete_invitation(self):
+        # Delete invitation as invitee
+        result = self.client.execute(
+            """mutation { deleteGroupInvitation(id: "2") { success } }"""
+        )
+
+        # The invitation is gone
+        self.assertTrue(result["data"]["deleteGroupInvitation"]["success"])
+        self.assertFalse(GroupInvitation.objects.filter(id=2).count())
+        self.assertEqual(GroupInvitation.objects.count(), 1)
+
+        # Delete invitation as admin
+        result = self.client.execute(
+            """mutation { deleteGroupInvitation(id: "1") { success } }"""
+        )
+
+        # The invitation is gone
+        self.assertTrue(result["data"]["deleteGroupInvitation"]["success"])
+        self.assertFalse(GroupInvitation.objects.filter(id=1).count())
+        self.assertEqual(GroupInvitation.objects.count(), 0)
+    
+
+    def test_cant_delete_invitation_if_not_appropriate(self):
+        # Group invitation doesn't exist
+        self.check_query_error(
+            """mutation { deleteGroupInvitation(id: "3") { success } }""",
+            message="Does not exist"
+        )
+
+        # Not an admin or invitee
+        invitation = GroupInvitation.objects.create(
+            user=User.objects.get(username="boone"),
+            group=Group.objects.get(name="The Others"),
+            id=4
+        )
+        self.check_query_error(
+            """mutation { deleteGroupInvitation(id: "4") { success } }""",
+            message="Does not exist"
+        )
+    
+
+    def test_cant_delete_invitation_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { deleteGroupInvitation(id: "1") { success } }""",
+            message="Not authorized"
+        ) 
