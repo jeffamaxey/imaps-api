@@ -470,3 +470,39 @@ class GroupUpdatingTests(TokenFunctionaltest):
         self.check_query_error("""mutation { updateGroup(
             id: "2" name: "The Good Guys" description: "Not so bad" 
         ) { group { name description } } }""", message="Not authorized")
+
+
+
+class GroupDeletingTests(TokenFunctionaltest):
+
+    def test_can_delete_group(self):
+        # Delete group
+        result = self.client.execute(
+            """mutation { deleteGroup(id: "1") { success } }"""
+        )
+
+        # The group is gone
+        self.assertTrue(result["data"]["deleteGroup"]["success"])
+        self.assertFalse(Group.objects.filter(id=1).count())
+    
+
+    def test_cant_delete_group_if_not_appropriate(self):
+        # Group doesn't exist
+        self.check_query_error(
+            """mutation { deleteGroup(id: "20") { success } }""",
+            message="Does not exist"
+        )
+
+        # Not an admin
+        self.check_query_error(
+            """mutation { deleteGroup(id: "2") { success } }""",
+            message="Not an admin"
+        )
+    
+
+    def test_cant_delete_group_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { deleteGroup(id: "1") { success } }""",
+            message="Not authorized"
+        )

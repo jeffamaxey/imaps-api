@@ -149,3 +149,22 @@ class UpdateGroupMutation(graphene.Mutation):
             form.save()
             return UpdateGroupMutation(group=form.instance)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class DeleteGroupMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        group = Group.objects.filter(id=kwargs["id"])
+        if not group: raise GraphQLError('{"group": ["Does not exist"]}')
+        if not info.context.user.admin_groups.filter(id=kwargs["id"]):
+            raise GraphQLError('{"group": ["Not an admin"]}')
+        group.first().delete()
+        return DeleteGroupMutation(success=True)
