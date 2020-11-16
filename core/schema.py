@@ -35,5 +35,6 @@ class Mutation(graphene.ObjectType):
     delete_group = DeleteGroupMutation.Field()
     invite_user_to_group = InviteUserToGroup.Field()
     delete_group_invitation = DeleteGroupInvitationMutation.Field()
+    accept_group_invitation = AcceptGroupInvitationMutation.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

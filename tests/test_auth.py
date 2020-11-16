@@ -625,3 +625,47 @@ class GroupInvitationDeletingTests(TokenFunctionaltest):
             """mutation { deleteGroupInvitation(id: "1") { success } }""",
             message="Not authorized"
         ) 
+
+
+
+class GroupInvitationAcceptanceTests(TokenFunctionaltest):
+
+    def test_can_accept_invitation(self):
+        # Accept invitation
+        juliette = User.objects.get(username="ethan")
+        self.client.headers["Authorization"] = "Bearer " + juliette.make_access_jwt()
+        result = self.client.execute(
+            """mutation { acceptGroupInvitation(id: "1") { 
+                group { users { username } }
+             } }"""
+        )
+
+        # The invitation is gone
+        self.assertTrue(result["data"]["acceptGroupInvitation"]["group"], {"users": [
+            {"username": "jack"}, {"username": "boone"},
+            {"username": "shannon"}, {"username": "ethan"}
+        ]})
+        self.assertFalse(GroupInvitation.objects.filter(id=1).count())
+        self.assertEqual(GroupInvitation.objects.count(), 1)
+    
+
+    def test_cant_delete_invitation_if_not_appropriate(self):
+        # Group invitation doesn't exist
+        self.check_query_error(
+            """mutation { acceptGroupInvitation(id: "3") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # Not the invitee
+        self.check_query_error(
+            """mutation { acceptGroupInvitation(id: "1") { group { name } } }""",
+            message="Does not exist"
+        )
+    
+
+    def test_cant_accept_invitation_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { acceptGroupInvitation(id: "1") { group { name } } }""",
+            message="Not authorized"
+        ) 
