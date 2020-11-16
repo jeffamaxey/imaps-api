@@ -4,4 +4,6 @@ __pycache__
 secrets.py
 .DS_Store
 .vscode
+tables.txt
+*.sql
 iMaps Docs.md

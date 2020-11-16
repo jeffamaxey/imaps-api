@@ -390,3 +390,36 @@ class UserDeletionTests(TokenFunctionaltest):
         ) { success } }""", message="Invalid or missing token")
         self.assertEqual(User.objects.count(), users_at_start)
 
+
+
+class GroupCreationTests(TokenFunctionaltest):
+
+    def test_can_create_group(self):
+        # User creates a group
+        result = self.client.execute("""mutation { createGroup(
+            name: "A Team", description: "The A Team"
+        ) { group { name description users { username } admins { username } } } }""")
+
+        # The group is returned
+        self.assertEqual(result["data"]["createGroup"]["group"], {
+            "name": "A Team", "description": "The A Team",
+            "users": [{"username": "jack"}], "admins": [{"username": "jack"}]
+        })
+
+        # The user can access their groups
+        result = self.client.execute("""{ user {
+            username groups { name } adminGroups { name }
+        } }""")
+        self.assertEqual(result["data"]["user"], {
+            "username": "jack",
+            "groups": [{"name": "Shephard Lab"}, {"name": "The Others"}, {"name": "A Team"}],
+            "adminGroups": [{"name": "Shephard Lab"}, {"name": "A Team"}],
+        })
+    
+
+    def test_must_be_logged_in_to_create_group(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation { createGroup(
+            name: "A Team", description: "The A Team"
+        ) { group { name description users { username } admins { username } } } }""",
+        message="Not authorized")

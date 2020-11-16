@@ -30,4 +30,6 @@ class Mutation(graphene.ObjectType):
     update_password = UpdatePasswordMutation.Field()
     delete_user = DeleteUserMutation.Field()
 
+    create_group = CreateGroupMutation.Field()
+
 schema = graphene.Schema(query=Query, mutation=Mutation)

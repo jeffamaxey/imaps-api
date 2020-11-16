@@ -109,3 +109,22 @@ class DeleteUserMutation(graphene.Mutation):
                 return DeleteUserMutation(success=True)
             raise GraphQLError(json.dumps({"username": "Invalid credentials"}))
         raise GraphQLError(json.dumps({"username": "Invalid or missing token"}))
+
+
+
+class CreateGroupMutation(graphene.Mutation):
+
+    Arguments = create_mutation_arguments(GroupForm)
+    
+    group = graphene.Field("core.queries.GroupType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        form = GroupForm(kwargs)
+        if form.is_valid():
+            form.save()
+            form.instance.users.add(info.context.user)
+            form.instance.admins.add(info.context.user)
+            return CreateGroupMutation(group=form.instance)
+        raise GraphQLError(json.dumps(form.errors))

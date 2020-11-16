@@ -67,3 +67,12 @@ class UpdatePasswordForm(ModelForm):
 
     def save(self):
         self.instance.set_password(self.cleaned_data.get("new"))
+
+
+
+class GroupForm(ModelForm):
+    """Creates or edits a group."""
+
+    class Meta:
+        model = Group
+        exclude = ["id", "admins", "users"]
