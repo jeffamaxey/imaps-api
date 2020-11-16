@@ -128,3 +128,24 @@ class CreateGroupMutation(graphene.Mutation):
             form.instance.admins.add(info.context.user)
             return CreateGroupMutation(group=form.instance)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class UpdateGroupMutation(graphene.Mutation):
+
+    Arguments = create_mutation_arguments(GroupForm, edit=True)
+    
+    group = graphene.Field("core.queries.GroupType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        group = Group.objects.filter(id=kwargs["id"])
+        if not group: raise GraphQLError('{"group": ["Does not exist"]}')
+        if not info.context.user.admin_groups.filter(id=kwargs["id"]):
+            raise GraphQLError('{"group": ["Not an admin"]}')
+        form = GroupForm(kwargs, instance=group.first())
+        if form.is_valid():
+            form.save()
+            return UpdateGroupMutation(group=form.instance)
+        raise GraphQLError(json.dumps(form.errors))

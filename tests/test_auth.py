@@ -7,7 +7,7 @@ import time
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from .base import FunctionalTest, TokenFunctionaltest
-from core.models import User
+from core.models import User, Group
 
 class SignupTests(FunctionalTest):
 
@@ -417,9 +417,56 @@ class GroupCreationTests(TokenFunctionaltest):
         })
     
 
+    def test_group_creation_validation(self):
+        # Name must be unique
+        self.check_query_error("""mutation { createGroup(
+            name: "The Others", description: "The A Team"
+        ) { group { name description users { username } admins { username } } } }""",
+        message="already exists")
+
+
     def test_must_be_logged_in_to_create_group(self):
         del self.client.headers["Authorization"]
         self.check_query_error("""mutation { createGroup(
             name: "A Team", description: "The A Team"
         ) { group { name description users { username } admins { username } } } }""",
         message="Not authorized")
+
+
+
+class GroupUpdatingTests(TokenFunctionaltest):
+
+    def test_can_update_group_info(self):
+        # Update info
+        result = self.client.execute("""mutation { updateGroup(
+            id: "1" name: "The Good Guys" description: "Not so bad" 
+        ) { group { name description } } }""")
+
+        # The new group info is returned
+        self.assertEqual(result["data"]["updateGroup"]["group"], {
+            "name": "The Good Guys", "description": "Not so bad"
+        })
+
+        # The group has updated
+        group = Group.objects.get(id=1)
+        self.assertEqual(group.name, "The Good Guys")
+        self.assertEqual(group.description, "Not so bad")
+    
+
+    def test_cant_edit_group_if_not_appropriate(self):
+        # Group doesn't exist
+        self.check_query_error("""mutation { updateGroup(
+            id: "20" name: "The Good Guys" description: "Not so bad" 
+        ) { group { name description } } }""", message="Does not exist")
+
+        # Not an admin
+        self.check_query_error("""mutation { updateGroup(
+            id: "2" name: "The Good Guys" description: "Not so bad" 
+        ) { group { name description } } }""", message="Not an admin")
+    
+
+    def test_cant_edit_group_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation { updateGroup(
+            id: "2" name: "The Good Guys" description: "Not so bad" 
+        ) { group { name description } } }""", message="Not authorized")
