@@ -668,4 +668,58 @@ class GroupInvitationAcceptanceTests(TokenFunctionaltest):
         self.check_query_error(
             """mutation { acceptGroupInvitation(id: "1") { group { name } } }""",
             message="Not authorized"
-        ) 
+        )
+
+
+
+class GroupAdminRevokeTests(TokenFunctionaltest):
+
+    def test_can_revoke_admin(self):
+        # Revoke access
+        Group.objects.get(name="The Others").admins.add(User.objects.get(username="jack"))
+        result = self.client.execute(
+            """mutation { revokeGroupAdmin(group: "2", user: "4") { 
+                group { admins { username } }
+             } }"""
+        )
+
+        # User is no longer admin
+        self.assertTrue(result["data"]["revokeGroupAdmin"]["group"], {"admins": [
+            {"username": "jack"}
+        ]})
+        self.assertFalse(User.objects.get(username="ben").admin_groups.count())
+    
+
+    def test_cant_revoke_admin_if_not_appropriate(self):
+        # Not an admin of group
+        self.check_query_error(
+            """mutation { revokeGroupAdmin(group: "2", user: "4") { group { name } } }""",
+            message="Not an admin"
+        )
+
+        Group.objects.get(name="The Others").admins.add(User.objects.get(username="jack"))
+        # Group doesn't exist
+        self.check_query_error(
+            """mutation { revokeGroupAdmin(group: "20", user: "4") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # User doesn't exist
+        self.check_query_error(
+            """mutation { revokeGroupAdmin(group: "2", user: "40") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # User isn't an admin
+        self.check_query_error(
+            """mutation { revokeGroupAdmin(group: "2", user: "5") { group { name } } }""",
+            message="Not an admin"
+        )
+
+        
+    def test_cant_revoke_admin_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { revokeGroupAdmin(group: "2", user: "4") { group { name } } }""",
+            message="Not authorized"
+        )
