@@ -506,3 +506,70 @@ class GroupDeletingTests(TokenFunctionaltest):
             """mutation { deleteGroup(id: "1") { success } }""",
             message="Not authorized"
         )
+
+
+
+class GroupInvitingTests(TokenFunctionaltest):
+
+    def  test_can_invite_user(self):
+        # Sends invitation
+        result = self.client.execute("""mutation {
+            inviteUserToGroup(user: "5" group: "1") { invitation {
+                user { username } group { name }
+            } }
+        }""")
+
+        # Invitation is sent
+        self.assertEqual(result["data"]["inviteUserToGroup"]["invitation"], {
+            "user": {"username": "juliette"}, "group": {"name": "Shephard Lab"}
+        })
+        self.assertEqual(
+            User.objects.get(id=5).group_invitations.first().group.name, "Shephard Lab"
+        )
+    
+
+    def test_invitation_must_be_appropriate(self):
+        # Must be admin of group
+        self.check_query_error("""mutation {
+            inviteUserToGroup(user: "5" group: "2") { invitation {
+                user { username } group { name }
+            } }
+        }""", message="Not an admin")
+
+        # Group must exist
+        self.check_query_error("""mutation {
+            inviteUserToGroup(user: "5" group: "20") { invitation {
+                user { username } group { name }
+            } }
+        }""", message="Does not exist")
+
+        # User must exist
+        self.check_query_error("""mutation {
+            inviteUserToGroup(user: "50" group: "1") { invitation {
+                user { username } group { name }
+            } }
+        }""", message="Does not exist")
+
+        # User mustn't be member already
+        self.check_query_error("""mutation {
+            inviteUserToGroup(user: "2" group: "1") { invitation {
+                user { username } group { name }
+            } }
+        }""", message="Already a member")
+
+        # User mustn't be invited already
+        self.check_query_error("""mutation {
+            inviteUserToGroup(user: "6" group: "1") { invitation {
+                user { username } group { name }
+            } }
+        }""", message="Already invited")
+
+
+    def test_must_be_logged_in_to_send_invitation(self):
+        # Must be logged in
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation {
+            inviteUserToGroup(user: "5" group: "1") { invitation {
+                user { username } group { name }
+            } }
+        }""", message="Not authorized")

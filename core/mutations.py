@@ -168,3 +168,31 @@ class DeleteGroupMutation(graphene.Mutation):
             raise GraphQLError('{"group": ["Not an admin"]}')
         group.first().delete()
         return DeleteGroupMutation(success=True)
+
+
+
+class InviteUserToGroup(graphene.Mutation):
+
+    class Arguments:
+        user = graphene.ID(required=True)
+        group = graphene.ID(required=True)
+
+    invitation = graphene.Field("core.queries.GroupInvitationType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        group = Group.objects.filter(id=kwargs["group"])
+        if not group: raise GraphQLError('{"group": ["Does not exist"]}')
+        if not info.context.user.admin_groups.filter(id=kwargs["group"]):
+            raise GraphQLError('{"group": ["Not an admin"]}')
+        user = User.objects.filter(id=kwargs["user"])
+        if not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if user.first().groups.filter(id=kwargs["group"]):
+            raise GraphQLError('{"user": ["Already a member"]}')
+        if user.first().group_invitations.filter(group=kwargs["group"]):
+            raise GraphQLError('{"user": ["Already invited"]}')
+        invitation = GroupInvitation.objects.create(
+            user=user.first(), group=group.first()
+        )
+        return InviteUserToGroup(invitation=invitation)
