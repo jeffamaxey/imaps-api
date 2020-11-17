@@ -29,6 +29,7 @@ class Mutation(graphene.ObjectType):
     signup = SignupMutation.Field()
     login = LoginMutation.Field()
     refresh_token = RefreshMutation.Field()
+    logout = LogoutMutation.Field()
 
     update_user = UpdateUserMutation.Field()
     update_password = UpdatePasswordMutation.Field()

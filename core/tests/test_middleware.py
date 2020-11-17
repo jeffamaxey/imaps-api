@@ -31,4 +31,9 @@ class ApiAuthMiddlewareTests(TestCase):
         self.request.refresh_token = "abc"
         response = self.mw(self.request)
         response.set_cookie.assert_called_with("refresh_token", value="abc", httponly=True)
-        
+    
+
+    def test_middleware_deletes_cookie_if_refresh_token_false(self):
+        self.request.refresh_token = False
+        response = self.mw(self.request)
+        response.delete_cookie.assert_called_with("refresh_token")

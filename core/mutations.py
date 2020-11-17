@@ -60,6 +60,16 @@ class RefreshMutation(graphene.Mutation):
 
 
 
+class LogoutMutation(graphene.Mutation):
+    
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        info.context.refresh_token = False
+        return LogoutMutation(success=True)
+
+
+
 class UpdateUserMutation(graphene.Mutation):
 
     Arguments = create_mutation_arguments(UpdateUserForm)

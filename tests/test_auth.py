@@ -216,6 +216,41 @@ class TokenRefreshTests(FunctionalTest):
 
 
 
+class LogoutTests(TokenFunctionaltest):
+
+    def test_can_logout(self):
+        # No cookies to begin with
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+
+        # Log in
+        self.client.execute("""mutation { login(
+            username: "jack", password: "livetogetha",
+        ) { accessToken } }""")
+
+        # Cookie set
+        self.assertTrue("refresh_token" in self.client.session.cookies)
+
+        # Log out
+        result = self.client.execute("mutation { logout { success } }")
+
+        # Cookie gone
+        self.assertTrue(result["data"]["logout"]["success"])
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+    
+
+    def test_logout_works_without_cookie(self):
+        # No cookies
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+
+        # Log out
+        result = self.client.execute("mutation { logout { success } }")
+
+        # Still no cookie
+        self.assertTrue(result["data"]["logout"]["success"])
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+
+
+
 class UserQueryTests(TokenFunctionaltest):
 
     def test_can_get_user(self):
