@@ -287,3 +287,27 @@ class RevokeGroupAdminMutation(graphene.Mutation):
             raise GraphQLError('{"user": ["Not an admin"]}')
         group.first().admins.remove(user.first())
         return RevokeGroupAdminMutation(group=group.first())
+
+
+
+class RemoveUserFromGroup(graphene.Mutation):
+
+    class Arguments:
+        user = graphene.ID(required=True)
+        group = graphene.ID(required=True)
+
+    group = graphene.Field("core.queries.GroupType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        group = Group.objects.filter(id=kwargs["group"])
+        if not group: raise GraphQLError('{"group": ["Does not exist"]}')
+        if not info.context.user.admin_groups.filter(id=kwargs["group"]):
+            raise GraphQLError('{"group": ["Not an admin"]}')
+        user = User.objects.filter(id=kwargs["user"])
+        if not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if group.first().users.filter(id=user.first().id).count() == 0:
+            raise GraphQLError('{"user": ["Not in group"]}')
+        group.first().users.remove(user.first())
+        return RemoveUserFromGroup(group=group.first())

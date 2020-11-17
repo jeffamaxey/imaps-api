@@ -781,3 +781,55 @@ class GroupAdminAddTests(TokenFunctionaltest):
             """mutation { makeGroupAdmin(group: "1", user: "3") { group { name } } }""",
             message="Not authorized"
         )
+
+
+
+class UserRemovalFromGroupTests(TokenFunctionaltest):
+
+    def test_can_rremove_user(self):
+        # Remove user
+        result = self.client.execute(
+            """mutation { removeUserFromGroup(group: "1", user: "3") { 
+                group { users { username } }
+             } }"""
+        )
+
+        # User is no longer admin
+        self.assertEqual(result["data"]["removeUserFromGroup"]["group"], {"users": [
+            {"username": "jack"}, {"username": "boone"}
+        ]})
+        self.assertFalse(User.objects.get(username="shannon").groups.count())
+    
+
+    def test_cant_remove_user_if_not_appropriate(self):
+        # Not an admin of group
+        self.check_query_error(
+            """mutation { removeUserFromGroup(group: "2", user: "5") { group { name } } }""",
+            message="Not an admin"
+        )
+
+        # Group doesn't exist
+        self.check_query_error(
+            """mutation { removeUserFromGroup(group: "20", user: "4") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # User doesn't exist
+        self.check_query_error(
+            """mutation { removeUserFromGroup(group: "1", user: "40") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # User isn't in group
+        self.check_query_error(
+            """mutation { removeUserFromGroup(group: "1", user: "5") { group { name } } }""",
+            message="Not in group"
+        )
+
+        
+    def test_cant_remove_user_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { removeUserFromGroup(group: "1", user: "4") { group { name } } }""",
+            message="Not authorized"
+        )
