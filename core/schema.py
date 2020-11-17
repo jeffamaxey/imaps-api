@@ -4,10 +4,14 @@ from core.mutations import *
 
 class Query(graphene.ObjectType):
 
-    user = graphene.Field("core.queries.UserType")
+    user = graphene.Field("core.queries.UserType", id=graphene.ID())
     group = graphene.Field("core.queries.GroupType", id=graphene.ID(required=True))
 
     def resolve_user(self, info, **kwargs):
+        if "id" in kwargs:
+            try:
+                return User.objects.get(id=kwargs["id"])
+            except: raise GraphQLError('{"user": "Does not exist"}')
         user = info.context.user
         if not user: raise GraphQLError('{"user": "Not authorized"}')
         return info.context.user

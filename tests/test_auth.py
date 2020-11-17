@@ -235,12 +235,36 @@ class UserQueryTests(TokenFunctionaltest):
         })
     
 
-    def test_must_be_logged_in_to_get_user(self):
+    def test_can_get_other_user(self):
+        # Get user
+        del self.client.headers["Authorization"]
+        result = self.client.execute("""{ user(id: "2") {
+            username email name lastLogin creationTime
+            groups { name } adminGroups { name } invitations { group { name } }
+        } }""")
+
+        # Everything is correct
+        self.assertEqual(result["data"]["user"], {
+            "username": "boone", "email": "boone@gmail.com",
+            "name": "Boone Carlyle", "lastLogin": None, "creationTime": 946684801,
+            "groups": [{"name": "Shephard Lab"}],
+            "adminGroups": [], "invitations": [],
+        })
+    
+
+    def test_invalid_user_requests(self):
+        # Incorrect ID
+        self.check_query_error("""{ user(id: "10000") {
+            name username
+        } }""", message="Does not exist")
+    
+
+    def test_must_be_logged_in_to_get_self_user(self):
         del self.client.headers["Authorization"]
         self.check_query_error("""{ user {
             username email name lastLogin
         } }""", message="Not authorized")
-    
+
 
     def test_can_get_group(self):
         # Get group
