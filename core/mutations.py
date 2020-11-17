@@ -235,7 +235,34 @@ class AcceptGroupInvitationMutation(graphene.Mutation):
             raise GraphQLError('{"invitation": ["Does not exist"]}')
         group = invitation.first().group
         invitation.first().delete()
+        group.users.add(info.context.user)
         return AcceptGroupInvitationMutation(group=group)
+
+
+
+class MakeGroupAdminMutation(graphene.Mutation):
+
+    class Arguments:
+        user = graphene.ID(required=True)
+        group = graphene.ID(required=True)
+
+    group = graphene.Field("core.queries.GroupType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        group = Group.objects.filter(id=kwargs["group"])
+        if not group: raise GraphQLError('{"group": ["Does not exist"]}')
+        if not info.context.user.admin_groups.filter(id=kwargs["group"]):
+            raise GraphQLError('{"group": ["Not an admin"]}')
+        user = User.objects.filter(id=kwargs["user"])
+        if not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if group.first().users.filter(id=user.first().id).count() == 0:
+            raise GraphQLError('{"user": ["Not a member"]}')
+        if group.first().admins.filter(id=user.first().id).count():
+            raise GraphQLError('{"user": ["Already an admin"]}')
+        group.first().admins.add(user.first())
+        return MakeGroupAdminMutation(group=group.first())
 
 
 

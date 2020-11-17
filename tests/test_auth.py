@@ -641,9 +641,9 @@ class GroupInvitationAcceptanceTests(TokenFunctionaltest):
         )
 
         # The invitation is gone
-        self.assertTrue(result["data"]["acceptGroupInvitation"]["group"], {"users": [
-            {"username": "jack"}, {"username": "boone"},
-            {"username": "shannon"}, {"username": "ethan"}
+        self.assertEqual(result["data"]["acceptGroupInvitation"]["group"], {"users": [
+            {"username": "ethan"}, {"username": "jack"},
+            {"username": "boone"}, {"username": "shannon"}, 
         ]})
         self.assertFalse(GroupInvitation.objects.filter(id=1).count())
         self.assertEqual(GroupInvitation.objects.count(), 1)
@@ -684,7 +684,7 @@ class GroupAdminRevokeTests(TokenFunctionaltest):
         )
 
         # User is no longer admin
-        self.assertTrue(result["data"]["revokeGroupAdmin"]["group"], {"admins": [
+        self.assertEqual(result["data"]["revokeGroupAdmin"]["group"], {"admins": [
             {"username": "jack"}
         ]})
         self.assertFalse(User.objects.get(username="ben").admin_groups.count())
@@ -721,5 +721,63 @@ class GroupAdminRevokeTests(TokenFunctionaltest):
         del self.client.headers["Authorization"]
         self.check_query_error(
             """mutation { revokeGroupAdmin(group: "2", user: "4") { group { name } } }""",
+            message="Not authorized"
+        )
+
+
+
+class GroupAdminAddTests(TokenFunctionaltest):
+
+    def test_can_make_admin(self):
+        # Make admin
+        result = self.client.execute(
+            """mutation { makeGroupAdmin(group: "1", user: "3") { 
+                group { admins { username } }
+             } }"""
+        )
+
+        # User is now admin
+        self.assertEqual(result["data"]["makeGroupAdmin"]["group"], {"admins": [
+            {"username": "jack"}, {"username": "shannon"}
+        ]})
+        self.assertTrue(User.objects.get(username="shannon").admin_groups.count())
+    
+
+    def test_cant_make_admin_if_not_appropriate(self):
+        # Not an admin of group
+        self.check_query_error(
+            """mutation { makeGroupAdmin(group: "2", user: "5") { group { name } } }""",
+            message="Not an admin"
+        )
+
+        # Group doesn't exist
+        self.check_query_error(
+            """mutation { makeGroupAdmin(group: "20", user: "3") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # User doesn't exist
+        self.check_query_error(
+            """mutation { makeGroupAdmin(group: "1", user: "30") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # User isn't a member
+        self.check_query_error(
+            """mutation { makeGroupAdmin(group: "1", user: "5") { group { name } } }""",
+            message="Not a member"
+        )
+
+        # User is already an admin
+        self.check_query_error(
+            """mutation { makeGroupAdmin(group: "1", user: "1") { group { name } } }""",
+            message="Already an admin"
+        )
+
+        
+    def test_cant_make_admin_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { makeGroupAdmin(group: "1", user: "3") { group { name } } }""",
             message="Not authorized"
         )
