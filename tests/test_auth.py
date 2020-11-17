@@ -786,7 +786,7 @@ class GroupAdminAddTests(TokenFunctionaltest):
 
 class UserRemovalFromGroupTests(TokenFunctionaltest):
 
-    def test_can_rremove_user(self):
+    def test_can_remove_user(self):
         # Remove user
         result = self.client.execute(
             """mutation { removeUserFromGroup(group: "1", user: "3") { 
@@ -794,7 +794,7 @@ class UserRemovalFromGroupTests(TokenFunctionaltest):
              } }"""
         )
 
-        # User is no longer admin
+        # User is no longer in group
         self.assertEqual(result["data"]["removeUserFromGroup"]["group"], {"users": [
             {"username": "jack"}, {"username": "boone"}
         ]})
@@ -831,5 +831,52 @@ class UserRemovalFromGroupTests(TokenFunctionaltest):
         del self.client.headers["Authorization"]
         self.check_query_error(
             """mutation { removeUserFromGroup(group: "1", user: "4") { group { name } } }""",
+            message="Not authorized"
+        )
+
+
+
+class UserLeavingGroupTests(TokenFunctionaltest):
+
+    def test_can_leave_group(self):
+        # Leave group
+        result = self.client.execute(
+            """mutation { leaveGroup(id: "2") { 
+                group { users { username } }
+             } }"""
+        )
+
+        # User is no longer in group
+        self.assertEqual(result["data"]["leaveGroup"]["group"], {"users": [
+            {"username": "ben"}, {"username": "juliette"}, {"username": "ethan"}
+        ]})
+        self.assertEqual(User.objects.get(username="jack").groups.count(), 1)
+    
+
+    def test_cant_leave_group_if_not_appropriate(self):
+        Group.objects.get(name="The Others").users.remove(User.objects.get(username="jack"))
+        # Not in group
+        self.check_query_error(
+            """mutation { leaveGroup(id: "2") { group { name } } }""",
+            message="Not in group"
+        )
+
+        # Group doesn't exist
+        self.check_query_error(
+            """mutation { leaveGroup(id: "20") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # Would be no admins
+        self.check_query_error(
+            """mutation { leaveGroup(id: "1") { group { name } } }""",
+            message="no admins"
+        )
+
+
+    def test_cant_leave_group_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { leaveGroup(id: "2") { group { name } } }""",
             message="Not authorized"
         )

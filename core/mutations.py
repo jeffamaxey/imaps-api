@@ -311,3 +311,25 @@ class RemoveUserFromGroup(graphene.Mutation):
             raise GraphQLError('{"user": ["Not in group"]}')
         group.first().users.remove(user.first())
         return RemoveUserFromGroup(group=group.first())
+
+
+
+class LeaveGroup(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    group = graphene.Field("core.queries.GroupType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        group = Group.objects.filter(id=kwargs["id"])
+        if not group: raise GraphQLError('{"group": ["Does not exist"]}')
+        if group.first().users.filter(id=info.context.user.id).count() == 0:
+            raise GraphQLError('{"group": ["Not in group"]}')
+        if group.first().admins.count() == 1:
+            if group.first().admins.filter(id=info.context.user.id).count():
+                raise GraphQLError('{"group": ["If you left there would be no admins"]}')
+        group.first().users.remove(info.context.user)
+        return RemoveUserFromGroup(group=group.first())
