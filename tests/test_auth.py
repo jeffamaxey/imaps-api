@@ -380,6 +380,7 @@ class UserDeletionTests(TokenFunctionaltest):
 
     def test_can_delete_account(self):
         # Send deletion mutation
+        Group.objects.get(name="Shephard Lab").admins.add(User.objects.get(username="boone"))
         users_at_start = User.objects.count()
         result = self.client.execute("""mutation { deleteUser(
             password: "livetogetha"
@@ -393,11 +394,19 @@ class UserDeletionTests(TokenFunctionaltest):
 
     def test_account_deletion_can_fail(self):
         users_at_start = User.objects.count()
+        Group.objects.get(name="Shephard Lab").admins.add(User.objects.get(username="boone"))
 
         # Wrong password
         self.check_query_error("""mutation { deleteUser(
             password: "wrongpassword"
         ) { success } }""", message="Invalid credentials")
+        self.assertEqual(User.objects.count(), users_at_start)
+
+        # Would leave orphan groups
+        Group.objects.get(name="Shephard Lab").admins.remove(User.objects.get(username="boone"))
+        self.check_query_error("""mutation { deleteUser(
+            password: "livetogetha"
+        ) { success } }""", message="only admin")
         self.assertEqual(User.objects.count(), users_at_start)
 
         # Invalid token
