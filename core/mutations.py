@@ -12,6 +12,7 @@ class SignupMutation(graphene.Mutation):
     Arguments = create_mutation_arguments(SignupForm)
 
     access_token = graphene.String()
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         form = SignupForm(kwargs)
@@ -19,7 +20,10 @@ class SignupMutation(graphene.Mutation):
             form.instance.last_login = time.time()
             form.save()
             info.context.refresh_token = form.instance.make_refresh_jwt()
-            return SignupMutation(access_token=form.instance.make_access_jwt())
+            return SignupMutation(
+                access_token=form.instance.make_access_jwt(),
+                user=form.instance
+            )
         raise GraphQLError(json.dumps(form.errors))
 
 
@@ -31,6 +35,7 @@ class LoginMutation(graphene.Mutation):
         password = graphene.String()
     
     access_token = graphene.String()
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         user = User.objects.filter(username=kwargs["username"]).first()
@@ -39,7 +44,7 @@ class LoginMutation(graphene.Mutation):
                 info.context.refresh_token = user.make_refresh_jwt()
                 user.last_login = time.time()
                 user.save()
-                return LoginMutation(access_token=user.make_access_jwt())
+                return LoginMutation(access_token=user.make_access_jwt(), user=user)
         raise GraphQLError(json.dumps({"username": "Invalid credentials"}))
 
 
@@ -47,6 +52,7 @@ class LoginMutation(graphene.Mutation):
 class RefreshMutation(graphene.Mutation):
 
     access_token = graphene.String()
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         token = info.context.COOKIES.get("refresh_token")
@@ -55,7 +61,7 @@ class RefreshMutation(graphene.Mutation):
         user = User.from_token(token)
         if user:
             info.context.refresh_token = user.make_refresh_jwt()
-            return RefreshMutation(access_token=user.make_access_jwt())
+            return RefreshMutation(access_token=user.make_access_jwt(), user=user)
         raise GraphQLError(json.dumps({"token": "Refresh token not valid"}))
 
 

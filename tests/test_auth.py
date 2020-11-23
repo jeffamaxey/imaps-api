@@ -18,9 +18,12 @@ class SignupTests(FunctionalTest):
         result = self.client.execute("""mutation { signup(
             email: "kate@gmail.com", password: "sw0rdfish123",
             username: "kate", name: "Kate Austen"
-        ) { accessToken } }""")
+        ) { accessToken user { username email name }} }""")
 
         # There's a new user
+        self.assertEqual(result["data"]["signup"]["user"], {
+            "username": "kate", "email": "kate@gmail.com", "name": "Kate Austen"
+        })
         self.assertEqual(User.objects.count(), users_at_start + 1)
         new_user = User.objects.last()
         self.assertEqual(new_user.username, "kate")
@@ -115,7 +118,12 @@ class LoginTests(FunctionalTest):
         # Send credentials
         result = self.client.execute("""mutation { login(
             username: "jack", password: "livetogetha",
-        ) { accessToken } }""")
+        ) { accessToken user { username email name } } }""")
+
+        # User is returned
+        self.assertEqual(result["data"]["login"]["user"], {
+            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
+        })
 
         # An access token has been returned
         access_token = result["data"]["login"]["accessToken"]
@@ -167,7 +175,14 @@ class TokenRefreshTests(FunctionalTest):
             value=original_refresh_token
         )
         self.client.session.cookies.set_cookie(cookie_obj)
-        result = self.client.execute("mutation { refreshToken { accessToken } }")
+        result = self.client.execute("""mutation { refreshToken {
+            accessToken user { username email name }
+        } }""")
+
+        # User is returned
+        self.assertEqual(result["data"]["refreshToken"]["user"], {
+            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
+        })
 
         # An access token has been returned
         access_token = result["data"]["refreshToken"]["accessToken"]
