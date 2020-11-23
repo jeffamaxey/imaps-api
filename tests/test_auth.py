@@ -288,7 +288,7 @@ class UserQueryTests(TokenFunctionaltest):
     def test_can_get_other_user(self):
         # Get user
         del self.client.headers["Authorization"]
-        result = self.client.execute("""{ user(id: "2") {
+        result = self.client.execute("""{ user(username: "boone") {
             username email name lastLogin creationTime
             groups { name } adminGroups { name } invitations { group { name } }
         } }""")
@@ -303,8 +303,8 @@ class UserQueryTests(TokenFunctionaltest):
     
 
     def test_invalid_user_requests(self):
-        # Incorrect ID
-        self.check_query_error("""{ user(id: "10000") {
+        # Incorrect username
+        self.check_query_error("""{ user(username: "smoke") {
             name username
         } }""", message="Does not exist")
     
