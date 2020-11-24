@@ -112,21 +112,16 @@ class UpdatePasswordMutation(graphene.Mutation):
 
 class DeleteUserMutation(graphene.Mutation):
 
-    class Arguments:
-        password = graphene.String(required=True)
-
     success = graphene.Boolean()
 
     def mutate(self, info, **kwargs):
         user = info.context.user
         if user:
-            if check_password(kwargs["password"], user.password):
-                for group in user.admin_groups.all():
-                    if group.admins.count() == 1:
-                        raise GraphQLError(json.dumps({"user": "You are the only admin of " + group.name}))
-                user.delete()
-                return DeleteUserMutation(success=True)
-            raise GraphQLError(json.dumps({"username": "Invalid credentials"}))
+            for group in user.admin_groups.all():
+                if group.admins.count() == 1:
+                    raise GraphQLError(json.dumps({"user": "You are the only admin of " + group.name}))
+            user.delete()
+            return DeleteUserMutation(success=True)
         raise GraphQLError(json.dumps({"username": "Invalid or missing token"}))
 
 

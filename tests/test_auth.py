@@ -432,9 +432,7 @@ class UserDeletionTests(TokenFunctionaltest):
         # Send deletion mutation
         Group.objects.get(name="Shephard Lab").admins.add(User.objects.get(username="boone"))
         users_at_start = User.objects.count()
-        result = self.client.execute("""mutation { deleteUser(
-            password: "livetogetha"
-        ) { success } }""")
+        result = self.client.execute("""mutation { deleteUser { success } }""")
 
         # It works
         self.assertTrue(result["data"]["deleteUser"]["success"])
@@ -446,31 +444,25 @@ class UserDeletionTests(TokenFunctionaltest):
         users_at_start = User.objects.count()
         Group.objects.get(name="Shephard Lab").admins.add(User.objects.get(username="boone"))
 
-        # Wrong password
-        self.check_query_error("""mutation { deleteUser(
-            password: "wrongpassword"
-        ) { success } }""", message="Invalid credentials")
-        self.assertEqual(User.objects.count(), users_at_start)
-
         # Would leave orphan groups
         Group.objects.get(name="Shephard Lab").admins.remove(User.objects.get(username="boone"))
-        self.check_query_error("""mutation { deleteUser(
-            password: "livetogetha"
-        ) { success } }""", message="only admin")
+        self.check_query_error("""mutation { deleteUser { success } }""", message="only admin")
         self.assertEqual(User.objects.count(), users_at_start)
 
         # Invalid token
         self.client.headers["Authorization"] = "Bearer qwerty"
-        self.check_query_error("""mutation { deleteUser(
-            password: "livetogetha"
-        ) { success } }""", message="Invalid or missing token")
+        self.check_query_error(
+            """mutation { deleteUser { success } }""",
+            message="Invalid or missing token"
+        )
         self.assertEqual(User.objects.count(), users_at_start)
 
         # No token
         del self.client.headers["Authorization"]
-        self.check_query_error("""mutation { deleteUser(
-            password: "livetogetha"
-        ) { success } }""", message="Invalid or missing token")
+        self.check_query_error(
+            """mutation { deleteUser { success } }""",
+            message="Invalid or missing token"
+        )
         self.assertEqual(User.objects.count(), users_at_start)
 
 
