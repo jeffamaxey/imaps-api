@@ -49,23 +49,6 @@ class LoginMutation(graphene.Mutation):
 
 
 
-class RefreshMutation(graphene.Mutation):
-
-    access_token = graphene.String()
-    user = graphene.Field("core.queries.UserType")
-
-    def mutate(self, info, **kwargs):
-        token = info.context.COOKIES.get("refresh_token")
-        if not token:
-            raise GraphQLError(json.dumps({"token": "No refresh token supplied"}))
-        user = User.from_token(token)
-        if user:
-            info.context.refresh_token = user.make_refresh_jwt()
-            return RefreshMutation(access_token=user.make_access_jwt(), user=user)
-        raise GraphQLError(json.dumps({"token": "Refresh token not valid"}))
-
-
-
 class LogoutMutation(graphene.Mutation):
     
     success = graphene.Boolean()

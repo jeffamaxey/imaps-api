@@ -4,8 +4,20 @@ from core.mutations import *
 
 class Query(graphene.ObjectType):
 
+    access_token = graphene.String()
     user = graphene.Field("core.queries.UserType", username=graphene.String())
     group = graphene.Field("core.queries.GroupType", id=graphene.ID(required=True))
+    
+    def resolve_access_token(self, info, **kwargs):
+        token = info.context.COOKIES.get("refresh_token")
+        if not token:
+            raise GraphQLError(json.dumps({"token": "No refresh token supplied"}))
+        user = User.from_token(token)
+        if user:
+            info.context.refresh_token = user.make_refresh_jwt()
+            return user.make_access_jwt()
+        raise GraphQLError(json.dumps({"token": "Refresh token not valid"}))
+
 
     def resolve_user(self, info, **kwargs):
         if "username" in kwargs:
@@ -28,7 +40,6 @@ class Query(graphene.ObjectType):
 class Mutation(graphene.ObjectType):
     signup = SignupMutation.Field()
     login = LoginMutation.Field()
-    refresh_token = RefreshMutation.Field()
     logout = LogoutMutation.Field()
 
     update_user = UpdateUserMutation.Field()

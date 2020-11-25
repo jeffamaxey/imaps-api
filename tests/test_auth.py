@@ -168,24 +168,17 @@ class LoginTests(FunctionalTest):
 class TokenRefreshTests(FunctionalTest):
 
     def test_can_refresh_token(self):
-        # Send mutation with cookie
+        # Send query with cookie
         original_refresh_token = self.user.make_refresh_jwt()
         cookie_obj = requests.cookies.create_cookie(
             domain="localhost.local", name="refresh_token",
             value=original_refresh_token
         )
         self.client.session.cookies.set_cookie(cookie_obj)
-        result = self.client.execute("""mutation { refreshToken {
-            accessToken user { username email name }
-        } }""")
-
-        # User is returned
-        self.assertEqual(result["data"]["refreshToken"]["user"], {
-            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
-        })
+        result = self.client.execute("{ accessToken }")
 
         # An access token has been returned
-        access_token = result["data"]["refreshToken"]["accessToken"]
+        access_token = result["data"]["accessToken"]
         algorithm, payload, secret = access_token.split(".")
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
@@ -204,7 +197,7 @@ class TokenRefreshTests(FunctionalTest):
     def test_token_refresh_can_fail(self):
         # No cookies
         self.check_query_error(
-            "mutation { refreshToken { accessToken } }", message="No refresh token"
+            "{ accessToken }", message="No refresh token"
         )
         self.assertFalse("refresh_token" in self.client.session.cookies)
 
@@ -214,7 +207,7 @@ class TokenRefreshTests(FunctionalTest):
         )
         self.client.session.cookies.set_cookie(cookie_obj)
         self.check_query_error(
-            "mutation { refreshToken { accessToken } }", message="Refresh token not valid"
+            "{ accessToken }", message="Refresh token not valid"
         )
         
         # Refresh token expired
@@ -226,7 +219,7 @@ class TokenRefreshTests(FunctionalTest):
         )
         self.client.session.cookies.set_cookie(cookie_obj)
         self.check_query_error(
-            "mutation { refreshToken { accessToken } }", message="Refresh token not valid"
+            "{ accessToken }", message="Refresh token not valid"
         )
 
 
