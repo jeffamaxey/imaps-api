@@ -313,7 +313,7 @@ class UserQueryTests(TokenFunctionaltest):
         # Get group
         result = self.client.execute("""{ group(id: "2") {
             name description users { username } admins { username }
-            invitations { user { username } }
+            invitations { user { username } } userCount
         } }""")
 
         # Everything is correct
@@ -325,6 +325,7 @@ class UserQueryTests(TokenFunctionaltest):
             ],
             "admins": [{"username": "ben"}],
             "invitations": [{"user": {"username": "jack"}}],
+            "userCount": 4
         })
     
 

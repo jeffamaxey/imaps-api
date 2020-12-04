@@ -32,9 +32,14 @@ class GroupType(DjangoObjectType):
         model = Group
     
     id = graphene.ID()
+    user_count = graphene.Int()
     users = graphene.List("core.queries.UserType")
     admins = graphene.List("core.queries.UserType")
     invitations = graphene.List("core.queries.GroupInvitationType")
+
+    def resolve_user_count(self, info, **kwargs):
+        return self.users.count()
+        
 
     def resolve_users(self, info, **kwargs):
         return self.users.all()
