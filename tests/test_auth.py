@@ -311,7 +311,7 @@ class UserQueryTests(TokenFunctionaltest):
 
     def test_can_get_group(self):
         # Get group
-        result = self.client.execute("""{ group(id: "2") {
+        result = self.client.execute("""{ group(name: "The Others") {
             name description users { username } admins { username }
             invitations { user { username } } userCount
         } }""")
@@ -331,7 +331,7 @@ class UserQueryTests(TokenFunctionaltest):
 
     def test_invalid_group_requests(self):
         # Incorrect ID
-        self.check_query_error("""{ group(id: "10000") {
+        self.check_query_error("""{ group(name: "XYZ") {
             name description
         } }""", message="Does not exist")
 
