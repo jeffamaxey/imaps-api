@@ -134,6 +134,7 @@ class UpdateGroupMutation(graphene.Mutation):
     Arguments = create_mutation_arguments(GroupForm, edit=True)
     
     group = graphene.Field("core.queries.GroupType")
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
@@ -145,7 +146,7 @@ class UpdateGroupMutation(graphene.Mutation):
         form = GroupForm(kwargs, instance=group.first())
         if form.is_valid():
             form.save()
-            return UpdateGroupMutation(group=form.instance)
+            return UpdateGroupMutation(group=form.instance, user=info.context.user)
         raise GraphQLError(json.dumps(form.errors))
 
 
