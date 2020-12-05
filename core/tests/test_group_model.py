@@ -16,9 +16,9 @@ class GroupCreationTests(TestCase):
 
     def test_group_uniqueness(self):
         group = mixer.blend(
-            Group, name="Locke Lab", description="A place where miracles happen"
+            Group, slug="Locke_Lab", description="A place where miracles happen"
         )
         with self.assertRaises(IntegrityError):
             with transaction.atomic():
-                Group.objects.create(name="Locke Lab")
+                Group.objects.create(slug="Locke_Lab")
         self.assertEqual(Group.objects.count(), 1)

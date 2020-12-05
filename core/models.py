@@ -83,7 +83,8 @@ class Group(RandomIDModel):
     class Meta:
         db_table = "groups"
     
-    name = models.CharField(max_length=50, unique=True)
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(max_length=50, unique=True)
     description = models.CharField(max_length=200)
     users = models.ManyToManyField(User, related_name="groups")
     admins = models.ManyToManyField(User, related_name="admin_groups")

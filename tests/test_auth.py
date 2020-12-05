@@ -311,14 +311,14 @@ class UserQueryTests(TokenFunctionaltest):
 
     def test_can_get_group(self):
         # Get group
-        result = self.client.execute("""{ group(name: "The Others") {
-            name description users { username } admins { username }
+        result = self.client.execute("""{ group(slug: "others") {
+            name slug description users { username } admins { username }
             invitations { user { username } } userCount
         } }""")
 
         # Everything is correct
         self.assertEqual(result["data"]["group"], {
-            "name": "The Others", "description": "",
+            "name": "The Others", "description": "", "slug": "others",
             "users": [
                 {"username": "ben"}, {"username": "juliette"},
                 {"username": "ethan"}, {"username": "jack"}
@@ -331,7 +331,7 @@ class UserQueryTests(TokenFunctionaltest):
 
     def test_invalid_group_requests(self):
         # Incorrect ID
-        self.check_query_error("""{ group(name: "XYZ") {
+        self.check_query_error("""{ group(slug: "XYZ") {
             name description
         } }""", message="Does not exist")
 
@@ -466,12 +466,12 @@ class GroupCreationTests(TokenFunctionaltest):
     def test_can_create_group(self):
         # User creates a group
         result = self.client.execute("""mutation { createGroup(
-            name: "A Team", description: "The A Team"
-        ) { group { name description users { username } admins { username } } } }""")
+            name: "A Team", slug: "a_team" description: "The A Team"
+        ) { group { name slug description users { username } admins { username } } } }""")
 
         # The group is returned
         self.assertEqual(result["data"]["createGroup"]["group"], {
-            "name": "A Team", "description": "The A Team",
+            "name": "A Team", "description": "The A Team", "slug": "a_team",
             "users": [{"username": "jack"}], "admins": [{"username": "jack"}]
         })
 
@@ -489,7 +489,7 @@ class GroupCreationTests(TokenFunctionaltest):
     def test_group_creation_validation(self):
         # Name must be unique
         self.check_query_error("""mutation { createGroup(
-            name: "The Others", description: "The A Team"
+            name: "Others", description: "The A Team", slug: "others"
         ) { group { name description users { username } admins { username } } } }""",
         message="already exists")
 
@@ -497,7 +497,7 @@ class GroupCreationTests(TokenFunctionaltest):
     def test_must_be_logged_in_to_create_group(self):
         del self.client.headers["Authorization"]
         self.check_query_error("""mutation { createGroup(
-            name: "A Team", description: "The A Team"
+            name: "A Team", description: "The A Team", slug: "a_team"
         ) { group { name description users { username } admins { username } } } }""",
         message="Not authorized")
 
@@ -508,36 +508,37 @@ class GroupUpdatingTests(TokenFunctionaltest):
     def test_can_update_group_info(self):
         # Update info
         result = self.client.execute("""mutation { updateGroup(
-            id: "1" name: "The Good Guys" description: "Not so bad" 
-        ) { group { name description } } }""")
+            id: "1" name: "The Good Guys" description: "Not so bad" slug: "good"
+        ) { group { name slug description } } }""")
 
         # The new group info is returned
         self.assertEqual(result["data"]["updateGroup"]["group"], {
-            "name": "The Good Guys", "description": "Not so bad"
+            "name": "The Good Guys", "description": "Not so bad", "slug": "good"
         })
 
         # The group has updated
         group = Group.objects.get(id=1)
         self.assertEqual(group.name, "The Good Guys")
+        self.assertEqual(group.slug, "good")
         self.assertEqual(group.description, "Not so bad")
     
 
     def test_cant_edit_group_if_not_appropriate(self):
         # Group doesn't exist
         self.check_query_error("""mutation { updateGroup(
-            id: "20" name: "The Good Guys" description: "Not so bad" 
+            id: "20" name: "The Good Guys" description: "Not so bad" slug: "good"
         ) { group { name description } } }""", message="Does not exist")
 
         # Not an admin
         self.check_query_error("""mutation { updateGroup(
-            id: "2" name: "The Good Guys" description: "Not so bad" 
+            id: "2" name: "The Good Guys" description: "Not so bad" slug: "good"
         ) { group { name description } } }""", message="Not an admin")
     
 
     def test_cant_edit_group_when_not_logged_in(self):
         del self.client.headers["Authorization"]
         self.check_query_error("""mutation { updateGroup(
-            id: "2" name: "The Good Guys" description: "Not so bad" 
+            id: "2" name: "The Good Guys" description: "Not so bad" slug: "good" 
         ) { group { name description } } }""", message="Not authorized")
 
 

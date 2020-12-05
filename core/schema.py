@@ -6,7 +6,7 @@ class Query(graphene.ObjectType):
 
     access_token = graphene.String()
     user = graphene.Field("core.queries.UserType", username=graphene.String())
-    group = graphene.Field("core.queries.GroupType", name=graphene.String(required=True))
+    group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     
     def resolve_access_token(self, info, **kwargs):
         token = info.context.COOKIES.get("refresh_token")
@@ -31,7 +31,7 @@ class Query(graphene.ObjectType):
 
     def resolve_group(self, info, **kwargs):
         try:
-            return Group.objects.get(name=kwargs["name"])
+            return Group.objects.get(slug=kwargs["slug"])
         except: raise GraphQLError('{"group": "Does not exist"}')
 
 

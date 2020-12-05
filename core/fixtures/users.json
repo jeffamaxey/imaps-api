@@ -65,6 +65,7 @@
         "pk": 1,
         "fields": {
             "name": "Shephard Lab",
+            "slug": "shephard_lab",
             "description": "Dr Shephard's Lab",
             "users": [1, 2, 3],
             "admins": [1]
@@ -75,6 +76,7 @@
         "pk": 2,
         "fields": {
             "name": "The Others",
+            "slug": "others",
             "description": "",
             "users": [4, 5, 6, 1],
             "admins": [4]
