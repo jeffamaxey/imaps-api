@@ -156,6 +156,7 @@ class DeleteGroupMutation(graphene.Mutation):
         id = graphene.ID(required=True)
 
     success = graphene.Boolean()
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
@@ -165,7 +166,7 @@ class DeleteGroupMutation(graphene.Mutation):
         if not info.context.user.admin_groups.filter(id=kwargs["id"]):
             raise GraphQLError('{"group": ["Not an admin"]}')
         group.first().delete()
-        return DeleteGroupMutation(success=True)
+        return DeleteGroupMutation(success=True, user=info.context.user)
 
 
 
