@@ -6,6 +6,7 @@ class Query(graphene.ObjectType):
 
     access_token = graphene.String()
     user = graphene.Field("core.queries.UserType", username=graphene.String())
+    users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     
     def resolve_access_token(self, info, **kwargs):
@@ -27,6 +28,10 @@ class Query(graphene.ObjectType):
         user = info.context.user
         if not user: raise GraphQLError('{"user": "Not authorized"}')
         return info.context.user
+    
+
+    def resolve_users(self, info, **kwargs):
+        return User.objects.all()
     
 
     def resolve_group(self, info, **kwargs):

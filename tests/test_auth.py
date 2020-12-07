@@ -295,6 +295,21 @@ class UserQueryTests(TokenFunctionaltest):
         })
     
 
+    def test_can_get_users(self):
+        # Get user
+        result = self.client.execute("""{ users {
+            username email name
+        } }""")
+        self.assertEqual(result["data"]["users"], [
+            {"username": "ben", "email": "ben@gmail.com", "name": "Ben Linus"},
+            {"username": "juliette", "email": "juliette@gmail.com", "name": "Juliette Burke"},
+            {"username": "ethan", "email": "ethan@gmail.com", "name": "Ethan Rom"},
+            {"username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"},
+            {"username": "boone", "email": "boone@gmail.com", "name": "Boone Carlyle"},
+            {"username": "shannon", "email": "shannon@gmail.com", "name": "Shannon Rutherford"}
+        ])
+    
+
     def test_invalid_user_requests(self):
         # Incorrect username
         self.check_query_error("""{ user(username: "smoke") {

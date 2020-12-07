@@ -205,6 +205,7 @@ class DeleteGroupInvitationMutation(graphene.Mutation):
         id = graphene.ID(required=True)
 
     success = graphene.Boolean()
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
@@ -215,7 +216,7 @@ class DeleteGroupInvitationMutation(graphene.Mutation):
             if not invitation.first().group.admins.filter(id=info.context.user.id):
                 raise GraphQLError('{"invitation": ["Does not exist"]}')
         invitation.first().delete()
-        return DeleteGroupInvitationMutation(success=True)
+        return DeleteGroupInvitationMutation(success=True, user=info.context.user)
 
 
 
@@ -225,6 +226,7 @@ class AcceptGroupInvitationMutation(graphene.Mutation):
         id = graphene.ID(required=True)
 
     group = graphene.Field("core.queries.GroupType")
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
@@ -236,7 +238,7 @@ class AcceptGroupInvitationMutation(graphene.Mutation):
         group = invitation.first().group
         invitation.first().delete()
         group.users.add(info.context.user)
-        return AcceptGroupInvitationMutation(group=group)
+        return AcceptGroupInvitationMutation(group=group, user=info.context.user)
 
 
 
