@@ -249,6 +249,7 @@ class MakeGroupAdminMutation(graphene.Mutation):
         group = graphene.ID(required=True)
 
     group = graphene.Field("core.queries.GroupType")
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
@@ -264,7 +265,7 @@ class MakeGroupAdminMutation(graphene.Mutation):
         if group.first().admins.filter(id=user.first().id).count():
             raise GraphQLError('{"user": ["Already an admin"]}')
         group.first().admins.add(user.first())
-        return MakeGroupAdminMutation(group=group.first())
+        return MakeGroupAdminMutation(group=group.first(), user=user.first())
 
 
 
@@ -275,6 +276,7 @@ class RevokeGroupAdminMutation(graphene.Mutation):
         group = graphene.ID(required=True)
 
     group = graphene.Field("core.queries.GroupType")
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
@@ -288,7 +290,7 @@ class RevokeGroupAdminMutation(graphene.Mutation):
         if group.first().admins.filter(id=user.first().id).count() == 0:
             raise GraphQLError('{"user": ["Not an admin"]}')
         group.first().admins.remove(user.first())
-        return RevokeGroupAdminMutation(group=group.first())
+        return RevokeGroupAdminMutation(group=group.first(), user=user.first())
 
 
 
