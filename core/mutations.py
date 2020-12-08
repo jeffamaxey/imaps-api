@@ -324,6 +324,7 @@ class LeaveGroup(graphene.Mutation):
         id = graphene.ID(required=True)
 
     group = graphene.Field("core.queries.GroupType")
+    user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
@@ -336,4 +337,4 @@ class LeaveGroup(graphene.Mutation):
             if group.first().admins.filter(id=info.context.user.id).count():
                 raise GraphQLError('{"group": ["If you left there would be no admins"]}')
         group.first().users.remove(info.context.user)
-        return RemoveUserFromGroup(group=group.first())
+        return LeaveGroup(group=group.first(), user=info.context.user)
