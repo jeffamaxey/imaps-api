@@ -14,7 +14,7 @@ class UserType(DjangoObjectType):
     invitations = graphene.List("core.queries.GroupInvitationType")
 
     def resolve_last_login(self, info, **kwargs):
-        return None if self.restricted else self.last_login
+        return None if "restricted" in self.__dict__ and self.restricted else self.last_login
         
 
     def resolve_groups(self, info, **kwargs):
@@ -23,12 +23,12 @@ class UserType(DjangoObjectType):
     
 
     def resolve_admin_groups(self, info, **kwargs):
-        if self.restricted: return None
+        if "restricted" in self.__dict__ and self.restricted: return None
         return self.admin_groups.all()
     
 
     def resolve_invitations(self, info, **kwargs):
-        if self.restricted: return None
+        if "restricted" in self.__dict__ and self.restricted: return None
         return self.group_invitations.all()
 
 

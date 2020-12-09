@@ -18,7 +18,7 @@ class SignupTests(FunctionalTest):
         result = self.client.execute("""mutation { signup(
             email: "kate@gmail.com", password: "sw0rdfish123",
             username: "kate", name: "Kate Austen"
-        ) { accessToken user { username email name }} }""")
+        ) { accessToken user { username email name } } }""")
 
         # There's a new user
         self.assertEqual(result["data"]["signup"]["user"], {
@@ -482,12 +482,18 @@ class GroupCreationTests(TokenFunctionaltest):
         # User creates a group
         result = self.client.execute("""mutation { createGroup(
             name: "A Team", slug: "a_team" description: "The A Team"
-        ) { group { name slug description users { username } admins { username } } } }""")
+        ) {
+            group { name slug description users { username } admins { username } }
+            user { username email name }
+        } }""")
 
         # The group is returned
         self.assertEqual(result["data"]["createGroup"]["group"], {
             "name": "A Team", "description": "The A Team", "slug": "a_team",
             "users": [{"username": "jack"}], "admins": [{"username": "jack"}]
+        })
+        self.assertEqual(result["data"]["createGroup"]["user"], {
+            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
         })
 
         # The user can access their groups
@@ -524,11 +530,14 @@ class GroupUpdatingTests(TokenFunctionaltest):
         # Update info
         result = self.client.execute("""mutation { updateGroup(
             id: "1" name: "The Good Guys" description: "Not so bad" slug: "good"
-        ) { group { name slug description } } }""")
+        ) { group { name slug description } user { username email name } } }""")
 
         # The new group info is returned
         self.assertEqual(result["data"]["updateGroup"]["group"], {
             "name": "The Good Guys", "description": "Not so bad", "slug": "good"
+        })
+        self.assertEqual(result["data"]["updateGroup"]["user"], {
+            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
         })
 
         # The group has updated
@@ -563,12 +572,17 @@ class GroupDeletingTests(TokenFunctionaltest):
     def test_can_delete_group(self):
         # Delete group
         result = self.client.execute(
-            """mutation { deleteGroup(id: "1") { success } }"""
+            """mutation { deleteGroup(id: "1") {
+                success user { username email name }
+            } }"""
         )
 
         # The group is gone
         self.assertTrue(result["data"]["deleteGroup"]["success"])
         self.assertFalse(Group.objects.filter(id=1).count())
+        self.assertEqual(result["data"]["deleteGroup"]["user"], {
+            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
+        })
     
 
     def test_cant_delete_group_if_not_appropriate(self):
@@ -666,23 +680,31 @@ class GroupInvitationDeletingTests(TokenFunctionaltest):
     def test_can_delete_invitation(self):
         # Delete invitation as invitee
         result = self.client.execute(
-            """mutation { deleteGroupInvitation(id: "2") { success } }"""
+            """mutation { deleteGroupInvitation(id: "2") {
+                success user { username email name }
+            } }"""
         )
 
         # The invitation is gone
         self.assertTrue(result["data"]["deleteGroupInvitation"]["success"])
         self.assertFalse(GroupInvitation.objects.filter(id=2).count())
         self.assertEqual(GroupInvitation.objects.count(), 1)
+        self.assertEqual(result["data"]["deleteGroupInvitation"]["user"], {
+            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
+        })
 
         # Delete invitation as admin
         result = self.client.execute(
-            """mutation { deleteGroupInvitation(id: "1") { success } }"""
+            """mutation { deleteGroupInvitation(id: "1") { success user { username email name } } }"""
         )
-
+        
         # The invitation is gone
         self.assertTrue(result["data"]["deleteGroupInvitation"]["success"])
         self.assertFalse(GroupInvitation.objects.filter(id=1).count())
         self.assertEqual(GroupInvitation.objects.count(), 0)
+        self.assertEqual(result["data"]["deleteGroupInvitation"]["user"], {
+            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
+        })
     
 
     def test_cant_delete_invitation_if_not_appropriate(self):
@@ -722,6 +744,7 @@ class GroupInvitationAcceptanceTests(TokenFunctionaltest):
         result = self.client.execute(
             """mutation { acceptGroupInvitation(id: "1") { 
                 group { users { username } }
+                user { username email name }
              } }"""
         )
 
@@ -732,6 +755,9 @@ class GroupInvitationAcceptanceTests(TokenFunctionaltest):
         ]})
         self.assertFalse(GroupInvitation.objects.filter(id=1).count())
         self.assertEqual(GroupInvitation.objects.count(), 1)
+        self.assertEqual(result["data"]["acceptGroupInvitation"]["user"], {
+            "username": "ethan", "email": "ethan@gmail.com", "name": "Ethan Rom"
+        })
     
 
     def test_cant_delete_invitation_if_not_appropriate(self):
@@ -765,6 +791,7 @@ class GroupAdminRevokeTests(TokenFunctionaltest):
         result = self.client.execute(
             """mutation { revokeGroupAdmin(group: "2", user: "4") { 
                 group { admins { username } }
+                user { username email name }
              } }"""
         )
 
@@ -773,6 +800,9 @@ class GroupAdminRevokeTests(TokenFunctionaltest):
             {"username": "jack"}
         ]})
         self.assertFalse(User.objects.get(username="ben").admin_groups.count())
+        self.assertEqual(result["data"]["revokeGroupAdmin"]["user"], {
+            "username": "ben", "email": "ben@gmail.com", "name": "Ben Linus"
+        })
     
 
     def test_cant_revoke_admin_if_not_appropriate(self):
@@ -824,6 +854,7 @@ class GroupAdminAddTests(TokenFunctionaltest):
         result = self.client.execute(
             """mutation { makeGroupAdmin(group: "1", user: "3") { 
                 group { admins { username } }
+                user { username email name }
              } }"""
         )
 
@@ -832,6 +863,9 @@ class GroupAdminAddTests(TokenFunctionaltest):
             {"username": "jack"}, {"username": "shannon"}
         ]})
         self.assertTrue(User.objects.get(username="shannon").admin_groups.count())
+        self.assertEqual(result["data"]["makeGroupAdmin"]["user"], {
+            "username": "shannon", "email": "shannon@gmail.com", "name": "Shannon Rutherford"
+        })
     
 
     def test_cant_make_admin_if_not_appropriate(self):
@@ -965,6 +999,7 @@ class UserLeavingGroupTests(TokenFunctionaltest):
         result = self.client.execute(
             """mutation { leaveGroup(id: "2") { 
                 group { users { username } }
+                user { username email name }
              } }"""
         )
 
@@ -973,6 +1008,9 @@ class UserLeavingGroupTests(TokenFunctionaltest):
             {"username": "ben"}, {"username": "juliette"}, {"username": "ethan"}
         ]})
         self.assertEqual(User.objects.get(username="jack").groups.count(), 1)
+        self.assertEqual(result["data"]["leaveGroup"]["user"], {
+            "username": "jack", "email": "jack@gmail.com", "name": "Jack Shephard"
+        })
     
 
     def test_cant_leave_group_if_not_appropriate(self):
