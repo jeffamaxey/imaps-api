@@ -314,6 +314,7 @@ class RemoveUserFromGroup(graphene.Mutation):
         if group.first().users.filter(id=user.first().id).count() == 0:
             raise GraphQLError('{"user": ["Not in group"]}')
         group.first().users.remove(user.first())
+        group.first().admins.remove(user.first())
         return RemoveUserFromGroup(group=group.first())
 
 

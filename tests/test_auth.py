@@ -886,6 +886,37 @@ class UserRemovalFromGroupTests(TokenFunctionaltest):
         self.assertFalse(User.objects.get(username="shannon").groups.count())
     
 
+    def test_removing_user_removed_admin_status(self):
+        # Two admins to start with
+        group = Group.objects.get(name="Shephard Lab")
+        group.admins.add(User.objects.get(username="boone"))
+        result = self.client.execute("""{ group(slug: "shephard_lab") {
+            name slug users { username } admins { username }
+        } }""")
+        self.assertEqual(result["data"]["group"], {
+            "name": "Shephard Lab", "slug": "shephard_lab",
+            "users": [
+                {"username": "jack"}, {"username": "boone"},
+                {"username": "shannon"},
+            ],
+            "admins": [{"username": "jack"}, {"username": "boone"}],
+        })
+
+        # Removing a user revokes their admin status
+        result = self.client.execute(
+            """mutation { removeUserFromGroup(group: "1", user: "2") { 
+                group { name slug users { username } admins { username } }
+             } }"""
+        )
+        self.assertEqual(result["data"]["removeUserFromGroup"]["group"], {
+            "name": "Shephard Lab", "slug": "shephard_lab",
+            "users": [
+                {"username": "jack"}, {"username": "shannon"},
+            ],
+            "admins": [{"username": "jack"}],
+        })
+    
+
     def test_cant_remove_user_if_not_appropriate(self):
         # Not an admin of group
         self.check_query_error(
