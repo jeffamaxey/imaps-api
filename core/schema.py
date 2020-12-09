@@ -23,10 +23,13 @@ class Query(graphene.ObjectType):
     def resolve_user(self, info, **kwargs):
         if "username" in kwargs:
             try:
-                return User.objects.get(username=kwargs["username"])
+                user = User.objects.get(username=kwargs["username"])
+                user.restricted = True
+                return user
             except: raise GraphQLError('{"user": "Does not exist"}')
         user = info.context.user
         if not user: raise GraphQLError('{"user": "Not authorized"}')
+        user.restricted = False
         return info.context.user
     
 

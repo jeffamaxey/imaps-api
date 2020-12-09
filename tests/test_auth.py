@@ -291,7 +291,7 @@ class UserQueryTests(TokenFunctionaltest):
             "username": "boone", "email": "boone@gmail.com",
             "name": "Boone Carlyle", "lastLogin": None, "creationTime": 946684801,
             "groups": [{"name": "Shephard Lab"}],
-            "adminGroups": [], "invitations": [],
+            "adminGroups": None, "invitations": None,
         })
     
 

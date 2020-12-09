@@ -13,16 +13,22 @@ class UserType(DjangoObjectType):
     admin_groups = graphene.List("core.queries.GroupType")
     invitations = graphene.List("core.queries.GroupInvitationType")
 
+    def resolve_last_login(self, info, **kwargs):
+        return None if self.restricted else self.last_login
+        
+
     def resolve_groups(self, info, **kwargs):
         admin_groups = list(self.admin_groups.all())
         return sorted(self.groups.all(), key = lambda g: g not in admin_groups)
     
 
     def resolve_admin_groups(self, info, **kwargs):
+        if self.restricted: return None
         return self.admin_groups.all()
     
 
     def resolve_invitations(self, info, **kwargs):
+        if self.restricted: return None
         return self.group_invitations.all()
 
 
