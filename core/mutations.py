@@ -102,10 +102,10 @@ class DeleteUserMutation(graphene.Mutation):
         if user:
             for group in user.admin_groups.all():
                 if group.admins.count() == 1:
-                    raise GraphQLError(json.dumps({"user": "You are the only admin of " + group.name}))
+                    raise GraphQLError(json.dumps({"user": ["You are the only admin of " + group.name]}))
             user.delete()
             return DeleteUserMutation(success=True)
-        raise GraphQLError(json.dumps({"username": "Invalid or missing token"}))
+        raise GraphQLError(json.dumps({"username": ["Invalid or missing token"]}))
 
 
 
@@ -328,7 +328,7 @@ class LeaveGroup(graphene.Mutation):
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
-            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+            raise GraphQLError(json.dumps({"error": ["Not authorized"]}))
         group = Group.objects.filter(id=kwargs["id"])
         if not group: raise GraphQLError('{"group": ["Does not exist"]}')
         if group.first().users.filter(id=info.context.user.id).count() == 0:
