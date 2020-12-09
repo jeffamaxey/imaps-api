@@ -289,6 +289,8 @@ class RevokeGroupAdminMutation(graphene.Mutation):
         if not user: raise GraphQLError('{"user": ["Does not exist"]}')
         if group.first().admins.filter(id=user.first().id).count() == 0:
             raise GraphQLError('{"user": ["Not an admin"]}')
+        if group.first().admins.count() == 1:
+            raise GraphQLError('{"user": ["You can\'t resign if you are the only admin"]}')
         group.first().admins.remove(user.first())
         return RevokeGroupAdminMutation(group=group.first(), user=user.first())
 

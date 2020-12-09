@@ -801,6 +801,12 @@ class GroupAdminRevokeTests(TokenFunctionaltest):
             message="Not an admin"
         )
 
+        # User is only admin
+        self.check_query_error(
+            """mutation { revokeGroupAdmin(group: "1", user: "1") { group { name } } }""",
+            message="only admin"
+        )
+
         
     def test_cant_revoke_admin_when_not_logged_in(self):
         del self.client.headers["Authorization"]
