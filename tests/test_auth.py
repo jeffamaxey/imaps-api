@@ -496,7 +496,7 @@ class GroupCreationTests(TokenFunctionaltest):
         } }""")
         self.assertEqual(result["data"]["user"], {
             "username": "jack",
-            "groups": [{"name": "Shephard Lab"}, {"name": "The Others"}, {"name": "A Team"}],
+            "groups": [{"name": "Shephard Lab"}, {"name": "A Team"}, {"name": "The Others"}],
             "adminGroups": [{"name": "Shephard Lab"}, {"name": "A Team"}],
         })
     

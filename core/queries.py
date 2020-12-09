@@ -14,7 +14,8 @@ class UserType(DjangoObjectType):
     invitations = graphene.List("core.queries.GroupInvitationType")
 
     def resolve_groups(self, info, **kwargs):
-        return self.groups.all()
+        admin_groups = list(self.admin_groups.all())
+        return sorted(self.groups.all(), key = lambda g: g not in admin_groups)
     
 
     def resolve_admin_groups(self, info, **kwargs):
