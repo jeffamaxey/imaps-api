@@ -2,6 +2,8 @@ import json
 from graphql.error import GraphQLLocatedError, GraphQLError
 from graphene_file_upload.django import FileUploadGraphQLView
 from graphene_django.views import GraphQLView
+from django.conf.urls.static import static
+import django.conf
 from django.urls import path
 
 class ReadableErrorGraphQLView(FileUploadGraphQLView):
@@ -20,3 +22,8 @@ class ReadableErrorGraphQLView(FileUploadGraphQLView):
 urlpatterns = [
     path("graphql", ReadableErrorGraphQLView.as_view()),
 ]
+if django.conf.settings.DEBUG:
+    urlpatterns += static(
+        django.conf.settings.MEDIA_URL,
+        document_root=django.conf.settings.MEDIA_ROOT
+    )
