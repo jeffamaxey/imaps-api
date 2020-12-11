@@ -1,9 +1,10 @@
 import json
 from graphql.error import GraphQLLocatedError, GraphQLError
+from graphene_file_upload.django import FileUploadGraphQLView
 from graphene_django.views import GraphQLView
 from django.urls import path
 
-class ReadableErrorGraphQLView(GraphQLView):
+class ReadableErrorGraphQLView(FileUploadGraphQLView):
     """A custom GraphQLView which stops Python error messages being sent to
     the user unless they were explicitly raised."""
 

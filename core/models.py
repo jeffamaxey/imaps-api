@@ -1,10 +1,21 @@
 import time
 import jwt
+import base64
 from random import randint
 from django_random_id_model import RandomIDModel
 from django.db import models
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
+
+def create_filename(instance, filename):
+    """Creates a filename for some uploaded image, from the owning object's ID,
+    and class name."""
+    
+    extension = "." + filename.split(".")[-1] if "." in filename else ""
+    hashed_class = base64.b64encode(instance.__class__.__name__.encode())
+    return f"{instance.id}{hashed_class}{extension}"
+
+
 
 class User(RandomIDModel):
     """The user model."""
@@ -19,6 +30,7 @@ class User(RandomIDModel):
     last_login = models.IntegerField(null=True, default=None)
     creation_time = models.IntegerField(default=0)
     name = models.CharField(max_length=50)
+    image = models.FileField(default="", upload_to=create_filename)
 
     def __str__(self):
         return f"{self.name} ({self.username})"

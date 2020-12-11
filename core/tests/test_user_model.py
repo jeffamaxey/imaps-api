@@ -1,9 +1,11 @@
 import jwt
 import time
+import os
 from mixer.backend.django import mixer
 from django.test import TestCase
 from django.db.utils import IntegrityError
 from django.db import transaction
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.conf import settings
 from core.models import User
 
@@ -53,6 +55,29 @@ class UserOrderingTests(TestCase):
 
 
 
+class UserImageTests(TestCase):
+
+    def setUp(self):
+        self.files_at_start = os.listdir("uploads")
+
+    
+    def tearDown(self):
+        for f in os.listdir("uploads"):
+            if f not in self.files_at_start:
+                if os.path.exists(os.path.join("uploads", f)):
+                    os.remove(os.path.join("uploads", f))
+
+
+    def test_can_set_image(self):
+        user = mixer.blend(User)
+        self.assertEqual(user.image, "")
+        user.image = SimpleUploadedFile("file.png", b"\x00\x01")
+        user.save()
+        self.assertTrue(user.image.name.startswith(str(user.id)))
+        self.assertTrue(user.image.name.endswith("bVXNlcg.png"))
+
+
+        
 class UserPasswordTests(TestCase):
 
     def test_can_set_password(self):

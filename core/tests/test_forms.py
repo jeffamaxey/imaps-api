@@ -1,6 +1,8 @@
+import os
 from mixer.backend.django import mixer
 from django.contrib.auth.hashers import check_password
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 from core.forms import *
 
 class SignupFormTests(TestCase):
@@ -70,3 +72,34 @@ class UpdatePasswordFormTests(TestCase):
         form = UpdatePasswordForm({"current": "password", "new": "password1"}, instance=john)
         self.assertFalse(form.is_valid())
         self.assertIn("too common", form.errors["new"][0])
+
+
+
+class UpdateImageFormTests(TestCase):
+
+    def setUp(self):
+        self.files_at_start = os.listdir("uploads")
+
+    
+    def tearDown(self):
+        for f in os.listdir("uploads"):
+            if f not in self.files_at_start:
+                if os.path.exists(os.path.join("uploads", f)):
+                    os.remove(os.path.join("uploads", f))
+
+
+    def test_form_can_update_image(self):
+        john = mixer.blend(User, id=123, email="john@gmail.com")
+        f = SimpleUploadedFile("file.png", b"\x00\x01")
+        form = UpdateUserImageForm({"image": f}, files={"image": f}, instance=john)
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertEqual(john.image.name, "123bVXNlcg.png")
+    
+
+    def test_can_remove_image(self):
+        john = mixer.blend(User, image=SimpleUploadedFile("file.png", b"\x00\x01"))
+        form = UpdateUserImageForm({"image": ""}, files={"image": ""}, instance=john)
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertEqual(john.image.name, "")

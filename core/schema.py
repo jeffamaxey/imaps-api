@@ -52,6 +52,7 @@ class Mutation(graphene.ObjectType):
 
     update_user = UpdateUserMutation.Field()
     update_password = UpdatePasswordMutation.Field()
+    update_user_image = UpdateUserImageMutation.Field()
     delete_user = DeleteUserMutation.Field()
 
     create_group = CreateGroupMutation.Field()

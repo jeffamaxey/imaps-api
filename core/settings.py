@@ -13,6 +13,7 @@ INSTALLED_APPS = [
     "graphene_django",
     "corsheaders",
     "core",
+    "django_cleanup.apps.CleanupConfig",
 ]
 
 MIDDLEWARE = [
@@ -31,6 +32,10 @@ AUTH_PASSWORD_VALIDATORS = [{
 }]
 
 STATIC_URL = "/static/"
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "uploads") if DEBUG else\
+    os.path.join(BASE_DIR, "..", "..", "static.imaps.goodwright.org")
+MEDIA_URL = "/media/"
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True

@@ -70,6 +70,24 @@ class UpdatePasswordForm(ModelForm):
 
 
 
+class UpdateUserImageForm(ModelForm):
+
+    class Meta:
+        model = User
+        fields = ["image"]
+
+    def save(self, *args, **kwargs):
+        """Save the uploaded image."""
+        
+        image = self.data.get("image")
+        if not (self.instance.image and not image):
+            self.instance.image = self.data.get("image")
+        if self.instance.image and not image:
+            self.instance.image = ""
+        ModelForm.save(self, *args, **kwargs)
+
+
+
 class GroupForm(ModelForm):
     """Creates or edits a group."""
 

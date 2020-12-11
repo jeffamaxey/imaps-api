@@ -4,6 +4,7 @@ import requests
 import jwt
 import json
 import time
+import os
 from django.conf import settings
 from django.contrib.auth.hashers import check_password
 from .base import FunctionalTest, TokenFunctionaltest
@@ -434,6 +435,68 @@ class UserModificationTests(TokenFunctionaltest):
         ) { user { email username name } } }""", message="Not authorized")
 
 
+
+class UserImageEditingTests(TokenFunctionaltest):
+
+    def test_can_edit_image(self):
+        # Update info
+        with open(os.path.join("tests", "files", "user-icon.png"), "rb") as f:
+            result = self.client.execute("""mutation updateImage($image: Upload!) {
+                updateUserImage(image: $image) { user { username image } }
+            }""", variables={"image": f})
+
+        # The new user info is returned
+        image = result["data"]["updateUserImage"]["user"]["image"]
+        self.assertTrue(image.endswith("png"))
+        self.assertTrue(len(image) > 10)
+
+        # The photo is actually saved
+        self.assertIn(image, os.listdir("uploads"))
+        self.assertEqual(len(self.files_at_start) + 1, len(os.listdir("uploads")))
+        with open(os.path.join("tests", "files", "user-icon.png"), "rb") as f1:
+            with open(os.path.join("uploads", image), "rb") as f2:
+                self.assertEqual(f1.read(), f2.read())
+
+
+        # The image can be changed to another image
+        with open(os.path.join("tests", "files", "user-icon-2.jpg"), "rb") as f:
+            result = self.client.execute("""mutation updateImage($image: Upload!) {
+                updateUserImage(image: $image) { user { username image } }
+            }""", variables={"image": f})
+        
+        # The new user info is returned
+        image2 = result["data"]["updateUserImage"]["user"]["image"]
+        self.assertTrue(image2.endswith("jpg"))
+        self.assertTrue(len(image2) > 10)
+        self.assertNotEqual(image, image2)
+        self.assertEqual(len(image), len(image2))
+
+        # The photo is actually saved and replaces the old one
+        self.assertIn(image2, os.listdir("uploads"))
+        self.assertEqual(len(self.files_at_start) + 1, len(os.listdir("uploads")))
+        with open(os.path.join("tests", "files", "user-icon-2.jpg"), "rb") as f1:
+            with open(os.path.join("uploads", image2), "rb") as f2:
+                self.assertEqual(f1.read(), f2.read())
+
+        # The image can be removed
+        result = self.client.execute("""mutation updateImage($image: Upload!) {
+            updateUserImage(image: $image) { user { username image } }
+        }""", variables={"image": ""})
+
+        # The new user info is returned
+        self.assertEqual(result["data"]["updateUserImage"]["user"]["image"], "")
+
+        # The photos are gone
+        self.assertEqual(len(self.files_at_start), len(os.listdir("uploads")))
+    
+
+    def test_cant_edit_user_image_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation { updateUserImage(image: "") {
+            user { email username name } }
+        }""", message="Not authorized")
+
+            
 
 class UserDeletionTests(TokenFunctionaltest):
 
