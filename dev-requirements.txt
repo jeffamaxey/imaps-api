@@ -1,3 +1,4 @@
 mixer
 ipython
 kirjava
+python-coveralls

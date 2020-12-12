@@ -1,0 +1,16 @@
+language: python
+
+python:
+    - 3.6
+    - 3.7
+    - 3.8
+    - 3.9
+
+install:
+    - pip install -r requirements.txt -r dev-requirements.txt
+
+script:
+    - coverage run --source=atomium -m unittest discover tests
+
+after_success:
+  - coveralls
