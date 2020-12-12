@@ -9,6 +9,9 @@ python:
 install:
     - pip install -r requirements.txt -r dev-requirements.txt
 
+before_script:
+    - mv tests/secrets_for_tests.py core/secrets.py
+
 script:
     - coverage run --source=core manage.py test
 
