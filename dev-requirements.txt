@@ -2,3 +2,4 @@ mixer
 ipython
 kirjava
 python-coveralls
+coverage==4.5.4 
