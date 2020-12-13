@@ -5,3 +5,4 @@ django-random-id-model
 graphene_file_upload
 django-cleanup
 pyjwt
+Pillow

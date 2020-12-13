@@ -30,7 +30,7 @@ class User(RandomIDModel):
     last_login = models.IntegerField(null=True, default=None)
     creation_time = models.IntegerField(default=0)
     name = models.CharField(max_length=50)
-    image = models.FileField(default="", upload_to=create_filename)
+    image = models.ImageField(default="", upload_to=create_filename)
 
     def __str__(self):
         return f"{self.name} ({self.username})"
