@@ -5,6 +5,7 @@ from random import randint
 from django_random_id_model import RandomIDModel
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import make_password
 
 def create_filename(instance, filename):
@@ -16,6 +17,11 @@ def create_filename(instance, filename):
     return f"{instance.id}{hashed_class}{extension}"
 
 
+def slug_validator(value):
+    """A stricter version of Django's built in slug validation."""
+
+    if len(value) < 2:
+        raise ValidationError("This must be at least 2 characters long")
 
 class User(RandomIDModel):
     """The user model."""
@@ -24,7 +30,7 @@ class User(RandomIDModel):
         db_table = "users"
         ordering = ["creation_time"]
 
-    username = models.SlugField(max_length=30, unique=True)
+    username = models.SlugField(max_length=30, unique=True, validators=[slug_validator])
     email = models.EmailField(max_length=200, unique=True)
     password = models.CharField(max_length=128)
     last_login = models.IntegerField(null=True, default=None)
@@ -96,7 +102,7 @@ class Group(RandomIDModel):
         db_table = "groups"
     
     name = models.CharField(max_length=50)
-    slug = models.SlugField(max_length=50, unique=True)
+    slug = models.SlugField(max_length=50, unique=True, validators=[slug_validator])
     description = models.CharField(max_length=200)
     users = models.ManyToManyField(User, related_name="groups")
     admins = models.ManyToManyField(User, related_name="admin_groups")

@@ -2,6 +2,7 @@ from mixer.backend.django import mixer
 from django.test import TestCase
 from django.db.utils import IntegrityError
 from django.db import transaction
+from django.core.exceptions import ValidationError
 from core.models import Group
 
 class GroupCreationTests(TestCase):
@@ -22,3 +23,9 @@ class GroupCreationTests(TestCase):
             with transaction.atomic():
                 Group.objects.create(slug="Locke_Lab")
         self.assertEqual(Group.objects.count(), 1)
+    
+
+    def test_group_slug_validation(self):
+        group = mixer.blend(Group, slug="1")
+        with self.assertRaises(ValidationError):
+            group.full_clean()

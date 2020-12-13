@@ -87,6 +87,15 @@ class SignupTests(FunctionalTest):
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
 
+        # Username must be long enough
+        self.check_query_error("""mutation { signup(
+            email: "kate@gmail.com", password: "sw0rdfish123",
+            name: "Kate Austen",
+            username: "1"
+        ) { accessToken } }""", message="2 characters")
+        self.assertEqual(User.objects.count(), users_at_start)
+        self.assertFalse("refresh_token" in self.client.session.cookies)
+
         # Password must be 9 or more characters
         self.check_query_error("""mutation { signup(
             email: "kate@gmail.com", password: "sw0rd123",
@@ -456,7 +465,6 @@ class UserImageEditingTests(TokenFunctionaltest):
         with open(os.path.join("tests", "files", "user-icon.png"), "rb") as f1:
             with open(os.path.join("uploads", image), "rb") as f2:
                 self.assertEqual(f1.read(), f2.read())
-
 
         # The image can be changed to another image
         with open(os.path.join("tests", "files", "user-icon-2.jpg"), "rb") as f:
