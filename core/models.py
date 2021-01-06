@@ -134,3 +134,80 @@ class GroupInvitation(RandomIDModel):
         if not self.id:
             self.creation_time = int(time.time())
         super(GroupInvitation, self).save(*args, **kwargs)
+
+
+
+class Collection(RandomIDModel):
+    """A collection of samples that belong together in some sense, either as
+    part of a single paper or to answer a single research question.
+    
+    It is either private or not, which determies whether the public can view it.
+    
+    It has a single owner, which is a user with full permissions. It can be
+    associated with multiple other users, who will have varying permissions, as
+    well as multiple groups, with varying permissions."""
+
+    class Meta:
+        db_table = "collections"
+        ordering = ["creation_time"]
+
+    name = models.CharField(max_length=50)
+    creation_time = models.IntegerField(default=time.time)
+    last_modified = models.IntegerField(default=time.time)
+    description = models.TextField(default="", blank=True)
+    private = models.BooleanField(default=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owned_collections")
+    users = models.ManyToManyField(User, through="core.CollectionUserLink", related_name="collections")
+    groups = models.ManyToManyField(Group, through="core.CollectionGroupLink", related_name="collections")
+
+
+    def save(self, *args, **kwargs):
+        """If the model is being updated, change the last_modified time."""
+        
+        if self.id:
+            self.last_modified = int(time.time())
+        super(Collection, self).save(*args, **kwargs)
+
+
+
+class CollectionUserLink(models.Model):
+    """Describes the nature of the relationship between a user and
+    collection."""
+
+    class Meta:
+        db_table = "collection_user_links"
+
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    can_edit = models.BooleanField(default=True)
+    can_execute = models.BooleanField(default=False)
+
+
+
+class CollectionGroupLink(models.Model):
+    """Describes the nature of the relationship between a group and
+    collection."""
+
+    class Meta:
+        db_table = "collection_group_links"
+
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    can_edit = models.BooleanField(default=True)
+    can_execute = models.BooleanField(default=False)
+
+
+
+class Paper(RandomIDModel):
+    """A paper that used data from one or more iMaps collections."""
+
+    class Meta:
+        db_table = "papers"
+        ordering = ["year"]
+
+    title = models.CharField(max_length=250)
+    url = models.URLField(max_length=200, blank=True, null=True)
+    year = models.IntegerField()
+    journal = models.CharField(max_length=100)
+    doi = models.CharField(max_length=100)
+    collections = models.ManyToManyField(Collection, related_name="papers")
