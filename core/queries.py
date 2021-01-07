@@ -100,7 +100,17 @@ class CollectionType(DjangoObjectType):
         model = Collection
     
     id = graphene.ID()
+    can_edit = graphene.Boolean()
+    can_execute = graphene.Boolean()
     papers = graphene.List("core.queries.PaperType")
+
+    def resolve_can_edit(self, info, **kwargs):
+        return self.editable_by(info.context.user)
+    
+
+    def resolve_can_execute(self, info, **kwargs):
+        return self.executable_by(info.context.user)
+
 
     def resolve_papers(self, info, **kwargs):
         return self.papers.all()

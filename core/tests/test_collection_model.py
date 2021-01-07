@@ -1,7 +1,7 @@
 import time
 from mixer.backend.django import mixer
 from django.test import TestCase
-from core.models import User, Collection, Group, Paper
+from core.models import User, Collection, Group, Paper, CollectionUserLink, CollectionGroupLink
 
 class CollectionSavingTests(TestCase):
 
@@ -73,3 +73,91 @@ class CollectionPapersTests(TestCase):
         paper1 = mixer.blend(Paper)
         collection.papers.add(paper1)
         self.assertEqual(list(collection.papers.all()), [paper1])
+
+
+
+class CollectionEditableTests(TestCase):
+
+    def test_none_user_cant_edit(self):
+        collection = mixer.blend(Collection)
+        self.assertFalse(collection.editable_by(None))
+    
+
+    def test_owner_can_edit(self):
+        user = mixer.blend(User)
+        other = mixer.blend(User)
+        collection = mixer.blend(Collection, owner=user)
+        self.assertTrue(collection.editable_by(user))
+        self.assertFalse(collection.editable_by(other))
+    
+
+    def test_editing_via_access(self):
+        user = mixer.blend(User)
+        other = mixer.blend(User)
+        collection = mixer.blend(Collection)
+        CollectionUserLink.objects.create(user=user, collection=collection, can_edit=True, can_execute=False)
+        CollectionUserLink.objects.create(user=other, collection=collection, can_edit=False, can_execute=False)
+        self.assertTrue(collection.editable_by(user))
+        self.assertFalse(collection.editable_by(other))
+    
+
+    def test_editing_via_group_access(self):
+        user = mixer.blend(User)
+        other = mixer.blend(User)
+        group = mixer.blend(Group)
+        other_group = mixer.blend(Group)
+        group.users.add(user)
+        other_group.users.add(other)
+        group.save()
+        other_group.save()
+        collection = mixer.blend(Collection)
+        CollectionUserLink.objects.create(user=user, collection=collection, can_edit=False, can_execute=False)
+        CollectionUserLink.objects.create(user=other, collection=collection, can_edit=False, can_execute=False)
+        CollectionGroupLink.objects.create(group=group, collection=collection, can_edit=True, can_execute=False)
+        CollectionGroupLink.objects.create(group=other_group, collection=collection, can_edit=False, can_execute=False)
+        self.assertTrue(collection.editable_by(user))
+        self.assertFalse(collection.editable_by(other))
+
+
+
+class CollectionExecutableTests(TestCase):
+
+    def test_none_user_cant_execute(self):
+        collection = mixer.blend(Collection)
+        self.assertFalse(collection.executable_by(None))
+    
+
+    def test_owner_can_execute(self):
+        user = mixer.blend(User)
+        other = mixer.blend(User)
+        collection = mixer.blend(Collection, owner=user)
+        self.assertTrue(collection.executable_by(user))
+        self.assertFalse(collection.executable_by(other))
+    
+
+    def test_executeing_via_access(self):
+        user = mixer.blend(User)
+        other = mixer.blend(User)
+        collection = mixer.blend(Collection)
+        CollectionUserLink.objects.create(user=user, collection=collection, can_execute=True, can_edit=False)
+        CollectionUserLink.objects.create(user=other, collection=collection, can_execute=False, can_edit=False)
+        self.assertTrue(collection.executable_by(user))
+        self.assertFalse(collection.executable_by(other))
+    
+
+    def test_executing_via_group_access(self):
+        user = mixer.blend(User)
+        other = mixer.blend(User)
+        group = mixer.blend(Group)
+        other_group = mixer.blend(Group)
+        group.users.add(user)
+        other_group.users.add(other)
+        group.save()
+        other_group.save()
+        collection = mixer.blend(Collection)
+        CollectionUserLink.objects.create(user=user, collection=collection, can_execute=False, can_edit=False)
+        CollectionUserLink.objects.create(user=other, collection=collection, can_execute=False, can_edit=False)
+        CollectionGroupLink.objects.create(group=group, collection=collection, can_execute=True, can_edit=False)
+        CollectionGroupLink.objects.create(group=other_group, collection=collection, can_execute=False, can_edit=False)
+        self.assertTrue(collection.executable_by(user))
+        self.assertFalse(collection.executable_by(other))

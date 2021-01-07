@@ -167,6 +167,42 @@ class Collection(RandomIDModel):
         if self.id:
             self.last_modified = int(time.time())
         super(Collection, self).save(*args, **kwargs)
+    
+
+    def editable_by(self, user):
+        """Determines if a user should be able to edit the collection."""
+
+        if user is None: return False
+        if self.owner == user: return True
+        if self.users.filter(id=user.id):
+            if self.collectionuserlink_set.get(user=user).can_edit: return True
+        user_groups = list(user.groups.all())
+        collection_groups = list(self.groups.all())
+        for user_group in user_groups:
+            for collection_group in collection_groups:
+                if user_group.id == collection_group.id:
+                    return self.collectiongrouplink_set.get(
+                        group=collection_group
+                    ).can_edit
+        return False
+    
+
+    def executable_by(self, user):
+        """Determines if a user should be able to edit the collection."""
+
+        if user is None: return False
+        if self.owner == user: return True
+        if self.users.filter(id=user.id):
+            if self.collectionuserlink_set.get(user=user).can_execute: return True
+        user_groups = list(user.groups.all())
+        collection_groups = list(self.groups.all())
+        for user_group in user_groups:
+            for collection_group in collection_groups:
+                if user_group == collection_group:
+                    return self.collectiongrouplink_set.get(
+                        group=collection_group
+                    ).can_execute
+        return False
 
 
 

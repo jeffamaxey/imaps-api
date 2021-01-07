@@ -9,15 +9,16 @@ class CollectionQueryTests(TokenFunctionaltest):
         collection.private = True
         collection.save()
         result = self.client.execute("""{ collection(id: "1") {
-            name description creationTime private
+            name description creationTime private canEdit canExecute
             owner { username } users { username } groups { name }
-            papers { title }
+            papers { title year }
         } }""")
         self.assertEqual(result["data"]["collection"], {
             "name": "Experiment 1", "description": "Initial explorations.",
+            "canEdit": True, "canExecute": True,
             "creationTime": 946684800, "private": True, "owner": {"username": "jack"},
             "users": [{"username": "boone"}, {"username": "shannon"}],
-            "groups": [], "papers": [{"title": "Paper 1"}]
+            "groups": [], "papers": [{"title": "Paper 1", "year": 2004}]
         })
 
         # Get collection with user access
@@ -26,11 +27,12 @@ class CollectionQueryTests(TokenFunctionaltest):
         collection.users.add(self.user)
         collection.save()
         result = self.client.execute("""{ collection(id: "2") {
-            name description papers { title } private
+            name description papers { title } private canEdit canExecute
             owner { username } users { username } groups { name }
         } }""")
         self.assertEqual(result["data"]["collection"], {
             "name": "Experiment 2", "description": "Secret explorations.",
+            "canEdit": True, "canExecute": False,
             "private": True, "owner": {"username": "boone"},
             "users": [{"username": "jack"}, {"username": "shannon"}],
             "groups": [], "papers": []
@@ -41,11 +43,12 @@ class CollectionQueryTests(TokenFunctionaltest):
         collection.users.remove(self.user)
         collection.save()
         result = self.client.execute("""{ collection(id: "3") {
-            name description papers { title } private
+            name description papers { title } private canEdit canExecute
             owner { username } users { username } groups { name }
         } }""")
         self.assertEqual(result["data"]["collection"], {
             "name": "Experiment 3", "description": "Secret explorations.",
+            "canEdit": True, "canExecute": False,
             "private": True, "owner": {"username": "shannon"},
             "users": [{"username": "boone"}],
             "groups": [{"name": "Shephard Lab"}], "papers": []
@@ -56,12 +59,13 @@ class CollectionQueryTests(TokenFunctionaltest):
         collection.private = False
         collection.save()
         result = self.client.execute("""{ collection(id: "5") {
-            name description papers { title } private
+            name description papers { title } private canEdit canExecute
             owner { username } users { username } groups { name }
         } }""")
         self.assertEqual(result["data"]["collection"], {
             "name": "Experiment 5", "description": "",
             "private": False, "owner": {"username": "juliette"},
+            "canEdit": False, "canExecute": False,
             "users": [{"username": "ethan"}],
             "groups": [], "papers": []
         })
