@@ -6,6 +6,7 @@
             "name": "Experiment 1",
             "description": "Initial explorations.",
             "owner": 1,
+            "creation_time": 946684800,
             "private": false,
             "users": [2, 3]
         }
@@ -36,17 +37,31 @@
     },
     {
         "model": "core.Collection",
-        "pk": 1,
+        "pk": 2,
+        "fields": {
+            "name": "Experiment 3",
+            "description": "Secret explorations.",
+            "creation_time": 946784800,
+            "owner": 3,
+            "private": true,
+            "users": [1, 2],
+            "groups": [1]
+        }
+    },
+    {
+        "model": "core.Collection",
+        "pk": 3,
         "fields": {
             "name": "Experiment A",
             "owner": 4,
             "private": false,
+            "groups": [2],
             "users": [5, 6]
         }
     },
     {
         "model": "core.Collection",
-        "pk": 2,
+        "pk": 4,
         "fields": {
             "name": "Experiment 2",
             "owner": 5,

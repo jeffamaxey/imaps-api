@@ -276,6 +276,7 @@ class UserQueryTests(TokenFunctionaltest):
         result = self.client.execute("""{ user {
             username email name lastLogin creationTime
             groups { name } adminGroups { name } invitations { group { name } }
+            collections { name } ownedCollections { name } allCollections { name }
         } }""")
 
         # Everything is correct
@@ -285,6 +286,9 @@ class UserQueryTests(TokenFunctionaltest):
             "groups": [{"name": "Shephard Lab"}, {"name": "The Others"}],
             "adminGroups": [{"name": "Shephard Lab"}],
             "invitations": [{"group": {"name": "The Others"}}],
+            "collections": [{"name": "Experiment 3"}],
+            "ownedCollections": [{"name": "Experiment 1"}],
+            "allCollections": [{"name": "Experiment 1"}, {"name": "Experiment 3"}],
         })
     
 
@@ -294,6 +298,7 @@ class UserQueryTests(TokenFunctionaltest):
         result = self.client.execute("""{ user(username: "boone") {
             username email name lastLogin creationTime
             groups { name } adminGroups { name } invitations { group { name } }
+            collections { name } ownedCollections { name } allCollections { name }
         } }""")
 
         # Everything is correct
@@ -302,6 +307,9 @@ class UserQueryTests(TokenFunctionaltest):
             "name": "Boone Carlyle", "lastLogin": None, "creationTime": 946684801,
             "groups": [{"name": "Shephard Lab"}],
             "adminGroups": None, "invitations": None,
+            "collections": [{"name": "Experiment 1"}],
+            "ownedCollections": [],
+            "allCollections": [{"name": "Experiment 1"}],
         })
     
 
@@ -339,6 +347,7 @@ class UserQueryTests(TokenFunctionaltest):
         result = self.client.execute("""{ group(slug: "others") {
             name slug description users { username } admins { username }
             invitations { user { username } } userCount
+            collections { name }
         } }""")
 
         # Everything is correct
@@ -350,7 +359,8 @@ class UserQueryTests(TokenFunctionaltest):
             ],
             "admins": [{"username": "ben"}],
             "invitations": [{"user": {"username": "jack"}}],
-            "userCount": 4
+            "userCount": 4,
+            "collections": [{"name": "Experiment A"}]
         })
     
 

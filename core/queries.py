@@ -12,6 +12,9 @@ class UserType(DjangoObjectType):
     groups = graphene.List("core.queries.GroupType")
     admin_groups = graphene.List("core.queries.GroupType")
     invitations = graphene.List("core.queries.GroupInvitationType")
+    collections = graphene.List("core.queries.CollectionType")
+    owned_collections = graphene.List("core.queries.CollectionType")
+    all_collections = graphene.List("core.queries.CollectionType")
 
     def resolve_last_login(self, info, **kwargs):
         return None if "restricted" in self.__dict__ and self.restricted else self.last_login
@@ -30,6 +33,25 @@ class UserType(DjangoObjectType):
     def resolve_invitations(self, info, **kwargs):
         if "restricted" in self.__dict__ and self.restricted: return None
         return self.group_invitations.all()
+    
+
+    def resolve_collections(self, info, **kwargs):
+        if "restricted" in self.__dict__ and self.restricted:
+            return self.collections.filter(private=False)
+        return self.collections.all()
+    
+
+    def resolve_owned_collections(self, info, **kwargs):
+        if "restricted" in self.__dict__ and self.restricted:
+            return self.owned_collections.filter(private=False)
+        return self.owned_collections.all()
+    
+
+    def resolve_all_collections(self, info, **kwargs):
+        if "restricted" in self.__dict__ and self.restricted:
+            return list(self.owned_collections.filter(private=False)) + \
+                list(self.collections.filter(private=False))
+        return list(self.owned_collections.all()) + list(self.collections.all())
 
 
 
@@ -66,5 +88,14 @@ class GroupInvitationType(DjangoObjectType):
     
     class Meta:
         model = GroupInvitation
+    
+    id = graphene.ID()
+
+
+
+class CollectionType(DjangoObjectType):
+    
+    class Meta:
+        model = Collection
     
     id = graphene.ID()
