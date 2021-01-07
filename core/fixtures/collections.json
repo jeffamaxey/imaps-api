@@ -1,0 +1,57 @@
+[
+    {
+        "model": "core.Collection",
+        "pk": 1,
+        "fields": {
+            "name": "Experiment 1",
+            "description": "Initial explorations.",
+            "owner": 1,
+            "private": false,
+            "users": [2, 3]
+        }
+    },
+            {
+                "model": "core.Paper",
+                "pk": 1,
+                "fields": {
+                    "title": "Paper 1",
+                    "collections": [1],
+                    "url": "https://island.com/paper1",
+                    "year": 2004,
+                    "journal": "Island Publications",
+                    "doi": "doi/XXXXX"
+                }
+            },
+    {
+        "model": "core.Collection",
+        "pk": 2,
+        "fields": {
+            "name": "Experiment 2",
+            "description": "Secret explorations.",
+            "owner": 2,
+            "private": true,
+            "users": [3],
+            "groups": [2]
+        }
+    },
+    {
+        "model": "core.Collection",
+        "pk": 1,
+        "fields": {
+            "name": "Experiment A",
+            "owner": 4,
+            "private": false,
+            "users": [5, 6]
+        }
+    },
+    {
+        "model": "core.Collection",
+        "pk": 2,
+        "fields": {
+            "name": "Experiment 2",
+            "owner": 5,
+            "private": true,
+            "users": [6]
+        }
+    }
+]
