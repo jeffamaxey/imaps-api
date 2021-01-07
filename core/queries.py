@@ -1,5 +1,6 @@
 import graphene
 from graphene_django.types import DjangoObjectType
+from graphene.relay import Connection
 from .models import *
 
 class UserType(DjangoObjectType):
@@ -97,5 +98,25 @@ class CollectionType(DjangoObjectType):
     
     class Meta:
         model = Collection
+    
+    id = graphene.ID()
+    papers = graphene.List("core.queries.PaperType")
+
+    def resolve_papers(self, info, **kwargs):
+        return self.papers.all()
+
+
+
+class CollectionConnection(Connection):
+
+    class Meta:
+        node = CollectionType
+
+
+
+class PaperType(DjangoObjectType):
+    
+    class Meta:
+        model = Paper
     
     id = graphene.ID()

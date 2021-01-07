@@ -37,7 +37,7 @@
     },
     {
         "model": "core.Collection",
-        "pk": 2,
+        "pk": 3,
         "fields": {
             "name": "Experiment 3",
             "description": "Secret explorations.",
@@ -50,9 +50,9 @@
     },
     {
         "model": "core.Collection",
-        "pk": 3,
+        "pk": 4,
         "fields": {
-            "name": "Experiment A",
+            "name": "Experiment 4",
             "owner": 4,
             "private": false,
             "groups": [2],
@@ -61,9 +61,9 @@
     },
     {
         "model": "core.Collection",
-        "pk": 4,
+        "pk": 5,
         "fields": {
-            "name": "Experiment 2",
+            "name": "Experiment 5",
             "owner": 5,
             "private": true,
             "users": [6]

@@ -1,5 +1,6 @@
 import graphene
 from graphql import GraphQLError
+from graphene.relay import ConnectionField
 from core.mutations import *
 
 class Query(graphene.ObjectType):
@@ -8,6 +9,8 @@ class Query(graphene.ObjectType):
     user = graphene.Field("core.queries.UserType", username=graphene.String())
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
+    collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
+    collections = ConnectionField("core.queries.CollectionConnection")
     
     def resolve_access_token(self, info, **kwargs):
         token = info.context.COOKIES.get("refresh_token")
@@ -41,6 +44,22 @@ class Query(graphene.ObjectType):
         try:
             return Group.objects.get(slug=kwargs["slug"])
         except: raise GraphQLError('{"group": "Does not exist"}')
+    
+
+    def resolve_collection(self, info, **kwargs):
+        collections = Collection.objects.filter(private=False)
+        if info.context.user:
+            collections = collections | Collection.objects.filter(owner=info.context.user)
+            collections = collections | info.context.user.collections.all()
+            for group in info.context.user.groups.all():
+                collections = collections | group.collections.all()
+        collection = collections.filter(id=kwargs["id"]).first()
+        if collection: return collection
+        raise GraphQLError('{"collection": "Does not exist"}')
+
+
+    def resolve_collections(self, info, **kwargs):
+        return Collection.objects.filter(private=False)
 
 
 

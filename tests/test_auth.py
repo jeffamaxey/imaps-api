@@ -360,7 +360,7 @@ class UserQueryTests(TokenFunctionaltest):
             "admins": [{"username": "ben"}],
             "invitations": [{"user": {"username": "jack"}}],
             "userCount": 4,
-            "collections": [{"name": "Experiment A"}]
+            "collections": [{"name": "Experiment 2"}, {"name": "Experiment 4"}]
         })
     
 
