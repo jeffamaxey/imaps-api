@@ -520,6 +520,7 @@ class UserDeletionTests(TokenFunctionaltest):
 
     def test_can_delete_account(self):
         # Send deletion mutation
+        self.user.collections.first().delete()
         Group.objects.get(name="Shephard Lab").admins.add(User.objects.get(username="boone"))
         users_at_start = User.objects.count()
         result = self.client.execute("""mutation { deleteUser { success } }""")
@@ -534,10 +535,16 @@ class UserDeletionTests(TokenFunctionaltest):
         users_at_start = User.objects.count()
         Group.objects.get(name="Shephard Lab").admins.add(User.objects.get(username="boone"))
 
+        # Own collections
+        self.check_query_error("""mutation { deleteUser { success } }""", message="collection")
+        self.assertEqual(User.objects.count(), users_at_start)
+        self.user.collections.first().delete()
+
         # Would leave orphan groups
         Group.objects.get(name="Shephard Lab").admins.remove(User.objects.get(username="boone"))
         self.check_query_error("""mutation { deleteUser { success } }""", message="only admin")
         self.assertEqual(User.objects.count(), users_at_start)
+
 
         # Invalid token
         self.client.headers["Authorization"] = "Bearer qwerty"

@@ -120,6 +120,8 @@ class DeleteUserMutation(graphene.Mutation):
             for group in user.admin_groups.all():
                 if group.admins.count() == 1:
                     raise GraphQLError(json.dumps({"user": ["You are the only admin of " + group.name]}))
+            if user.collections.count():
+                raise GraphQLError(json.dumps({"user": [f"You are the owner of at least one collection"]}))
             user.delete()
             return DeleteUserMutation(success=True)
         raise GraphQLError(json.dumps({"username": ["Invalid or missing token"]}))
