@@ -10,7 +10,18 @@ class Query(graphene.ObjectType):
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
-    collections = ConnectionField("core.queries.CollectionConnection")
+    collection_count = graphene.Int()
+    collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
+
+
+    
+
+
+
+
+
+
+
     
     def resolve_access_token(self, info, **kwargs):
         token = info.context.COOKIES.get("refresh_token")
@@ -58,8 +69,14 @@ class Query(graphene.ObjectType):
         raise GraphQLError('{"collection": "Does not exist"}')
 
 
+    def resolve_collection_count(self, info, **kwargs):
+        return Collection.objects.filter(private=False).count()
+
+
     def resolve_collections(self, info, **kwargs):
-        return Collection.objects.filter(private=False)
+        collections = Collection.objects.filter(private=False)
+        if "offset" in kwargs: collections = collections[kwargs["offset"]:]
+        return collections
 
 
 

@@ -33,7 +33,7 @@ class CollectionOrderingTests(TestCase):
         collection2 = mixer.blend(Collection, creation_time=1)
         collection3 = mixer.blend(Collection, creation_time=4)
         self.assertEqual(
-            list(Collection.objects.all()), [collection2, collection1, collection3]
+            list(Collection.objects.all()), [collection3, collection1, collection2]
         )
 
 

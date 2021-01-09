@@ -66,6 +66,7 @@ class GroupType(DjangoObjectType):
     users = graphene.List("core.queries.UserType")
     admins = graphene.List("core.queries.UserType")
     invitations = graphene.List("core.queries.GroupInvitationType")
+    collections = graphene.List("core.queries.CollectionType")
 
     def resolve_user_count(self, info, **kwargs):
         return self.users.count()
@@ -81,6 +82,10 @@ class GroupType(DjangoObjectType):
 
     def resolve_invitations(self, info, **kwargs):
         return self.group_invitations.all()
+    
+
+    def resolve_collections(self, info, **kwargs):
+        return self.collections.filter(private=False)
 
 
 

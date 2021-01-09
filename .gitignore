@@ -11,5 +11,6 @@ tables.txt
 *.sql
 iMaps Docs.md
 load_from_sql.py
+load_collections.py
 collections.csv
 dump.txt

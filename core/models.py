@@ -149,7 +149,7 @@ class Collection(RandomIDModel):
 
     class Meta:
         db_table = "collections"
-        ordering = ["creation_time"]
+        ordering = ["-creation_time"]
 
     name = models.CharField(max_length=50)
     creation_time = models.IntegerField(default=time.time)

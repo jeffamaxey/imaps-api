@@ -84,9 +84,33 @@ class CollectionQueryTests(TokenFunctionaltest):
     
 
     def test_can_get_all_collections(self):
-        result = self.client.execute("""{ collections {
+        result = self.client.execute("""{
+            collections { edges { node { name } } }
+            collectionCount
+        }""")
+        self.assertEqual(result["data"]["collections"], {"edges": [
+           {"node": {"name": "Experiment 4"}}, {"node": {"name": "Experiment 1"}}
+        ]})
+        self.assertEqual(result["data"]["collectionCount"], 2)
+
+    
+    def test_can_get_paginated_collections(self):
+        Collection.objects.create(name="C3", owner=self.user, private=False, creation_time=1000)
+        Collection.objects.create(name="C4", owner=self.user, private=False, creation_time=2000)
+        Collection.objects.create(name="C5", owner=self.user, private=False, creation_time=3000)
+
+        result = self.client.execute("""{ collections(first: 3) {
             edges { node { name } }
         } }""")
         self.assertEqual(result["data"]["collections"], {"edges": [
-           {"node": {"name": "Experiment 1"}}, {"node": {"name": "Experiment 4"}}
+           {"node": {"name": "Experiment 4"}}, {"node": {"name": "Experiment 1"}},
+           {"node": {"name": "C5"}}
+        ]})
+
+        result = self.client.execute("""{ collections(first: 3, offset: 2) {
+            edges { node { name } }
+        } }""")
+        self.assertEqual(result["data"]["collections"], {"edges": [
+           {"node": {"name": "C5"}}, {"node": {"name": "C4"}},
+           {"node": {"name": "C3"}}
         ]})
