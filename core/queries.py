@@ -1,6 +1,6 @@
 import graphene
 from graphene_django.types import DjangoObjectType
-from graphene.relay import Connection
+from graphene.relay import Connection, ConnectionField
 from .models import *
 
 class UserType(DjangoObjectType):
@@ -67,7 +67,8 @@ class GroupType(DjangoObjectType):
     admins = graphene.List("core.queries.UserType")
     invitations = graphene.List("core.queries.GroupInvitationType")
     collections = graphene.List("core.queries.CollectionType")
-    all_collections = graphene.List("core.queries.CollectionType")
+    all_collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
+    all_collections_count = graphene.Int()
 
     def resolve_user_count(self, info, **kwargs):
         return self.users.count()
@@ -91,8 +92,16 @@ class GroupType(DjangoObjectType):
 
     def resolve_all_collections(self, info, **kwargs):
         if info.context.user and self.users.filter(id=info.context.user.id):
-            return self.collections.all()
+            collections = self.collections.all()
+            if "offset" in kwargs: collections = collections[kwargs["offset"]:]
+            return collections
         else: return []
+    
+
+    def resolve_all_collections_count(self, info, **kwargs):
+        if info.context.user and self.users.filter(id=info.context.user.id):
+            return self.collections.count()
+        else: return 0
 
 
 class GroupInvitationType(DjangoObjectType):

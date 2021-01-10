@@ -81,9 +81,16 @@ class CollectionQueryTests(TokenFunctionaltest):
         self.check_query_error("""{ collection(id: "5") {
             name
         } }""", message="Does not exist")
+
+        # Private collection when logged out
+        del self.client.headers["Authorization"]
+        self.check_query_error("""{ collection(id: "2") {
+            name
+        } }""", message="Does not exist")
     
 
     def test_can_get_all_collections(self):
+        # Any group
         result = self.client.execute("""{
             collections { edges { node { name } } }
             collectionCount

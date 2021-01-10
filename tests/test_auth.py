@@ -348,7 +348,7 @@ class UserQueryTests(TokenFunctionaltest):
             name slug description users { username } admins { username }
             invitations { user { username } } userCount
             collections { name }
-            allCollections { name }
+            allCollections { edges { node { name } } } allCollectionsCount
         } }""")
 
         # Everything is correct
@@ -362,21 +362,34 @@ class UserQueryTests(TokenFunctionaltest):
             "invitations": [{"user": {"username": "jack"}}],
             "userCount": 4,
             "collections": [{"name": "Experiment 4"}],
-            "allCollections": [{"name": "Experiment 2"}, {"name": "Experiment 4"}]
+            "allCollections": {"edges": [
+                {"node": {"name": "Experiment 2"}}, {"node": {"name": "Experiment 4"}}
+            ]},
+            "allCollectionsCount": 2
         })
+
+        # Paginated all collections
+        result = self.client.execute("""{ group(slug: "others") {
+            allCollections(offset: 1, first: 1) { edges { node { name } } } allCollectionsCount
+        } }""")
+        self.assertEqual(result["data"]["group"], {
+            "allCollections": {"edges": [{"node": {"name": "Experiment 4"}}]},
+            "allCollectionsCount": 2
+        })
+
 
         # Can't get all collections if not in group or logged out though
         Group.objects.get(id=2).users.remove(self.user)
         result = self.client.execute("""{ group(slug: "others") {
-            allCollections { name }
+            allCollections { edges { node { name } } } allCollectionsCount
         } }""")
-        self.assertEqual(result["data"]["group"], { "allCollections": []})
+        self.assertEqual(result["data"]["group"], { "allCollections": {"edges": []}, "allCollectionsCount": 0})
         Group.objects.get(id=2).users.add(self.user)
         del self.client.headers["Authorization"]
         result = self.client.execute("""{ group(slug: "others") {
-            allCollections { name }
+            allCollections { edges { node { name } } } allCollectionsCount
         } }""")
-        self.assertEqual(result["data"]["group"], { "allCollections": []})
+        self.assertEqual(result["data"]["group"], { "allCollections": {"edges": []}, "allCollectionsCount": 0})
 
     
 
