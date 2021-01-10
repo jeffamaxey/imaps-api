@@ -348,6 +348,7 @@ class UserQueryTests(TokenFunctionaltest):
             name slug description users { username } admins { username }
             invitations { user { username } } userCount
             collections { name }
+            allCollections { name }
         } }""")
 
         # Everything is correct
@@ -360,8 +361,23 @@ class UserQueryTests(TokenFunctionaltest):
             "admins": [{"username": "ben"}],
             "invitations": [{"user": {"username": "jack"}}],
             "userCount": 4,
-            "collections": [{"name": "Experiment 4"}]
+            "collections": [{"name": "Experiment 4"}],
+            "allCollections": [{"name": "Experiment 2"}, {"name": "Experiment 4"}]
         })
+
+        # Can't get all collections if not in group or logged out though
+        Group.objects.get(id=2).users.remove(self.user)
+        result = self.client.execute("""{ group(slug: "others") {
+            allCollections { name }
+        } }""")
+        self.assertEqual(result["data"]["group"], { "allCollections": []})
+        Group.objects.get(id=2).users.add(self.user)
+        del self.client.headers["Authorization"]
+        result = self.client.execute("""{ group(slug: "others") {
+            allCollections { name }
+        } }""")
+        self.assertEqual(result["data"]["group"], { "allCollections": []})
+
     
 
     def test_invalid_group_requests(self):

@@ -14,15 +14,6 @@ class Query(graphene.ObjectType):
     collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
 
 
-    
-
-
-
-
-
-
-
-    
     def resolve_access_token(self, info, **kwargs):
         token = info.context.COOKIES.get("refresh_token")
         if not token:
