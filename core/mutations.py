@@ -1,11 +1,13 @@
 import time
 import json
+import secrets
 import graphene
 from graphql import GraphQLError
 from django.contrib.auth.hashers import check_password
+from django.contrib.auth.password_validation import validate_password
 from core.models import User
 from core.forms import *
-from core.email import send_welcome_email
+from core.email import send_welcome_email, send_reset_email, send_reset_warning_email
 from core.arguments import create_mutation_arguments
 
 class SignupMutation(graphene.Mutation):
@@ -20,7 +22,7 @@ class SignupMutation(graphene.Mutation):
         if form.is_valid():
             form.instance.last_login = time.time()
             form.save()
-            send_welcome_email(form.instance,info.context.META.get(
+            send_welcome_email(form.instance, info.context.META.get(
                 "HTTP_ORIGIN", "https://imaps.goodwright.org"
             ))
             info.context.refresh_token = form.instance.make_refresh_jwt()
@@ -94,6 +96,58 @@ class UpdatePasswordMutation(graphene.Mutation):
             form.save()
             return UpdatePasswordMutation(success=True)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class RequestPasswordResetMutation(graphene.Mutation):
+
+    class Arguments:
+        email = graphene.String()
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        matches = User.objects.filter(email=kwargs["email"])
+        random_token = secrets.token_hex(64)
+        reset_url = info.context.META.get(
+            "HTTP_ORIGIN", "https://imaps.goodwright.org"
+        ) + f"?token={random_token}"
+        if matches:
+            user = matches.first()
+            user.password_reset_token = random_token
+            user.password_reset_token_expiry = time.time() + 3600
+            user.save()
+            send_reset_email(user, reset_url)
+        else:
+            send_reset_warning_email(kwargs["email"])
+        return RequestPasswordResetMutation(success=True)
+
+
+
+class ResetPasswordMutation(graphene.Mutation):
+
+    class Arguments:
+        password = graphene.String()
+        token = graphene.String()
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        matches = User.objects.filter(password_reset_token=kwargs["token"])
+        if matches:
+            user = matches.first()
+            if user.password_reset_token_expiry < time.time():
+                raise GraphQLError(json.dumps({"token": ["Token has expired"]}))
+            try:
+                validate_password(kwargs["password"])
+            except ValidationError as e:
+                raise GraphQLError(json.dumps({"password": [e.error_list[0].message]}))
+            user.set_password(kwargs["password"])
+            user.password_reset_token = ""
+            user.password_reset_token_expiry = 0
+            user.save()
+            return ResetPasswordMutation(success=True)
+        raise GraphQLError(json.dumps({"token": ["Token is not valid"]}))
 
 
 

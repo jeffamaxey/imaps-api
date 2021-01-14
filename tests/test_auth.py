@@ -5,6 +5,7 @@ import jwt
 import json
 import time
 import os
+import re
 from django.conf import settings
 from django.core import mail
 from django.contrib.auth.hashers import check_password
@@ -470,6 +471,83 @@ class PasswordUpdateTests(TokenFunctionaltest):
 
 
 
+class PasswordResetTests(FunctionalTest):
+
+    def test_can_reset_password(self):
+        # Request a password reset
+        result = self.client.execute("""mutation { requestPasswordReset(
+            email: "jack@gmail.com"
+        ) { success } }""")
+        
+        # Server reports success
+        self.assertTrue(result["data"]["requestPasswordReset"]["success"])
+
+        # An email was sent with a link
+        self.assertEqual(len(mail.outbox), 1)
+        token = re.findall(r"token=([a-zA-Z0-9]+)", mail.outbox[0].body)[0]
+        self.assertEqual(len(token), 128)
+
+        # The user has been updated
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.password_reset_token, token)
+
+        # The token allows the password to be changed
+        result = self.client.execute("""mutation { resetPassword(
+            password: "newpassword12345" token: """ + f'"{token}"' + """
+        ) { success } }""")
+
+        # Server reports success
+        self.assertTrue(result["data"]["resetPassword"]["success"])
+
+        # User can log in with new credentials
+        result = self.client.execute("""mutation { login(
+            username: "jack", password: "newpassword12345",
+        ) { user { username email } } }""")
+        self.assertEqual(result["data"]["login"]["user"], {
+            "username": "jack", "email": "jack@gmail.com",
+        })
+
+        # But can't use same token again
+        self.check_query_error("""mutation { resetPassword(
+            password: "newpassword12345" token: """ + f'"{token}"' + """
+        ) { success } }""", "valid")
+    
+
+    def test_can_password_can_fail(self):
+        # Invalid email
+        result = self.client.execute("""mutation { requestPasswordReset(
+            email: "wrong@gmail.com"
+        ) { success } }""")
+        self.assertTrue(result["data"]["requestPasswordReset"]["success"])
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("associated", mail.outbox[0].body)
+
+        # Wrong token sent
+        self.user.password_reset_token = "123456"
+        self.user.password_reset_token_expiry = time.time() + 3600
+        self.user.save()
+        result = self.check_query_error("""mutation { resetPassword(
+            password: "newpassword12345" token: "wrongtoken"
+        ) { success } }""", "valid")
+
+        # Correct token sent too late
+        self.user.password_reset_token = "123456"
+        self.user.password_reset_token_expiry = time.time() - 1
+        self.user.save()
+        result = self.check_query_error("""mutation { resetPassword(
+            password: "newpassword12345" token: "123456"
+        ) { success } }""", "expired")
+
+        # Password not valid
+        self.user.password_reset_token = "123456"
+        self.user.password_reset_token_expiry = time.time() + 3600
+        self.user.save()
+        result = self.check_query_error("""mutation { resetPassword(
+            password: "password123" token: "123456"
+        ) { success } }""", "common")
+
+
+    
 class UserModificationTests(TokenFunctionaltest):
 
     def test_can_update_user_info(self):

@@ -37,6 +37,8 @@ class User(RandomIDModel):
     creation_time = models.IntegerField(default=0)
     name = models.CharField(max_length=50)
     image = models.ImageField(default="", upload_to=create_filename)
+    password_reset_token = models.CharField(default="", max_length=128)
+    password_reset_token_expiry = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.name} ({self.username})"
