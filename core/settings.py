@@ -1,5 +1,5 @@
 import os
-from .secrets import SECRET_KEY, BASE_DIR, DATABASES
+from .secrets import *
 
 ALLOWED_HOSTS = []
 
@@ -43,3 +43,6 @@ CORS_ALLOW_CREDENTIALS = True
 ID_DIGITS_LENGTH = 18
 
 GRAPHENE = {"SCHEMA": "core.schema.schema"}
+
+
+

@@ -5,6 +5,7 @@ from graphql import GraphQLError
 from django.contrib.auth.hashers import check_password
 from core.models import User
 from core.forms import *
+from core.email import send_welcome_email
 from core.arguments import create_mutation_arguments
 
 class SignupMutation(graphene.Mutation):
@@ -19,6 +20,9 @@ class SignupMutation(graphene.Mutation):
         if form.is_valid():
             form.instance.last_login = time.time()
             form.save()
+            send_welcome_email(form.instance,info.context.META.get(
+                "HTTP_ORIGIN", "https://imaps.goodwright.org"
+            ))
             info.context.refresh_token = form.instance.make_refresh_jwt()
             return SignupMutation(
                 access_token=form.instance.make_access_jwt(),

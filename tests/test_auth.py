@@ -6,6 +6,7 @@ import json
 import time
 import os
 from django.conf import settings
+from django.core import mail
 from django.contrib.auth.hashers import check_password
 from .base import FunctionalTest, TokenFunctionaltest
 from core.models import User, Group, GroupInvitation
@@ -20,6 +21,11 @@ class SignupTests(FunctionalTest):
             email: "kate@gmail.com", password: "sw0rdfish123",
             username: "kate", name: "Kate Austen"
         ) { accessToken user { username email name } } }""")
+
+        # An email was sent
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["kate@gmail.com"])
+        self.assertEqual(mail.outbox[0].subject, "Welcome to iMaps")
 
         # There's a new user
         self.assertEqual(result["data"]["signup"]["user"], {
@@ -61,6 +67,7 @@ class SignupTests(FunctionalTest):
             name: "000001111122222333334444455555666667777788888999990"
         ) { accessToken } }""", message="50 characters")
         self.assertEqual(User.objects.count(), users_at_start)
+        self.assertEqual(len(mail.outbox), 0)
 
         # Email must be unique
         self.check_query_error("""mutation { signup(
@@ -69,6 +76,7 @@ class SignupTests(FunctionalTest):
         ) { accessToken } }""", message="already exists")
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertEqual(len(mail.outbox), 0)
 
         # Username must be unique
         self.check_query_error("""mutation { signup(
@@ -77,6 +85,7 @@ class SignupTests(FunctionalTest):
         ) { accessToken } }""", message="already exists")
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertEqual(len(mail.outbox), 0)
 
         # Username must be short enough
         self.check_query_error("""mutation { signup(
@@ -86,6 +95,7 @@ class SignupTests(FunctionalTest):
         ) { accessToken } }""", message="30 characters")
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertEqual(len(mail.outbox), 0)
 
         # Username must be long enough
         self.check_query_error("""mutation { signup(
@@ -95,6 +105,7 @@ class SignupTests(FunctionalTest):
         ) { accessToken } }""", message="2 characters")
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertEqual(len(mail.outbox), 0)
 
         # Password must be 9 or more characters
         self.check_query_error("""mutation { signup(
@@ -103,6 +114,7 @@ class SignupTests(FunctionalTest):
         ) { accessToken } }""", message="too short")
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertEqual(len(mail.outbox), 0)
 
         # Password can't be numeric
         self.check_query_error("""mutation { signup(
@@ -111,6 +123,7 @@ class SignupTests(FunctionalTest):
         ) { accessToken } }""", message="numeric")
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertEqual(len(mail.outbox), 0)
 
         # Password must be reasonably uncommon
         self.check_query_error("""mutation { signup(
@@ -119,6 +132,7 @@ class SignupTests(FunctionalTest):
         ) { accessToken } }""", message="too common")
         self.assertEqual(User.objects.count(), users_at_start)
         self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertEqual(len(mail.outbox), 0)
 
 
 
