@@ -9,12 +9,13 @@ class SignupFormTests(TestCase):
 
     def test_signup_form_uses_password(self):
         form = SignupForm({
-            "name": "Johnny", "email": "a@b.co",
+            "name": "Johnny", "email": "a@B.co",
             "username": "john", "password": "sw0rdfish123"
         })
         self.assertTrue(form.is_valid())
         form.save()
         self.assertNotEqual(form.instance.password, "sw0rdfish123")
+        self.assertEqual(form.instance.email, "a@b.co")
     
 
     def test_signup_form_validates_password(self):
@@ -38,6 +39,19 @@ class SignupFormTests(TestCase):
         })
         self.assertFalse(form.is_valid())
         self.assertIn("too common", form.errors["password"][0])
+
+
+
+class UpdateUserFormTests(TestCase):
+
+    def test_update_user_form_lowers_email(self):
+        john = mixer.blend(User, email="john@gmail.com")
+        form = UpdateUserForm({
+            "email": "a@B.co", "username": "max", "name": "Max"
+        }, instance=john)
+        self.assertTrue(form.is_valid())
+        form.save()
+        self.assertEqual(form.instance.email, "a@b.co")
 
 
 

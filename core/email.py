@@ -7,9 +7,11 @@ def send_welcome_email(user, hostname):
     message = re.compile(r"  +").sub("", f"""Dear {user.name},
     <br><br>
     Thank you for signing up to the <a href=\"{hostname}\">iMaps platform</a>.
-    Your username is {user.username}.
+    Your username is {user.username} - to manage your account, visit
+    <a href=\"{hostname}/settings/\">{hostname}/settings/</a>.
     <br><br>
-    The Ule Lab.""").strip()
+    Best wishes,<br>
+    Goodwright and the Ule Lab.""").strip()
     send_mail(
         subject="Welcome to iMaps",
         message=message,
@@ -33,7 +35,7 @@ def send_reset_email(user, reset_url):
     <br><br>
     If you didn't request this, no action is required - only the recipeint of
     this email can reset your password.
-
+    <br><br>
     The Ule Lab.""").strip()
 
     send_mail(

@@ -14,6 +14,12 @@ class SignupForm(ModelForm):
         fields = ["email", "name", "username", "password"]
 
 
+    def clean_email(self):
+        """Lower cases the email."""
+
+        return self.data["email"].lower()
+
+
     def clean_password(self):
         """Runs the password validators specified in settings."""
 
@@ -36,6 +42,12 @@ class UpdateUserForm(ModelForm):
     class Meta:
         model = User
         fields = ["username", "name", "email"]
+    
+
+    def clean_email(self):
+        """Lower cases the email."""
+
+        return self.data["email"].lower()
 
 
 
