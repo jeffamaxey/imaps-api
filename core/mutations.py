@@ -111,7 +111,7 @@ class RequestPasswordResetMutation(graphene.Mutation):
         random_token = secrets.token_hex(64)
         reset_url = info.context.META.get(
             "HTTP_ORIGIN", "https://imaps.goodwright.org"
-        ) + f"?token={random_token}"
+        ) + f"/password-reset?token={random_token}"
         if matches:
             user = matches.first()
             user.password_reset_token = random_token
@@ -141,7 +141,7 @@ class ResetPasswordMutation(graphene.Mutation):
             try:
                 validate_password(kwargs["password"])
             except ValidationError as e:
-                raise GraphQLError(json.dumps({"password": [e.error_list[0].message]}))
+                raise GraphQLError(json.dumps({"password": [str(e.error_list[0])]}))
             user.set_password(kwargs["password"])
             user.password_reset_token = ""
             user.password_reset_token_expiry = 0

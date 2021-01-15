@@ -545,6 +545,11 @@ class PasswordResetTests(FunctionalTest):
         result = self.check_query_error("""mutation { resetPassword(
             password: "password123" token: "123456"
         ) { success } }""", "common")
+        result = self.check_query_error("""mutation { resetPassword(
+            password: "smog123" token: "123456"
+        ) { success } }""", "at least 9 characters")
+
+        
 
 
     
