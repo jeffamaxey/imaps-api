@@ -125,12 +125,10 @@ class CollectionQueryTests(TokenFunctionaltest):
 
     def test_can_get_sample(self):
         result = self.client.execute("""{ sample(id: "1") {
-            name description creationTime source organism qcPass qcMessage
-            piName annotatorName
+            name creationTime source organism qcPass qcMessage piName annotatorName
         } }""")
         self.assertEqual(result["data"]["sample"], {
-            "name": "Sample 1", "description": "Initial experiment.",
-            "creationTime": 946684800, "source": "ovarian cells",
+            "name": "Sample 1", "creationTime": 946684800, "source": "ovarian cells",
             "organism": "Homo sapiens", "qcPass": True, "qcMessage": "Reads correctly.",
             "piName": "Jack", "annotatorName": "Hurley"
         })

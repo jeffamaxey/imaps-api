@@ -260,7 +260,6 @@ class Sample(RandomIDModel):
         ordering = ["-creation_time"]
     
     name = models.CharField(max_length=50)
-    description = models.TextField(default="", blank=True)
     creation_time = models.IntegerField(default=time.time)
     last_modified = models.IntegerField(default=time.time)
     source = models.CharField(max_length=100)

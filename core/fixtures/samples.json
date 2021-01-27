@@ -4,7 +4,6 @@
         "pk": 1,
         "fields": {
             "name": "Sample 1",
-            "description": "Initial experiment.",
             "creation_time": 946684800,
             "source": "ovarian cells",
             "organism": "Homo sapiens",
@@ -20,7 +19,6 @@
         "pk": 2,
         "fields": {
             "name": "Sample 2",
-            "description": "Second experiment.",
             "creation_time": 946684801,
             "source": "ovarian cells",
             "organism": "Homo sapiens",
@@ -36,7 +34,6 @@
         "pk": 3,
         "fields": {
             "name": "Sample 3",
-            "description": "3rd experiment.",
             "creation_time": 946684802,
             "source": "ovarian cells",
             "organism": "Homo sapiens",
