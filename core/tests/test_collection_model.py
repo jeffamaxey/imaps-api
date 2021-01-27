@@ -15,6 +15,7 @@ class CollectionSavingTests(TestCase):
         self.assertFalse(collection.users.all())
         self.assertFalse(collection.groups.all())
         self.assertFalse(collection.papers.all())
+        self.assertFalse(collection.samples.all())
     
 
     def test_can_update_collection(self):

@@ -249,3 +249,31 @@ class Paper(RandomIDModel):
     journal = models.CharField(max_length=100)
     doi = models.CharField(max_length=100)
     collections = models.ManyToManyField(Collection, related_name="papers")
+
+
+
+class Sample(RandomIDModel):
+    """A single CLIP experiment."""
+
+    class Meta:
+        db_table = "samples"
+        ordering = ["-creation_time"]
+    
+    name = models.CharField(max_length=50)
+    creation_time = models.IntegerField(default=time.time)
+    last_modified = models.IntegerField(default=time.time)
+    description = models.TextField(default="", blank=True)
+    source = models.CharField(max_length=100)
+    organism = models.CharField(max_length=100)
+    qc_pass = models.NullBooleanField()
+    qc_message = models.CharField(max_length=100)
+    pi_name = models.CharField(max_length=100)
+    annotator_name = models.CharField(max_length=100)
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name="samples")
+
+    def save(self, *args, **kwargs):
+        """If the model is being updated, change the last_modified time."""
+        
+        if self.id:
+            self.last_modified = int(time.time())
+        super(Sample, self).save(*args, **kwargs)
