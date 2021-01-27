@@ -10,7 +10,7 @@ from core.models import User
 class FunctionalTest(StaticLiveServerTestCase):
 
     fixtures = [
-        "users.json", "collections.json"
+        "users.json", "collections.json", "samples.json"
     ]
 
     def setUp(self):

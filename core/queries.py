@@ -122,6 +122,8 @@ class CollectionType(DjangoObjectType):
     can_edit = graphene.Boolean()
     can_execute = graphene.Boolean()
     papers = graphene.List("core.queries.PaperType")
+    samples = ConnectionField("core.queries.SampleConnection", offset=graphene.Int())
+    sample_count = graphene.Int()
 
     def resolve_can_edit(self, info, **kwargs):
         return self.editable_by(info.context.user)
@@ -133,6 +135,16 @@ class CollectionType(DjangoObjectType):
 
     def resolve_papers(self, info, **kwargs):
         return self.papers.all()
+    
+
+    def resolve_samples(self, info, **kwargs):
+        samples = self.samples.all()
+        if "offset" in kwargs: samples = samples[kwargs["offset"]:]
+        return samples
+    
+
+    def resolve_sample_count(self, info, **kwargs):
+        return self.samples.count()
 
 
 
@@ -149,3 +161,19 @@ class PaperType(DjangoObjectType):
         model = Paper
     
     id = graphene.ID()
+
+
+
+class SampleType(DjangoObjectType):
+    
+    class Meta:
+        model = Sample
+    
+    id = graphene.ID()
+
+
+
+class SampleConnection(Connection):
+
+    class Meta:
+        node = SampleType

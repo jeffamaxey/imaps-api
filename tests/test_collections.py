@@ -1,5 +1,5 @@
 from .base import FunctionalTest, TokenFunctionaltest
-from core.models import Collection
+from core.models import Collection, Sample
 
 class CollectionQueryTests(TokenFunctionaltest):
 
@@ -121,3 +121,51 @@ class CollectionQueryTests(TokenFunctionaltest):
            {"node": {"name": "C5"}}, {"node": {"name": "C4"}},
            {"node": {"name": "C3"}}
         ]})
+    
+
+    def test_can_get_sample(self):
+        result = self.client.execute("""{ sample(id: "1") {
+            name description creationTime source organism qcPass qcMessage
+            piName annotatorName
+        } }""")
+        self.assertEqual(result["data"]["sample"], {
+            "name": "Sample 1", "description": "Initial experiment.",
+            "creationTime": 946684800, "source": "ovarian cells",
+            "organism": "Homo sapiens", "qcPass": True, "qcMessage": "Reads correctly.",
+            "piName": "Jack", "annotatorName": "Hurley"
+        })
+    
+
+    def test_cant_get_invalid_sample(self):
+        # Incorrect ID
+        self.check_query_error("""{ sample(id: "999") {
+            name
+        } }""", message="Does not exist")
+
+        # Inaccessible sample
+        sample = Sample.objects.get(id=1)
+        sample.collection = Collection.objects.get(id=5)
+        sample.save()
+        self.check_query_error("""{ sample(id: "1") {
+            name
+        } }""", message="Does not exist")
+
+        # Private collection when logged out
+        del self.client.headers["Authorization"]
+        sample.collection = Collection.objects.get(id=2)
+        sample.save()
+        self.check_query_error("""{ sample(id: "1") {
+            name
+        } }""", message="Does not exist")
+    
+
+    def test_can_get_samples_for_collection(self):
+        result = self.client.execute("""{ collection(id: "1") {
+            name samples { edges { node { name qcPass } } } sampleCount
+        } }""")
+        self.assertEqual(result["data"]["collection"]["samples"], {"edges": [
+           {"node": {"name": "Sample 3", "qcPass": True}},
+           {"node": {"name": "Sample 2", "qcPass": False}},
+           {"node": {"name": "Sample 1", "qcPass": True}}
+        ]})
+        self.assertEqual(result["data"]["collection"]["sampleCount"], 3)

@@ -12,6 +12,7 @@ class Query(graphene.ObjectType):
     collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
     collection_count = graphene.Int()
     collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
+    sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
 
 
     def resolve_access_token(self, info, **kwargs):
@@ -68,6 +69,20 @@ class Query(graphene.ObjectType):
         collections = Collection.objects.filter(private=False)
         if "offset" in kwargs: collections = collections[kwargs["offset"]:]
         return collections
+    
+
+    def resolve_sample(self, info, **kwargs):
+        collections = Collection.objects.filter(private=False)
+        if info.context.user:
+            collections = collections | Collection.objects.filter(owner=info.context.user)
+            collections = collections | info.context.user.collections.all()
+            for group in info.context.user.groups.all():
+                collections = collections | group.collections.all()
+        sample = Sample.objects.filter(
+            id=kwargs["id"], collection__in=collections
+        ).first()
+        if sample: return sample
+        raise GraphQLError('{"sample": "Does not exist"}')
 
 
 
