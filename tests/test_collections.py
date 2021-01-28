@@ -167,3 +167,26 @@ class CollectionQueryTests(TokenFunctionaltest):
            {"node": {"name": "Sample 1", "qcPass": True}}
         ]})
         self.assertEqual(result["data"]["collection"]["sampleCount"], 3)
+    
+
+    def test_can_get_paginated_samples_for_collection(self):
+        result = self.client.execute("""{ collection(id: "1") {
+            name samples(first: 2) { edges { node { name qcPass } } } sampleCount
+        } }""")
+        self.assertEqual(result["data"]["collection"]["samples"], {"edges": [
+           {"node": {"name": "Sample 3", "qcPass": True}},
+           {"node": {"name": "Sample 2", "qcPass": False}},
+        ]})
+        self.assertEqual(result["data"]["collection"]["sampleCount"], 3)
+
+        result = self.client.execute("""{ collection(id: "1") {
+            name samples(first: 2, offset: 1) { edges { node { name qcPass } } } sampleCount
+        } }""")
+        self.assertEqual(result["data"]["collection"]["samples"], {"edges": [
+           {"node": {"name": "Sample 2", "qcPass": False}},
+           {"node": {"name": "Sample 1", "qcPass": True}}
+        ]})
+        self.assertEqual(result["data"]["collection"]["sampleCount"], 3)
+
+
+
