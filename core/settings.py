@@ -13,6 +13,7 @@ INSTALLED_APPS = [
     "graphene_django",
     "corsheaders",
     "core",
+    "peka",
     "django_cleanup.apps.CleanupConfig",
 ]
 
