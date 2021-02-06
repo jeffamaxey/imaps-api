@@ -14,6 +14,6 @@ load_from_sql.py
 load_collections.py
 load_samples.py
 collections.csv
-peka/create_data.py
+peka/create_*.py
 dump.txt
 *.tsv
