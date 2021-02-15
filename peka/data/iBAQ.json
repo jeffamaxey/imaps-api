@@ -1,0 +1,1128 @@
+{
+    "cmap": "gist_yarg",
+    "columns": [
+        "K562-TARDBP",
+        "HepG2-LIN28B",
+        "K562-LIN28B",
+        "K562-CPSF6",
+        "K562-FUS",
+        "HepG2-FUS",
+        "HepG2-HNRNPUL1",
+        "K562-EFTUD2",
+        "HepG2-FAM120A",
+        "K562-CSTF2T",
+        "K562-EWSR1",
+        "HepG2-PRPF4",
+        "K562-SAFB2",
+        "K562-TAF15",
+        "HepG2-TAF15",
+        "HepG2-HNRNPU",
+        "K562-HNRNPU",
+        "HepG2-HNRNPA1",
+        "K562-HNRNPA1",
+        "K562-U2AF1",
+        "HepG2-U2AF1",
+        "K562-BUD13",
+        "HepG2-BUD13",
+        "HepG2-AQR",
+        "K562-PRPF8",
+        "K562-TIA1",
+        "K562-AQR",
+        "K562-SMNDC1",
+        "K562-GPKOW",
+        "K562-APOBEC3C",
+        "K562-DDX55",
+        "HepG2-LARP4",
+        "K562-RBFOX2",
+        "K562-NOLC1",
+        "HepG2-LSM11",
+        "HepG2-STAU2",
+        "K562-NONO",
+        "HepG2-DROSHA",
+        "HepG2-CDC40",
+        "K562-LSM11",
+        "K562-PPIL4",
+        "HepG2-HLTF",
+        "K562-DDX24",
+        "K562-SAFB",
+        "HepG2-SAFB",
+        "HepG2-UPF1",
+        "HepG2-AKAP1",
+        "HepG2-DDX55",
+        "K562-ZC3H11A",
+        "K562-DDX6",
+        "HepG2-ZC3H11A",
+        "K562-FAM120A",
+        "K562-UPF1",
+        "HepG2-TIAL1",
+        "HepG2-TIA1",
+        "HepG2-CSTF2",
+        "K562-SLBP",
+        "K562-UTP3",
+        "K562-SF3B1",
+        "HepG2-TBRG4",
+        "K562-DDX51",
+        "K562-WRN",
+        "HepG2-XRCC6",
+        "K562-WDR43",
+        "K562-DDX21",
+        "K562-PUS1",
+        "K562-EIF3G",
+        "K562-GNL3",
+        "K562-NPM1",
+        "K562-NSUN2",
+        "HepG2-LARP7",
+        "K562-SSB",
+        "K562-SDAD1",
+        "K562-SBDS",
+        "K562-CPEB4",
+        "K562-UTP18",
+        "K562-WDR3",
+        "K562-AARS",
+        "K562-ZC3H8",
+        "K562-SUPV3L1",
+        "HepG2-ILF3",
+        "K562-EXOSC5",
+        "K562-LARP7",
+        "K562-ABCF1",
+        "K562-RPS11",
+        "K562-SERBP1",
+        "HepG2-NIP7",
+        "HepG2-HNRNPC",
+        "K562-HNRNPC",
+        "HepG2-SUGP2",
+        "K562-ILF3",
+        "HepG2-AGGF1",
+        "K562-AGGF1",
+        "HepG2-DDX59",
+        "K562-AKAP1",
+        "HepG2-FTO",
+        "HepG2-SDAD1",
+        "HepG2-NOLC1",
+        "HepG2-WDR43",
+        "HepG2-UTP18",
+        "HepG2-SRSF9",
+        "K562-SRSF1",
+        "HepG2-SRSF1",
+        "HepG2-SND1",
+        "HepG2-NOL12",
+        "HepG2-RPS3",
+        "K562-RPS3",
+        "K562-FXR2",
+        "K562-FMR1",
+        "HepG2-RBFOX2",
+        "HepG2-XPO5",
+        "HepG2-DDX6",
+        "HepG2-PRPF8",
+        "K562-DDX42",
+        "K562-DROSHA",
+        "K562-XRN2",
+        "K562-GEMIN5",
+        "K562-DGCR8",
+        "HepG2-DHX30",
+        "HepG2-SUPV3L1",
+        "HepG2-DDX3X",
+        "K562-DDX3X",
+        "HepG2-NCBP2",
+        "K562-SLTM",
+        "HepG2-XRN2",
+        "HepG2-SLTM",
+        "HepG2-CSTF2T",
+        "HepG2-NKRF",
+        "HepG2-EFTUD2",
+        "HepG2-RBM22",
+        "HepG2-DGCR8",
+        "HepG2-EIF3D",
+        "HepG2-FASTKD2",
+        "K562-MTPAP",
+        "HepG2-RBM15",
+        "HepG2-EIF3H",
+        "K562-AKAP8L",
+        "K562-GTF2F1",
+        "HepG2-GTF2F1",
+        "HepG2-GRSF1",
+        "HepG2-FKBP4",
+        "K562-FTO",
+        "K562-HNRNPUL1",
+        "HepG2-RBM5",
+        "HepG2-TROVE2",
+        "HepG2-DDX52",
+        "K562-NIPBL",
+        "K562-NCBP2",
+        "K562-XRCC6",
+        "K562-YWHAG",
+        "HepG2-POLR2G",
+        "K562-TROVE2",
+        "HepG2-SMNDC1",
+        "HepG2-EXOSC5",
+        "K562-AATF",
+        "K562-PHF6",
+        "K562-DHX30",
+        "K562-TBRG4",
+        "K562-DDX52",
+        "K562-LARP4",
+        "K562-FASTKD2",
+        "K562-ZRANB2",
+        "HepG2-DKC1",
+        "HepG2-SRSF7",
+        "K562-EIF4G2",
+        "HepG2-BCCIP",
+        "HepG2-HNRNPM",
+        "K562-HNRNPM",
+        "HepG2-SFPQ",
+        "K562-SRSF7",
+        "K562-TRA2A",
+        "HepG2-TRA2A",
+        "K562-ZNF800",
+        "K562-PUM1",
+        "K562-HLTF",
+        "K562-GRWD1",
+        "K562-UCHL5",
+        "HepG2-GRWD1",
+        "K562-ZNF622",
+        "HepG2-PPIG",
+        "HepG2-ZNF800",
+        "HepG2-FXR2",
+        "HepG2-G3BP1",
+        "K562-FXR1",
+        "K562-RBM15",
+        "HepG2-UCHL5",
+        "HepG2-PABPN1",
+        "HepG2-SSB",
+        "K562-METAP2",
+        "K562-SND1",
+        "HepG2-YBX3",
+        "K562-YBX3",
+        "K562-IGF2BP1",
+        "HepG2-HNRNPL",
+        "K562-HNRNPL",
+        "HepG2-QKI",
+        "K562-QKI",
+        "HepG2-PTBP1",
+        "K562-PTBP1",
+        "K562-MATR3",
+        "HepG2-MATR3",
+        "HepG2-PCBP1",
+        "K562-PCBP1",
+        "HepG2-HNRNPK",
+        "K562-HNRNPK",
+        "HepG2-PCBP2",
+        "HepG2-IGF2BP1",
+        "HepG2-IGF2BP3",
+        "K562-IGF2BP2",
+        "HepG2-SF3A3",
+        "HepG2-SF3B4",
+        "HepG2-SUB1",
+        "K562-KHSRP",
+        "HepG2-FUBP3",
+        "HepG2-KHSRP",
+        "K562-PUM2",
+        "K562-PABPC4",
+        "K562-SF3B4",
+        "K562-RBM22",
+        "K562-U2AF2",
+        "HepG2-U2AF2",
+        "HepG2-BCLAF1",
+        "K562-KHDRBS1"
+    ],
+    "face_color": "#f6ff6d",
+    "matrix": [
+        [
+            {
+                "color": "#323232",
+                "value": 791730000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#7e7e7e",
+                "value": 35175000.0
+            },
+            {
+                "color": "#303030",
+                "value": 895640000.0
+            },
+            {
+                "color": "#303030",
+                "value": 895640000.0
+            },
+            {
+                "color": "#5e5e5e",
+                "value": 132360000.0
+            },
+            {
+                "color": "#cdcdcd",
+                "value": 1280400.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#898989",
+                "value": 21535000.0
+            },
+            {
+                "color": "#525252",
+                "value": 213650000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#6f6f6f",
+                "value": 64168000.0
+            },
+            {
+                "color": "#575757",
+                "value": 181940000.0
+            },
+            {
+                "color": "#575757",
+                "value": 181940000.0
+            },
+            {
+                "color": "#282828",
+                "value": 1235500000.0
+            },
+            {
+                "color": "#282828",
+                "value": 1235500000.0
+            },
+            {
+                "color": "#0b0b0b",
+                "value": 4318200000.0
+            },
+            {
+                "color": "#0b0b0b",
+                "value": 4318200000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#e4e4e4",
+                "value": 486470.0
+            },
+            {
+                "color": "#e4e4e4",
+                "value": 486470.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#808080",
+                "value": 31449000.0
+            },
+            {
+                "color": "#555555",
+                "value": 190770000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#9a9a9a",
+                "value": 10672000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#838383",
+                "value": 26574000.0
+            },
+            {
+                "color": "#a9a9a9",
+                "value": 5796400.0
+            },
+            {
+                "color": "#5b5b5b",
+                "value": 150720000.0
+            },
+            {
+                "color": "#757575",
+                "value": 50866000.0
+            },
+            {
+                "color": "#909090",
+                "value": 16507000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#838383",
+                "value": 27261000.0
+            },
+            {
+                "color": "#363636",
+                "value": 704960000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": 152470.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#868686",
+                "value": 25189000.0
+            },
+            {
+                "color": "#e4e4e4",
+                "value": 487150.0
+            },
+            {
+                "color": "#898989",
+                "value": 21505000.0
+            },
+            {
+                "color": "#828282",
+                "value": 28820000.0
+            },
+            {
+                "color": "#828282",
+                "value": 28820000.0
+            },
+            {
+                "color": "#424242",
+                "value": 415050000.0
+            },
+            {
+                "color": "#7f7f7f",
+                "value": 32736000.0
+            },
+            {
+                "color": "#a9a9a9",
+                "value": 5796400.0
+            },
+            {
+                "color": "#7e7e7e",
+                "value": 34458000.0
+            },
+            {
+                "color": "#969696",
+                "value": 12937000.0
+            },
+            {
+                "color": "#7e7e7e",
+                "value": 34458000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#424242",
+                "value": 415050000.0
+            },
+            {
+                "color": "#1c1c1c",
+                "value": 2107500000.0
+            },
+            {
+                "color": "#555555",
+                "value": 190770000.0
+            },
+            {
+                "color": "#7f7f7f",
+                "value": 33163000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#909090",
+                "value": 16549000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#545454",
+                "value": 202130000.0
+            },
+            {
+                "color": "#969696",
+                "value": 12544000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#6f6f6f",
+                "value": 64397000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#2e2e2e",
+                "value": 984090000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#5b5b5b",
+                "value": 147790000.0
+            },
+            {
+                "color": "#6c6c6c",
+                "value": 73493000.0
+            },
+            {
+                "color": "#0d0d0d",
+                "value": 4002100000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#7d7d7d",
+                "value": 35606000.0
+            },
+            {
+                "color": "#414141",
+                "value": 424170000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#757575",
+                "value": 51667000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#e6e6e6",
+                "value": 443700.0
+            },
+            {
+                "color": "#404040",
+                "value": 471770000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#7d7d7d",
+                "value": 35606000.0
+            },
+            {
+                "color": "#999999",
+                "value": 11376000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#838383",
+                "value": 26510000.0
+            },
+            {
+                "color": "#000000",
+                "value": 6990000000.0
+            },
+            {
+                "color": "#000000",
+                "value": 6990000000.0
+            },
+            {
+                "color": "#a1a1a1",
+                "value": 8111300.0
+            },
+            {
+                "color": "#404040",
+                "value": 471770000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#7f7f7f",
+                "value": 32736000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#909090",
+                "value": 16507000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#373737",
+                "value": 684850000.0
+            },
+            {
+                "color": "#101010",
+                "value": 3297900000.0
+            },
+            {
+                "color": "#101010",
+                "value": 3297900000.0
+            },
+            {
+                "color": "#2e2e2e",
+                "value": 1009700000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#343434",
+                "value": 763050000.0
+            },
+            {
+                "color": "#343434",
+                "value": 763050000.0
+            },
+            {
+                "color": "#686868",
+                "value": 86577000.0
+            },
+            {
+                "color": "#939393",
+                "value": 13615000.0
+            },
+            {
+                "color": "#757575",
+                "value": 50866000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#969696",
+                "value": 12937000.0
+            },
+            {
+                "color": "#808080",
+                "value": 31449000.0
+            },
+            {
+                "color": "#ededed",
+                "value": 333300.0
+            },
+            {
+                "color": "#ffffff",
+                "value": 152470.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#c2c2c2",
+                "value": 2008600.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#616161",
+                "value": 112640000.0
+            },
+            {
+                "color": "#e6e6e6",
+                "value": 443700.0
+            },
+            {
+                "color": "#3d3d3d",
+                "value": 538900000.0
+            },
+            {
+                "color": "#3d3d3d",
+                "value": 538900000.0
+            },
+            {
+                "color": "#b3b3b3",
+                "value": 3541400.0
+            },
+            {
+                "color": "#8e8e8e",
+                "value": 17953000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#8e8e8e",
+                "value": 17953000.0
+            },
+            {
+                "color": "#898989",
+                "value": 21535000.0
+            },
+            {
+                "color": "#696969",
+                "value": 83355000.0
+            },
+            {
+                "color": "#cdcdcd",
+                "value": 1280400.0
+            },
+            {
+                "color": "#7b7b7b",
+                "value": 39941000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#797979",
+                "value": 40955000.0
+            },
+            {
+                "color": "#6c6c6c",
+                "value": 73740000.0
+            },
+            {
+                "color": "#919191",
+                "value": 15919000.0
+            },
+            {
+                "color": "#858585",
+                "value": 26106000.0
+            },
+            {
+                "color": "#c1c1c1",
+                "value": 2102200.0
+            },
+            {
+                "color": "#939393",
+                "value": 14074000.0
+            },
+            {
+                "color": "#d2d2d2",
+                "value": 1029700.0
+            },
+            {
+                "color": "#d2d2d2",
+                "value": 1029700.0
+            },
+            {
+                "color": "#363636",
+                "value": 717830000.0
+            },
+            {
+                "color": "#eaeaea",
+                "value": 373970.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#5e5e5e",
+                "value": 132360000.0
+            },
+            {
+                "color": "#b2b2b2",
+                "value": 3904900.0
+            },
+            {
+                "color": "#f4f4f4",
+                "value": 244500.0
+            },
+            {
+                "color": "#909090",
+                "value": 16609000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#b3b3b3",
+                "value": 3541400.0
+            },
+            {
+                "color": "#6f6f6f",
+                "value": 64397000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#f4f4f4",
+                "value": 244500.0
+            },
+            {
+                "color": "#9a9a9a",
+                "value": 10672000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#575757",
+                "value": 182030000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#616161",
+                "value": 112640000.0
+            },
+            {
+                "color": "#545454",
+                "value": 202130000.0
+            },
+            {
+                "color": "#909090",
+                "value": 16609000.0
+            },
+            {
+                "color": "#5b5b5b",
+                "value": 150720000.0
+            },
+            {
+                "color": "#6c6c6c",
+                "value": 73740000.0
+            },
+            {
+                "color": "#767676",
+                "value": 48840000.0
+            },
+            {
+                "color": "#8d8d8d",
+                "value": 18600000.0
+            },
+            {
+                "color": "#151515",
+                "value": 2781400000.0
+            },
+            {
+                "color": "#9e9e9e",
+                "value": 9087900.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#202020",
+                "value": 1754300000.0
+            },
+            {
+                "color": "#202020",
+                "value": 1754300000.0
+            },
+            {
+                "color": "#444444",
+                "value": 397880000.0
+            },
+            {
+                "color": "#151515",
+                "value": 2781400000.0
+            },
+            {
+                "color": "#494949",
+                "value": 305630000.0
+            },
+            {
+                "color": "#494949",
+                "value": 305630000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#454545",
+                "value": 382250000.0
+            },
+            {
+                "color": "#e4e4e4",
+                "value": 487150.0
+            },
+            {
+                "color": "#afafaf",
+                "value": 4507500.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#afafaf",
+                "value": 4507500.0
+            },
+            {
+                "color": "#acacac",
+                "value": 4992900.0
+            },
+            {
+                "color": "#797979",
+                "value": 43207000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#686868",
+                "value": 86577000.0
+            },
+            {
+                "color": "#383838",
+                "value": 662390000.0
+            },
+            {
+                "color": "#656565",
+                "value": 99952000.0
+            },
+            {
+                "color": "#858585",
+                "value": 26106000.0
+            },
+            {
+                "color": "#ffffff",
+                "value": NaN
+            },
+            {
+                "color": "#494949",
+                "value": 306330000.0
+            },
+            {
+                "color": "#414141",
+                "value": 424170000.0
+            },
+            {
+                "color": "#f3f3f3",
+                "value": 253870.0
+            },
+            {
+                "color": "#2e2e2e",
+                "value": 1009700000.0
+            },
+            {
+                "color": "#252525",
+                "value": 1461100000.0
+            },
+            {
+                "color": "#252525",
+                "value": 1461100000.0
+            },
+            {
+                "color": "#313131",
+                "value": 832270000.0
+            },
+            {
+                "color": "#161616",
+                "value": 2761800000.0
+            },
+            {
+                "color": "#161616",
+                "value": 2761800000.0
+            },
+            {
+                "color": "#b3b3b3",
+                "value": 3827900.0
+            },
+            {
+                "color": "#b3b3b3",
+                "value": 3827900.0
+            },
+            {
+                "color": "#161616",
+                "value": 2687300000.0
+            },
+            {
+                "color": "#161616",
+                "value": 2687300000.0
+            },
+            {
+                "color": "#4b4b4b",
+                "value": 299970000.0
+            },
+            {
+                "color": "#4b4b4b",
+                "value": 299970000.0
+            },
+            {
+                "color": "#242424",
+                "value": 1502500000.0
+            },
+            {
+                "color": "#242424",
+                "value": 1502500000.0
+            },
+            {
+                "color": "#171717",
+                "value": 2587000000.0
+            },
+            {
+                "color": "#171717",
+                "value": 2587000000.0
+            },
+            {
+                "color": "#2b2b2b",
+                "value": 1133600000.0
+            },
+            {
+                "color": "#313131",
+                "value": 832270000.0
+            },
+            {
+                "color": "#3b3b3b",
+                "value": 570780000.0
+            },
+            {
+                "color": "#767676",
+                "value": 48875000.0
+            },
+            {
+                "color": "#7d7d7d",
+                "value": 36514000.0
+            },
+            {
+                "color": "#5e5e5e",
+                "value": 133360000.0
+            },
+            {
+                "color": "#5c5c5c",
+                "value": 147450000.0
+            },
+            {
+                "color": "#191919",
+                "value": 2276000000.0
+            },
+            {
+                "color": "#202020",
+                "value": 1779100000.0
+            },
+            {
+                "color": "#191919",
+                "value": 2276000000.0
+            },
+            {
+                "color": "#686868",
+                "value": 87338000.0
+            },
+            {
+                "color": "#2e2e2e",
+                "value": 995560000.0
+            },
+            {
+                "color": "#5e5e5e",
+                "value": 133360000.0
+            },
+            {
+                "color": "#7b7b7b",
+                "value": 39941000.0
+            },
+            {
+                "color": "#282828",
+                "value": 1209400000.0
+            },
+            {
+                "color": "#282828",
+                "value": 1209400000.0
+            },
+            {
+                "color": "#838383",
+                "value": 27267000.0
+            },
+            {
+                "color": "#696969",
+                "value": 80598000.0
+            }
+        ]
+    ],
+    "rows": [
+        "iBAQ"
+    ]
+}

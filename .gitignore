@@ -10,10 +10,14 @@ tables.txt
 .coverage
 *.sql
 iMaps Docs.md
-load_from_sql.py
+*_from_sql.py
 load_collections.py
 load_samples.py
 collections.csv
 peka/create_*.py
 dump.txt
 *.tsv
+summarise.py
+load.py
+*.sql.gz
+json/*

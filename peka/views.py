@@ -2,8 +2,16 @@ import json
 from django.http import JsonResponse
 
 def data(request):
-    with open("peka/data/heatmap.json") as f:
+    with open("peka/data/main_heatmap.json") as f:
         data = json.load(f)
+    for key, filename in [
+        ["similarity", "similarity_score"], ["iBAQ", "iBAQ"],
+        ["recall", "recall"], ["introns", "3UTR%_intron%_5UTR+CDS%"],
+        ["noncoding_IDR", "%_noncoding_IDR_peaks"],
+        ["total_IDR", "total_IDR_peaks"]
+    ]:
+        with open(f"peka/data/{filename}.json") as f:
+            data[key] = json.load(f)
     return JsonResponse(data)
 
 
