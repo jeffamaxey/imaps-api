@@ -16,7 +16,6 @@ load_samples.py
 collections.csv
 peka/create_*.py
 dump.txt
-*.tsv
 summarise.py
 load.py
 *.sql.gz
