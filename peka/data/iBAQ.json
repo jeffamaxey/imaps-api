@@ -234,11 +234,11 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#7e7e7e",
@@ -262,7 +262,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#898989",
@@ -274,7 +274,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#6f6f6f",
@@ -306,11 +306,11 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#e4e4e4",
@@ -322,7 +322,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#808080",
@@ -334,7 +334,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#9a9a9a",
@@ -342,7 +342,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#838383",
@@ -366,7 +366,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#838383",
@@ -382,11 +382,11 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#868686",
@@ -434,7 +434,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#424242",
@@ -454,7 +454,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#909090",
@@ -462,7 +462,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#545454",
@@ -474,7 +474,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#6f6f6f",
@@ -482,7 +482,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#2e2e2e",
@@ -490,7 +490,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#5b5b5b",
@@ -506,7 +506,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#7d7d7d",
@@ -518,11 +518,11 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#757575",
@@ -530,19 +530,19 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#e6e6e6",
@@ -554,7 +554,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#7d7d7d",
@@ -566,11 +566,11 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#838383",
@@ -594,15 +594,15 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#7f7f7f",
@@ -610,11 +610,11 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#909090",
@@ -622,11 +622,11 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#373737",
@@ -646,7 +646,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#343434",
@@ -670,7 +670,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#969696",
@@ -690,7 +690,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#c2c2c2",
@@ -698,7 +698,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#616161",
@@ -726,7 +726,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#8e8e8e",
@@ -750,7 +750,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#797979",
@@ -794,7 +794,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#5e5e5e",
@@ -814,7 +814,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#b3b3b3",
@@ -826,11 +826,11 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#f4f4f4",
@@ -842,7 +842,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#575757",
@@ -850,7 +850,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#616161",
@@ -890,7 +890,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#202020",
@@ -918,7 +918,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#454545",
@@ -934,7 +934,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#afafaf",
@@ -950,7 +950,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#686868",
@@ -970,7 +970,7 @@
             },
             {
                 "color": "#ffffff",
-                "value": NaN
+                "value": 0
             },
             {
                 "color": "#494949",
