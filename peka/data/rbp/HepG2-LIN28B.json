@@ -1,6 +1,28 @@
 {
     "PEKA_score_heatmap": {
-        "cmap": "gist_yarg",
+        "cmap": [
+            "#ffffff",
+            "#e6e6e6",
+            "#cccccc",
+            "#b3b3b3",
+            "#999999",
+            "#7f7f7f",
+            "#666666",
+            "#4c4c4c",
+            "#323232",
+            "#181818",
+            "#000000"
+        ],
+        "colorbar_ticks": [
+            60.0,
+            70.0,
+            80.0,
+            90.0
+        ],
+        "colorbar_vmin_vmax": {
+            "vmax": 96.19569958,
+            "vmin": 50.61311683
+        },
         "columns": [
             "z-score"
         ],
@@ -290,6 +312,17 @@
         ]
     },
     "rbp_heatmap": {
+        "colorbar_ticks": [
+            1.0,
+            2.0,
+            3.0,
+            4.0,
+            5.0
+        ],
+        "colorbar_vmin_vmax": {
+            "vmax": 5.931420699444445,
+            "vmin": 0.5732661638888888
+        },
         "colors": [
             "#54478c",
             "#2c699a",
