@@ -1,5 +1,17 @@
 {
-    "cmap": "gist_yarg",
+    "cmap": [
+        "#ffffff",
+        "#e6e6e6",
+        "#cccccc",
+        "#b3b3b3",
+        "#999999",
+        "#7f7f7f",
+        "#666666",
+        "#4c4c4c",
+        "#323232",
+        "#181818",
+        "#000000"
+    ],
     "columns": [
         "K562-TARDBP",
         "HepG2-LIN28B",
@@ -233,16 +245,16 @@
                 "value": 0.85
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#4c4c4c",
@@ -253,32 +265,32 @@
                 "value": 0.75
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#3f3f3f",
                 "value": 0.75
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#4c4c4c",
@@ -289,12 +301,12 @@
                 "value": 0.65
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#666666",
@@ -305,276 +317,276 @@
                 "value": 0.7
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#595959",
                 "value": 0.65
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#999999",
                 "value": 0.4
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#3f3f3f",
                 "value": 0.75
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#f3f3f3",
                 "value": 0.05
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#8c8c8c",
@@ -585,48 +597,48 @@
                 "value": 0.85
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#999999",
@@ -641,20 +653,20 @@
                 "value": 0.45
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#bfbfbf",
@@ -669,216 +681,216 @@
                 "value": 0.55
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#e6e6e6",
                 "value": 0.1
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#595959",
                 "value": 0.65
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#e6e6e6",
@@ -889,16 +901,16 @@
                 "value": 0.05
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#d9d9d9",
@@ -917,84 +929,84 @@
                 "value": 0.35
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#ffffff",
                 "value": 0.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#ffffff",
                 "value": 0.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#d9d9d9",
                 "value": 0.15
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#ffffff",
                 "value": 0.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#f3f3f3",
@@ -1065,16 +1077,16 @@
                 "value": 0.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#0c0c0c",
@@ -1089,16 +1101,16 @@
                 "value": 0.9
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#cccccc",
                 "value": 0.2
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#f3f3f3",
@@ -1113,8 +1125,8 @@
                 "value": 1.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#262626",

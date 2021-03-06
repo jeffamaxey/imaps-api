@@ -1,5 +1,17 @@
 {
-    "cmap": "gist_yarg",
+    "cmap": [
+        "#ffffff",
+        "#e6e6e6",
+        "#cccccc",
+        "#b3b3b3",
+        "#999999",
+        "#7f7f7f",
+        "#666666",
+        "#4c4c4c",
+        "#323232",
+        "#181818",
+        "#000000"
+    ],
     "columns": [
         "K562-TARDBP",
         "HepG2-LIN28B",
@@ -233,12 +245,12 @@
                 "value": 791730000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#7e7e7e",
@@ -261,8 +273,8 @@
                 "value": 1280400.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#898989",
@@ -273,8 +285,8 @@
                 "value": 213650000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#6f6f6f",
@@ -305,24 +317,24 @@
                 "value": 4318200000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
-            },
-            {
-                "color": "#e4e4e4",
-                "value": 486470.0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#e4e4e4",
                 "value": 486470.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#e4e4e4",
+                "value": 486470.0
+            },
+            {
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#808080",
@@ -333,16 +345,16 @@
                 "value": 190770000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#9a9a9a",
                 "value": 10672000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#838383",
@@ -365,8 +377,8 @@
                 "value": 16507000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#838383",
@@ -381,12 +393,12 @@
                 "value": 152470.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#868686",
@@ -433,8 +445,8 @@
                 "value": 34458000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#424242",
@@ -453,16 +465,16 @@
                 "value": 33163000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#909090",
                 "value": 16549000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#545454",
@@ -473,24 +485,24 @@
                 "value": 12544000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#6f6f6f",
                 "value": 64397000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#2e2e2e",
                 "value": 984090000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#5b5b5b",
@@ -505,8 +517,8 @@
                 "value": 4002100000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#7d7d7d",
@@ -517,32 +529,32 @@
                 "value": 424170000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#757575",
                 "value": 51667000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#e6e6e6",
@@ -553,8 +565,8 @@
                 "value": 471770000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#7d7d7d",
@@ -565,12 +577,12 @@
                 "value": 11376000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#838383",
@@ -593,40 +605,40 @@
                 "value": 471770000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#7f7f7f",
                 "value": 32736000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#909090",
                 "value": 16507000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#373737",
@@ -645,8 +657,8 @@
                 "value": 1009700000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#343434",
@@ -669,8 +681,8 @@
                 "value": 50866000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#969696",
@@ -689,16 +701,16 @@
                 "value": 152470.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#c2c2c2",
                 "value": 2008600.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#616161",
@@ -725,8 +737,8 @@
                 "value": 17953000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#8e8e8e",
@@ -749,8 +761,8 @@
                 "value": 39941000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#797979",
@@ -793,8 +805,8 @@
                 "value": 373970.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#5e5e5e",
@@ -813,8 +825,8 @@
                 "value": 16609000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#b3b3b3",
@@ -825,12 +837,12 @@
                 "value": 64397000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#f4f4f4",
@@ -841,16 +853,16 @@
                 "value": 10672000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#575757",
                 "value": 182030000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#616161",
@@ -889,8 +901,8 @@
                 "value": 9087900.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#202020",
@@ -917,8 +929,8 @@
                 "value": 305630000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#454545",
@@ -933,8 +945,8 @@
                 "value": 4507500.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#afafaf",
@@ -949,8 +961,8 @@
                 "value": 43207000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#686868",
@@ -969,8 +981,8 @@
                 "value": 26106000.0
             },
             {
-                "color": "#ffffff",
-                "value": 0
+                "color": "#f6ff6d",
+                "value": null
             },
             {
                 "color": "#494949",
