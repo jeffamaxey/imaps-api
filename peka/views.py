@@ -45,7 +45,7 @@ def motif(request):
                 with open(f"peka/data/motif/{group[0]}_full.json") as f:
                     data = json.load(f)
                     data["group"] = group[0]
-                    data["group_membets"] = group[1].split(", ")
+                    data["group_members"] = group[1].split(", ")
                     return JsonResponse(data)
         return JsonResponse({"error": "No such motif"}, status=404)
     return JsonResponse({"error": "No motif sequence given"}, status=400)
