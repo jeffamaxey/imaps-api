@@ -1,5 +1,6 @@
 import time
 import jwt
+import json
 import base64
 from random import randint
 from django_random_id_model import RandomIDModel
@@ -276,3 +277,102 @@ class Sample(RandomIDModel):
         if self.id:
             self.last_modified = int(time.time())
         super(Sample, self).save(*args, **kwargs)
+
+
+
+class Process(RandomIDModel):
+
+    class Meta:
+        db_table = "processes"
+    
+    name = models.CharField(max_length=100)
+    description = models.CharField(max_length=200)
+    input_schema = models.TextField(default="[]")
+    output_schema = models.TextField(default="[]")
+
+    def __str__(self):
+        return self.name
+
+
+
+class Execution(RandomIDModel):
+
+    class Meta:
+        db_table = "executions"
+        ordering = ["created"]
+    
+    name = models.CharField(max_length=100)
+    created = models.IntegerField(default=time.time)
+    scheduled = models.IntegerField(blank=True, null=True)
+    started = models.IntegerField(blank=True, null=True)
+    finished = models.IntegerField(blank=True, null=True)
+    status = models.CharField(max_length=50, blank=True, null=True)
+    warning = models.CharField(max_length=300, blank=True, null=True)
+    error = models.CharField(max_length=300, blank=True, null=True)
+    input = models.TextField(default="{}")
+    output = models.TextField(default="{}")
+    sample = models.ForeignKey(Sample, blank=True, null=True, on_delete=models.CASCADE, related_name="executions")
+    collection = models.ForeignKey(Collection, blank=True, null=True, on_delete=models.CASCADE, related_name="executions")
+    process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name="executions")
+
+
+    def __str__(self):
+        return self.name
+    
+
+    @property
+    def parent(self):
+        """Identifies the execution that spawned this one as a subprocess, if
+        any."""
+
+        possibles = Execution.objects.filter(output__contains=str(self.id))
+        for possible in possibles:
+            output = json.loads(possible.output)
+            if "steps" in output and int(self.id) in output["steps"]:
+                return possible
+    
+
+    @property
+    def upstream(self):
+        """Identifies the executions whose products this execution consumes."""
+
+        input_schema = json.loads(self.process.input_schema)
+        inputs = json.loads(self.input)
+        ids = []
+        for inp in input_schema:
+            if inp["name"] in inputs and "type" in inp:
+                if inp["type"].startswith("data:"):
+                    ids.append(inputs[inp["name"]])
+                if inp["type"].startswith("list:data:"):
+                    ids += inputs[inp["name"]]
+        return Execution.objects.filter(id__in=ids)
+    
+
+    @property
+    def downstream(self):
+        """Identifies the executions which consume this execution's products."""
+
+        possibles = Execution.objects.filter(input__contains=f"{self.id}")
+        possibles = possibles.select_related("process")
+        confirmed_ids = set()
+        for possible in possibles:
+            input_schema = json.loads(possible.process.input_schema)
+            inputs = json.loads(possible.input)
+            for inp in input_schema:
+                if inp["name"] in inputs and "type" in inp:
+                    if inp["type"][:4] == "data" and inputs[inp["name"]] == self.id:
+                        confirmed_ids.add(possible.id)
+                    if inp["type"][:9] == "list:data" and self.id in inputs[inp["name"]]:
+                        confirmed_ids.add(possible.id)
+        return Execution.objects.filter(id__in=confirmed_ids)
+    
+
+    @property
+    def components(self):
+        """Identifies the executions spawned by this execution as
+        subprocesses."""
+
+        outputs = json.loads(self.output)
+        steps = outputs.get("steps", [])
+        return Execution.objects.filter(id__in=steps)
+

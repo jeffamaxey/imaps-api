@@ -12,8 +12,9 @@ class SampleSavingTests(TestCase):
             qc_message="very good", pi_name="Dr Smith", annotator_name="Jo",
             collection=collection
         )
-        self.assertLess(abs(collection.creation_time - time.time()), 1)
-        self.assertLess(abs(collection.last_modified - time.time()), 1)
+        self.assertLess(abs(sample.creation_time - time.time()), 1)
+        self.assertLess(abs(sample.last_modified - time.time()), 1)
+        self.assertFalse(sample.executions.all())
     
 
     def test_can_update_sample(self):
@@ -27,7 +28,7 @@ class SampleSavingTests(TestCase):
 
 class SampleOrderingTests(TestCase):
 
-    def test_collections_ordered_by_creation_time(self):
+    def test_samples_ordered_by_creation_time(self):
         sample1 = mixer.blend(Sample, creation_time=2)
         sample2 = mixer.blend(Sample, creation_time=1)
         sample3 = mixer.blend(Sample, creation_time=4)
