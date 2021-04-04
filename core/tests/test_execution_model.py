@@ -2,14 +2,14 @@ import time
 import json
 from mixer.backend.django import mixer
 from django.test import TestCase
-from core.models import Execution, Process
+from core.models import Execution, Command, ExecutionUserLink, User, Group, Sample, Collection
 
 class ExecutionSavingTests(TestCase):
 
     def test_can_create_execution(self):
-        process = mixer.blend(Process)
+        command = mixer.blend(Command)
         execution = Execution.objects.create(
-            name="run-code (sample)", process=process, input="{}", output="{}",
+            name="run-code (sample)", command=command, input="{}", output="{}",
 
         )
         execution.full_clean()
@@ -20,6 +20,54 @@ class ExecutionSavingTests(TestCase):
         self.assertIsNone(execution.sample)
         self.assertLess(abs(execution.created - time.time()), 1)
         self.assertEqual(str(execution), "run-code (sample)")
+
+
+
+class ExecutionQuerysetViewableByTests(TestCase):
+
+    def test_no_user(self):
+        ex1 = mixer.blend(Execution, private=True)
+        ex2 = mixer.blend(Execution, private=True)
+        ex3 = mixer.blend(Execution, private=False)
+        ex4 = mixer.blend(Execution, private=False)
+        with self.assertNumQueries(1):
+            self.assertEqual(list(Execution.objects.all().viewable_by(None)), [ex3, ex4])
+    
+
+    def test(self):
+        user = mixer.blend(User)
+        group1 = mixer.blend(Group)
+        group2 = mixer.blend(Group)
+        group3 = mixer.blend(Group)
+        group1.users.add(user)
+        group2.users.add(user)
+        executions = [
+            mixer.blend(Execution, private=True),
+            mixer.blend(Execution, private=False), # public
+            mixer.blend(Execution, private=True), # belongs to user
+            mixer.blend(Execution, private=True, sample=mixer.blend(Sample)), # sample belongs to user
+            mixer.blend(Execution, private=True, sample=mixer.blend(Sample, collection=mixer.blend(Collection))), # sample collection belongs to user
+            mixer.blend(Execution, private=True, collection=mixer.blend(Collection)), # collection belongs to user
+            mixer.blend(Execution, private=True, sample=mixer.blend(Sample, collection=mixer.blend(Collection))), # collection belongs to group 1
+            mixer.blend(Execution, private=True, collection=mixer.blend(Collection)), # sample collection belongs to group 1
+            mixer.blend(Execution, private=True, sample=mixer.blend(Sample, collection=mixer.blend(Collection))), # collection belongs to group 2
+            mixer.blend(Execution, private=True, collection=mixer.blend(Collection)), # sample collection belongs to group 2
+            mixer.blend(Execution, private=True),
+            mixer.blend(Execution, private=True),
+            mixer.blend(Execution, private=True),
+            mixer.blend(Execution, private=True),
+            mixer.blend(Execution, private=True),
+        ]
+        executions[2].users.add(user)
+        executions[3].sample.users.add(user)
+        executions[4].sample.collection.users.add(user)
+        executions[5].collection.users.add(user)
+        executions[6].sample.collection.groups.add(group1)
+        executions[7].collection.groups.add(group1)
+        executions[8].sample.collection.groups.add(group2)
+        executions[9].collection.groups.add(group2)
+        with self.assertNumQueries(2):
+            self.assertEqual(list(Execution.objects.all().viewable_by(user)), executions[1:10])
 
 
 
@@ -60,13 +108,13 @@ class ExecutionUpstreamTests(TestCase):
     
 
     def test_can_get_upstream(self):
-        process = mixer.blend(Process, input_schema=json.dumps([
+        command = mixer.blend(Command, input_schema=json.dumps([
             {"name": "inp1", "type": "basic:json:"},
             {"name": "inp2", "type": "data:fasta:"},
             {"name": "inp3", "type": "list:data:seq"},
             {"name": "inp4"},
         ]))
-        execution = mixer.blend(Execution, process=process, input=json.dumps({
+        execution = mixer.blend(Execution, command=command, input=json.dumps({
             "inp1": 10, "inp2": 20, "inp3": [30, 40, 50], "inp4": 10
         }))
         ex1 = mixer.blend(Execution, id=10)
@@ -88,21 +136,21 @@ class ExecutionDownstreamTests(TestCase):
     def test_can_get_downstream(self):
         ex1 = mixer.blend(Execution, input=json.dumps({
             "inp1": 1, "inp2": 2, "inp3": "xxx"
-        }), process=mixer.blend(Process, input_schema=json.dumps([
+        }), command=mixer.blend(Command, input_schema=json.dumps([
             {"name": "inp1", "type": "data:fasta"},
             {"name": "inp2", "type": "data:fasta"},
             {"name": "inp3", "type": "basic:str"},
         ])))
         ex2 = mixer.blend(Execution, input=json.dumps({
             "inp1": [1, 2], "inp2": [3, 4], "inp3": "xxx"
-        }), process=mixer.blend(Process, input_schema=json.dumps([
+        }), command=mixer.blend(Command, input_schema=json.dumps([
             {"name": "inp1", "type": "list:data:fasta"},
             {"name": "inp2", "type": "list:data:fasta"},
             {"name": "inp3", "type": "basic:str"},
         ])))
         ex3 = mixer.blend(Execution, input=json.dumps({
             "inp1": [1, 2], "inp2": [3, 4], "inp3": "xxx"
-        }), process=mixer.blend(Process, input_schema=json.dumps([
+        }), command=mixer.blend(Command, input_schema=json.dumps([
             {"name": "inpx", "type": "list:data:fasta"},
             {"name": "inp2"},
             {"name": "inp3", "type": "basic:str"},

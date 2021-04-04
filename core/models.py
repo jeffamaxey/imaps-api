@@ -29,17 +29,23 @@ class User(RandomIDModel):
 
     class Meta:
         db_table = "users"
-        ordering = ["creation_time"]
+        ordering = ["created"]
 
     username = models.SlugField(max_length=30, unique=True, validators=[slug_validator])
     email = models.EmailField(max_length=200, unique=True)
     password = models.CharField(max_length=128)
     last_login = models.IntegerField(null=True, default=None)
-    creation_time = models.IntegerField(default=0)
+    created = models.IntegerField(default=time.time)
     name = models.CharField(max_length=50)
     image = models.ImageField(default="", upload_to=create_filename)
     password_reset_token = models.CharField(default="", max_length=128)
     password_reset_token_expiry = models.IntegerField(default=0)
+    company = models.CharField(max_length=100, default="")
+    department = models.CharField(max_length=100, default="")
+    location = models.CharField(max_length=100, default="")
+    lab = models.CharField(max_length=100, default="")
+    job_title = models.CharField(max_length=100, default="")
+    phone_number = models.CharField(max_length=20, default="")
 
     def __str__(self):
         return f"{self.name} ({self.username})"
@@ -56,16 +62,7 @@ class User(RandomIDModel):
             user = User.objects.get(id=token["sub"])
         except: user = None
         return user
-    
 
-    def save(self, *args, **kwargs):
-        """If the model is being saved for the first time, set the creation
-        time."""
-        
-        if not self.id:
-            self.creation_time = int(time.time())
-        super(User, self).save(*args, **kwargs)
-    
 
     def set_password(self, password):
         """"Sets the user's password, salting and hashing whatever is given
@@ -140,6 +137,23 @@ class GroupInvitation(RandomIDModel):
 
 
 
+class CollectionQuerySet(models.query.QuerySet):
+
+    def viewable_by(self, user):
+        viewable = self.filter(private=False)
+        if user:
+            viewable |= self.filter(users=user)
+            for group in user.groups.all():
+                viewable |= self.filter(groups=group)
+        return viewable.all().distinct()
+
+
+
+class CollectionManager(models.Manager):
+    _queryset_class = CollectionQuerySet
+
+
+
 class Collection(RandomIDModel):
     """A collection of samples that belong together in some sense, either as
     part of a single paper or to answer a single research question.
@@ -152,16 +166,20 @@ class Collection(RandomIDModel):
 
     class Meta:
         db_table = "collections"
-        ordering = ["-creation_time"]
+        ordering = ["-created"]
 
     name = models.CharField(max_length=50)
-    creation_time = models.IntegerField(default=time.time)
+    created = models.IntegerField(default=time.time)
     last_modified = models.IntegerField(default=time.time)
     description = models.TextField(default="", blank=True)
     private = models.BooleanField(default=True)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name="owned_collections")
     users = models.ManyToManyField(User, through="core.CollectionUserLink", related_name="collections")
     groups = models.ManyToManyField(Group, through="core.CollectionGroupLink", related_name="collections")
+
+    objects = CollectionManager()
+
+    def __str__(self):
+        return self.name
 
 
     def save(self, *args, **kwargs):
@@ -171,42 +189,6 @@ class Collection(RandomIDModel):
             self.last_modified = int(time.time())
         super(Collection, self).save(*args, **kwargs)
     
-
-    def editable_by(self, user):
-        """Determines if a user should be able to edit the collection."""
-
-        if user is None: return False
-        if self.owner == user: return True
-        if self.users.filter(id=user.id):
-            if self.collectionuserlink_set.get(user=user).can_edit: return True
-        user_groups = list(user.groups.all())
-        collection_groups = list(self.groups.all())
-        for user_group in user_groups:
-            for collection_group in collection_groups:
-                if user_group.id == collection_group.id:
-                    return self.collectiongrouplink_set.get(
-                        group=collection_group
-                    ).can_edit
-        return False
-    
-
-    def executable_by(self, user):
-        """Determines if a user should be able to edit the collection."""
-
-        if user is None: return False
-        if self.owner == user: return True
-        if self.users.filter(id=user.id):
-            if self.collectionuserlink_set.get(user=user).can_execute: return True
-        user_groups = list(user.groups.all())
-        collection_groups = list(self.groups.all())
-        for user_group in user_groups:
-            for collection_group in collection_groups:
-                if user_group == collection_group:
-                    return self.collectiongrouplink_set.get(
-                        group=collection_group
-                    ).can_execute
-        return False
-
 
 
 class CollectionUserLink(models.Model):
@@ -218,8 +200,9 @@ class CollectionUserLink(models.Model):
 
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    can_edit = models.BooleanField(default=True)
-    can_execute = models.BooleanField(default=False)
+    can_edit = models.BooleanField(default=False)
+    can_share = models.BooleanField(default=False)
+    is_owner = models.BooleanField(default=False)
 
 
 
@@ -232,8 +215,8 @@ class CollectionGroupLink(models.Model):
 
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
     group = models.ForeignKey(Group, on_delete=models.CASCADE)
-    can_edit = models.BooleanField(default=True)
-    can_execute = models.BooleanField(default=False)
+    can_edit = models.BooleanField(default=False)
+    can_share = models.BooleanField(default=False)
 
 
 
@@ -253,23 +236,49 @@ class Paper(RandomIDModel):
 
 
 
+class SampleQuerySet(models.query.QuerySet):
+
+    def viewable_by(self, user):
+        viewable = self.filter(private=False)
+        if user:
+            viewable |= self.filter(users=user)
+            viewable |= self.filter(collection__users=user)
+            for group in user.groups.all():
+                viewable |= self.filter(collection__groups=group)
+        return viewable.all().distinct()
+
+
+
+class SampleManager(models.Manager):
+    _queryset_class = SampleQuerySet
+
+
+
 class Sample(RandomIDModel):
     """A single CLIP experiment."""
 
     class Meta:
         db_table = "samples"
-        ordering = ["-creation_time"]
+        ordering = ["-created"]
     
     name = models.CharField(max_length=50)
-    creation_time = models.IntegerField(default=time.time)
+    created = models.IntegerField(default=time.time)
     last_modified = models.IntegerField(default=time.time)
+    private = models.BooleanField(default=True)
     source = models.CharField(max_length=100)
     organism = models.CharField(max_length=100)
     qc_pass = models.NullBooleanField()
     qc_message = models.CharField(max_length=100)
     pi_name = models.CharField(max_length=100)
     annotator_name = models.CharField(max_length=100)
-    collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name="samples")
+    collection = models.ForeignKey(Collection, null=True, on_delete=models.CASCADE, related_name="samples")
+    users = models.ManyToManyField(User, through="core.SampleUserLink", related_name="samples")
+
+    objects = SampleManager()
+
+    def __str__(self):
+        return self.name
+
 
     def save(self, *args, **kwargs):
         """If the model is being updated, change the last_modified time."""
@@ -280,10 +289,25 @@ class Sample(RandomIDModel):
 
 
 
-class Process(RandomIDModel):
+class SampleUserLink(models.Model):
+    """Describes the nature of the relationship between a user and
+    sample."""
 
     class Meta:
-        db_table = "processes"
+        db_table = "sample_user_links"
+
+    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    can_edit = models.BooleanField(default=False)
+    can_share = models.BooleanField(default=False)
+    is_owner = models.BooleanField(default=False)
+
+
+
+class Command(RandomIDModel):
+
+    class Meta:
+        db_table = "commands"
     
     name = models.CharField(max_length=100)
     description = models.CharField(max_length=200)
@@ -293,6 +317,24 @@ class Process(RandomIDModel):
     def __str__(self):
         return self.name
 
+
+class ExecutionQuerySet(models.query.QuerySet):
+
+    def viewable_by(self, user):
+        viewable = self.filter(private=False)
+        if user:
+            viewable |= self.filter(users=user)
+            viewable |= self.filter(sample__users=user)
+            viewable |= self.filter(collection__users=user)
+            viewable |= self.filter(sample__collection__users=user)
+            for group in user.groups.all():
+                viewable |= self.filter(collection__groups=group)
+                viewable |= self.filter(sample__collection__groups=group)
+        return viewable.all().distinct()
+
+
+class ExecutionManager(models.Manager):
+    _queryset_class = ExecutionQuerySet
 
 
 class Execution(RandomIDModel):
@@ -307,13 +349,18 @@ class Execution(RandomIDModel):
     started = models.IntegerField(blank=True, null=True)
     finished = models.IntegerField(blank=True, null=True)
     status = models.CharField(max_length=50, blank=True, null=True)
+    private = models.BooleanField(default=True)
     warning = models.CharField(max_length=300, blank=True, null=True)
     error = models.CharField(max_length=300, blank=True, null=True)
     input = models.TextField(default="{}")
     output = models.TextField(default="{}")
+    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE, related_name="created_executions")
     sample = models.ForeignKey(Sample, blank=True, null=True, on_delete=models.CASCADE, related_name="executions")
     collection = models.ForeignKey(Collection, blank=True, null=True, on_delete=models.CASCADE, related_name="executions")
-    process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name="executions")
+    command = models.ForeignKey(Command, on_delete=models.CASCADE, related_name="executions")
+    users = models.ManyToManyField(User, through="core.ExecutionUserLink", related_name="executions")
+
+    objects = ExecutionManager()
 
 
     def __str__(self):
@@ -322,7 +369,7 @@ class Execution(RandomIDModel):
 
     @property
     def parent(self):
-        """Identifies the execution that spawned this one as a subprocess, if
+        """Identifies the execution that spawned this one as a subcommand, if
         any."""
 
         possibles = Execution.objects.filter(output__contains=str(self.id))
@@ -336,7 +383,7 @@ class Execution(RandomIDModel):
     def upstream(self):
         """Identifies the executions whose products this execution consumes."""
 
-        input_schema = json.loads(self.process.input_schema)
+        input_schema = json.loads(self.command.input_schema)
         inputs = json.loads(self.input)
         ids = []
         for inp in input_schema:
@@ -353,10 +400,10 @@ class Execution(RandomIDModel):
         """Identifies the executions which consume this execution's products."""
 
         possibles = Execution.objects.filter(input__contains=f"{self.id}")
-        possibles = possibles.select_related("process")
+        possibles = possibles.select_related("command")
         confirmed_ids = set()
         for possible in possibles:
-            input_schema = json.loads(possible.process.input_schema)
+            input_schema = json.loads(possible.command.input_schema)
             inputs = json.loads(possible.input)
             for inp in input_schema:
                 if inp["name"] in inputs and "type" in inp:
@@ -370,9 +417,24 @@ class Execution(RandomIDModel):
     @property
     def components(self):
         """Identifies the executions spawned by this execution as
-        subprocesses."""
+        subcommandes."""
 
         outputs = json.loads(self.output)
         steps = outputs.get("steps", [])
         return Execution.objects.filter(id__in=steps)
 
+
+
+
+class ExecutionUserLink(models.Model):
+    """Describes the nature of the relationship between a user and
+    execution."""
+
+    class Meta:
+        db_table = "execution_user_links"
+
+    execution = models.ForeignKey(Execution, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    can_edit = models.BooleanField(default=False)
+    can_share = models.BooleanField(default=False)
+    is_owner = models.BooleanField(default=False)

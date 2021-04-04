@@ -1,3 +1,4 @@
+import json
 import graphene
 from graphene_django.types import DjangoObjectType
 from graphene.relay import Connection, ConnectionField
@@ -14,8 +15,6 @@ class UserType(DjangoObjectType):
     admin_groups = graphene.List("core.queries.GroupType")
     invitations = graphene.List("core.queries.GroupInvitationType")
     collections = graphene.List("core.queries.CollectionType")
-    owned_collections = graphene.List("core.queries.CollectionType")
-    all_collections = graphene.List("core.queries.CollectionType")
 
     def resolve_last_login(self, info, **kwargs):
         return None if "restricted" in self.__dict__ and self.restricted else self.last_login
@@ -37,22 +36,7 @@ class UserType(DjangoObjectType):
     
 
     def resolve_collections(self, info, **kwargs):
-        if "restricted" in self.__dict__ and self.restricted:
-            return self.collections.filter(private=False)
-        return self.collections.all()
-    
-
-    def resolve_owned_collections(self, info, **kwargs):
-        if "restricted" in self.__dict__ and self.restricted:
-            return self.owned_collections.filter(private=False)
-        return self.owned_collections.all()
-    
-
-    def resolve_all_collections(self, info, **kwargs):
-        if "restricted" in self.__dict__ and self.restricted:
-            return list(self.owned_collections.filter(private=False)) + \
-                list(self.collections.filter(private=False))
-        return list(self.owned_collections.all()) + list(self.collections.all())
+        return self.collections.filter(private=False)
 
 
 
@@ -119,32 +103,32 @@ class CollectionType(DjangoObjectType):
         model = Collection
     
     id = graphene.ID()
-    can_edit = graphene.Boolean()
-    can_execute = graphene.Boolean()
+    owners = graphene.List("core.queries.UserType")
     papers = graphene.List("core.queries.PaperType")
     samples = ConnectionField("core.queries.SampleConnection", offset=graphene.Int())
     sample_count = graphene.Int()
-
-    def resolve_can_edit(self, info, **kwargs):
-        return self.editable_by(info.context.user)
-    
-
-    def resolve_can_execute(self, info, **kwargs):
-        return self.executable_by(info.context.user)
-
+    executions = graphene.List("core.queries.ExecutionType")
 
     def resolve_papers(self, info, **kwargs):
         return self.papers.all()
     
+    
+    def resolve_owners(self, info, **kwargs):
+        return self.users.filter(collectionuserlink__is_owner=True)
+
 
     def resolve_samples(self, info, **kwargs):
-        samples = self.samples.all()
+        samples = self.samples.all().viewable_by(info.context.user)
         if "offset" in kwargs: samples = samples[kwargs["offset"]:]
         return samples
     
 
     def resolve_sample_count(self, info, **kwargs):
-        return self.samples.count()
+        return self.samples.all().viewable_by(info.context.user).count()
+
+
+    def resolve_executions(self, info, **kwargs):
+        return self.executions.all().viewable_by(info.context.user)
 
 
 
@@ -170,6 +154,16 @@ class SampleType(DjangoObjectType):
         model = Sample
     
     id = graphene.ID()
+    owners = graphene.List("core.queries.UserType")
+    executions = graphene.List("core.queries.ExecutionType")
+
+
+    def resolve_owners(self, info, **kwargs):
+        return self.users.filter(sampleuserlink__is_owner=True)
+
+
+    def resolve_executions(self, info, **kwargs):
+        return self.executions.all().viewable_by(info.context.user)
 
 
 
@@ -177,3 +171,42 @@ class SampleConnection(Connection):
 
     class Meta:
         node = SampleType
+
+
+
+class CommandType(DjangoObjectType):
+    
+    class Meta:
+        model = Command
+    
+    id = graphene.ID()
+
+
+
+class ExecutionType(DjangoObjectType):
+    
+    class Meta:
+        model = Execution
+    
+    id = graphene.ID()
+    command = graphene.Field("core.queries.CommandType")
+    owners = graphene.List("core.queries.UserType")
+    parent = graphene.Field("core.queries.ExecutionType")
+    upstream_executions = graphene.List("core.queries.ExecutionType")
+    downstream_executions = graphene.List("core.queries.ExecutionType")
+    component_executions = graphene.List("core.queries.ExecutionType")
+
+    def resolve_owners(self, info, **kwargs):
+        return self.users.filter(executionuserlink__is_owner=True)
+
+
+    def resolve_upstream_executions(self, info, **kwargs):
+        return self.upstream.viewable_by(info.context.user)
+    
+
+    def resolve_downstream_executions(self, info, **kwargs):
+        return self.downstream.viewable_by(info.context.user)
+    
+
+    def resolve_component_executions(self, info, **kwargs):
+        return self.components.viewable_by(info.context.user)

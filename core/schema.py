@@ -10,9 +10,11 @@ class Query(graphene.ObjectType):
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
-    collection_count = graphene.Int()
-    collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
+    public_collection_count = graphene.Int()
+    public_collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
+    user_collections = graphene.List("core.queries.CollectionType")
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
+    execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
 
 
     def resolve_access_token(self, info, **kwargs):
@@ -50,39 +52,38 @@ class Query(graphene.ObjectType):
     
 
     def resolve_collection(self, info, **kwargs):
-        collections = Collection.objects.filter(private=False)
-        if info.context.user:
-            collections = collections | Collection.objects.filter(owner=info.context.user)
-            collections = collections | info.context.user.collections.all()
-            for group in info.context.user.groups.all():
-                collections = collections | group.collections.all()
+        collections = Collection.objects.all().viewable_by(info.context.user)
         collection = collections.filter(id=kwargs["id"]).first()
         if collection: return collection
         raise GraphQLError('{"collection": "Does not exist"}')
 
 
-    def resolve_collection_count(self, info, **kwargs):
+    def resolve_public_collection_count(self, info, **kwargs):
         return Collection.objects.filter(private=False).count()
+    
+
+    def resolve_user_collections(self, info, **kwargs):
+        return Collection.objects.all().viewable_by(info.context.user)
 
 
-    def resolve_collections(self, info, **kwargs):
+    def resolve_public_collections(self, info, **kwargs):
         collections = Collection.objects.filter(private=False)
         if "offset" in kwargs: collections = collections[kwargs["offset"]:]
         return collections
     
 
     def resolve_sample(self, info, **kwargs):
-        collections = Collection.objects.filter(private=False)
-        if info.context.user:
-            collections = collections | Collection.objects.filter(owner=info.context.user)
-            collections = collections | info.context.user.collections.all()
-            for group in info.context.user.groups.all():
-                collections = collections | group.collections.all()
-        sample = Sample.objects.filter(
-            id=kwargs["id"], collection__in=collections
-        ).first()
+        samples = Sample.objects.all().viewable_by(info.context.user)
+        sample = samples.filter(id=kwargs["id"]).first()
         if sample: return sample
         raise GraphQLError('{"sample": "Does not exist"}')
+    
+
+    def resolve_execution(self, info, **kwargs):
+        executions = Execution.objects.all().viewable_by(info.context.user)
+        execution = executions.filter(id=kwargs["id"]).first()
+        if execution: return execution
+        raise GraphQLError('{"execution": "Does not exist"}')
 
 
 

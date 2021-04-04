@@ -18,5 +18,7 @@ peka/create_*.py
 dump.txt
 summarise.py
 load.py
+build.py
+pull.py
 *.sql.gz
 json/*

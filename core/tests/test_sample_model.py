@@ -12,26 +12,26 @@ class SampleSavingTests(TestCase):
             qc_message="very good", pi_name="Dr Smith", annotator_name="Jo",
             collection=collection
         )
-        self.assertLess(abs(sample.creation_time - time.time()), 1)
+        self.assertLess(abs(sample.created - time.time()), 1)
         self.assertLess(abs(sample.last_modified - time.time()), 1)
         self.assertFalse(sample.executions.all())
     
 
     def test_can_update_sample(self):
-        sample = mixer.blend(Sample, creation_time=0, last_modified=0)
+        sample = mixer.blend(Sample, created=0, last_modified=0)
         sample.description = "X"
         sample.save()
         self.assertLess(abs(sample.last_modified - time.time()), 1)
-        self.assertGreater(abs(sample.creation_time - time.time()), 1)
+        self.assertGreater(abs(sample.created - time.time()), 1)
 
 
 
 class SampleOrderingTests(TestCase):
 
-    def test_samples_ordered_by_creation_time(self):
-        sample1 = mixer.blend(Sample, creation_time=2)
-        sample2 = mixer.blend(Sample, creation_time=1)
-        sample3 = mixer.blend(Sample, creation_time=4)
+    def test_samples_ordered_by_created(self):
+        sample1 = mixer.blend(Sample, created=2)
+        sample2 = mixer.blend(Sample, created=1)
+        sample3 = mixer.blend(Sample, created=4)
         self.assertEqual(
             list(Sample.objects.all()), [sample3, sample1, sample2]
         )

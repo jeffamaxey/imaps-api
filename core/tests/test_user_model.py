@@ -18,20 +18,19 @@ class UserCreationTests(TestCase):
         self.assertIsNone(user.last_login)
         self.assertEqual(str(user), "John Locke (locke)")
         self.assertEqual(user.password, "")
-        self.assertLess(abs(time.time() - user.creation_time), 1)
+        self.assertLess(abs(time.time() - user.created), 1)
         self.assertFalse(user.groups.count())
         self.assertFalse(user.admin_groups.count())
         self.assertFalse(user.group_invitations.count())
         self.assertFalse(user.collections.count())
-        self.assertFalse(user.owned_collections.count())
         self.assertNotEqual(user.id, 1)
     
 
-    def test_editing_user_doesnt_change_creation_time(self):
-        user = mixer.blend(User, username="locke", creation_time=10000)
+    def test_editing_user_doesnt_change_created(self):
+        user = mixer.blend(User, username="locke", created=10000)
         user.name = "Hurley"
         user.save()
-        self.assertEqual(user.creation_time, 10000)
+        self.assertEqual(user.created, 10000)
     
 
     def test_user_uniqueness(self):
@@ -49,7 +48,7 @@ class UserCreationTests(TestCase):
 
 class UserOrderingTests(TestCase):
 
-    def test_users_ordered_by_creation_time(self):
+    def test_users_ordered_by_created(self):
         user1 = mixer.blend(User, id=2)
         user2 = mixer.blend(User, id=1)
         user3 = mixer.blend(User, id=3)
@@ -148,27 +147,3 @@ class UserFromTokenTests(TestCase):
             "sub": self.user.id, "expires": 1000000000000, "iat": 100
         }, settings.SECRET_KEY, algorithm="HS256").decode()
         self.assertEqual(User.from_token(token), self.user)
-
-
-
-class UserCollectionsTests(TestCase):
-    
-    def test_users_can_own_collections(self):
-        user = mixer.blend(User)
-        collection1 = mixer.blend(Collection)
-        user.owned_collections.add(collection1)
-        self.assertEqual(list(user.owned_collections.all()), [collection1])
-        self.assertEqual(list(user.collections.all()), [])
-        self.assertEqual(collection1.owner, user)
-    
-
-    def test_users_can_have_access_to_collections(self):
-        user = mixer.blend(User)
-        collection1 = mixer.blend(Collection)
-        user.collections.add(collection1)
-        self.assertEqual(list(user.owned_collections.all()), [])
-        self.assertEqual(list(user.collections.all()), [collection1])
-        self.assertTrue(user.collectionuserlink_set.get(collection=collection1).can_edit)
-        self.assertFalse(user.collectionuserlink_set.get(collection=collection1).can_execute)
-        self.assertFalse(user.collections.filter(collectionuserlink__can_edit=False))
-        self.assertFalse(user.collections.filter(collectionuserlink__can_execute=True))
