@@ -4,36 +4,45 @@ from django.test import TestCase
 from django.conf import settings
 from core.middleware import *
 
-class ApiAuthMiddlewareTests(TestCase):
+class AuthMiddlewareTests(TestCase):
 
     def setUp(self):
-        self.request = Mock(path="/")
+        self.request = Mock(path="/", refresh_token=None)
+        self.response = Mock()
         self.callback = MagicMock()
+        self.callback.return_value = self.response
         self.mw = AuthenticationMiddleware(self.callback)
         self.user = mixer.blend(User, username="john")
     
 
     @patch("core.middleware.User.from_token")
-    def test_middleware_uses_access_token_to_assign_user(self, from_token):
+    def test_middleware_assigns_from_output_to_request(self, mock_from):
         self.request.META = {"HTTP_AUTHORIZATION": "Bearer 12345"}
         response = self.mw(self.request)
-        from_token.assert_called_with("12345")
-        self.request.user = from_token.return_value
-
-
-    def test_middleware_does_not_set_cookie_if_no_refresh_token_added(self):
-        self.request.refresh_token = None
-        response = self.mw(self.request)
-        self.assertFalse(response.set_cookie.called)
+        mock_from.assert_called_with("12345")
+        self.assertEqual(self.request.user, mock_from.return_value)
     
 
-    def test_middleware_does_set_cookie_if_refresh_token_added(self):
-        self.request.refresh_token = "abc"
+    @patch("core.middleware.User.from_token")
+    def test_middleware_does_nothing_if_no_refresh_token_flag(self, mock_from):
         response = self.mw(self.request)
-        response.set_cookie.assert_called_with("refresh_token", value="abc", httponly=True)
+        self.assertFalse(self.response.set_cookie.called)
+        self.assertFalse(self.response.delete_cookie.called)
     
 
-    def test_middleware_deletes_cookie_if_refresh_token_false(self):
+    @patch("core.middleware.User.from_token")
+    def test_middleware_deletes_refresh_token_if_false_flag(self, mock_from):
         self.request.refresh_token = False
         response = self.mw(self.request)
-        response.delete_cookie.assert_called_with("refresh_token")
+        self.assertFalse(self.response.set_cookie.called)
+        self.response.delete_cookie.assert_called_with("refresh_token")
+    
+
+    @patch("core.middleware.User.from_token")
+    def test_middleware_can_set_cookie(self, mock_from):
+        self.request.refresh_token = "ABCDEFGH"
+        response = self.mw(self.request)
+        self.assertFalse(self.response.delete_cookie.called)
+        self.response.set_cookie.assert_called_with(
+            "refresh_token", value="ABCDEFGH", httponly=True, max_age=31536000
+        )

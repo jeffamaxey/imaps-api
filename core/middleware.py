@@ -28,5 +28,8 @@ class AuthenticationMiddleware:
         if refresh_token is False:
             response.delete_cookie("refresh_token")
         elif refresh_token:
-            response.set_cookie("refresh_token", value=refresh_token, httponly=True)
+            response.set_cookie(
+                "refresh_token", value=refresh_token, httponly=True,
+                max_age=settings.SESSION_LENGTH_DAYS * 86400
+            )
         return response

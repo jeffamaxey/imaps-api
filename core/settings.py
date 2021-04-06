@@ -45,5 +45,7 @@ ID_DIGITS_LENGTH = 18
 
 GRAPHENE = {"SCHEMA": "core.schema.schema"}
 
+SESSION_LENGTH_DAYS = 365
+
 
 
