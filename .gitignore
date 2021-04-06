@@ -22,3 +22,5 @@ build.py
 pull.py
 *.sql.gz
 json/*
+emails.dat
+trim.py

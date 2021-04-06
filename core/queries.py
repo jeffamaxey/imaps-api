@@ -154,12 +154,7 @@ class SampleType(DjangoObjectType):
         model = Sample
     
     id = graphene.ID()
-    owners = graphene.List("core.queries.UserType")
     executions = graphene.List("core.queries.ExecutionType")
-
-
-    def resolve_owners(self, info, **kwargs):
-        return self.users.filter(sampleuserlink__is_owner=True)
 
 
     def resolve_executions(self, info, **kwargs):

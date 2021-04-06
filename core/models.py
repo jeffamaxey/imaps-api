@@ -168,7 +168,7 @@ class Collection(RandomIDModel):
         db_table = "collections"
         ordering = ["-created"]
 
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=200)
     created = models.IntegerField(default=time.time)
     last_modified = models.IntegerField(default=time.time)
     description = models.TextField(default="", blank=True)
@@ -261,7 +261,7 @@ class Sample(RandomIDModel):
         db_table = "samples"
         ordering = ["-created"]
     
-    name = models.CharField(max_length=50)
+    name = models.CharField(max_length=250)
     created = models.IntegerField(default=time.time)
     last_modified = models.IntegerField(default=time.time)
     private = models.BooleanField(default=True)
@@ -300,7 +300,6 @@ class SampleUserLink(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     can_edit = models.BooleanField(default=False)
     can_share = models.BooleanField(default=False)
-    is_owner = models.BooleanField(default=False)
 
 
 
@@ -310,7 +309,7 @@ class Command(RandomIDModel):
         db_table = "commands"
     
     name = models.CharField(max_length=100)
-    description = models.CharField(max_length=200)
+    description = models.TextField()
     input_schema = models.TextField(default="[]")
     output_schema = models.TextField(default="[]")
 
@@ -343,21 +342,21 @@ class Execution(RandomIDModel):
         db_table = "executions"
         ordering = ["created"]
     
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=250)
     created = models.IntegerField(default=time.time)
     scheduled = models.IntegerField(blank=True, null=True)
     started = models.IntegerField(blank=True, null=True)
     finished = models.IntegerField(blank=True, null=True)
     status = models.CharField(max_length=50, blank=True, null=True)
     private = models.BooleanField(default=True)
-    warning = models.CharField(max_length=300, blank=True, null=True)
-    error = models.CharField(max_length=300, blank=True, null=True)
+    warning = models.TextField(blank=True, null=True)
+    error = models.TextField(blank=True, null=True)
     input = models.TextField(default="{}")
     output = models.TextField(default="{}")
-    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.CASCADE, related_name="created_executions")
-    sample = models.ForeignKey(Sample, blank=True, null=True, on_delete=models.CASCADE, related_name="executions")
-    collection = models.ForeignKey(Collection, blank=True, null=True, on_delete=models.CASCADE, related_name="executions")
-    command = models.ForeignKey(Command, on_delete=models.CASCADE, related_name="executions")
+    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL, related_name="created_executions")
+    sample = models.ForeignKey(Sample, blank=True, null=True, on_delete=models.SET_NULL, related_name="executions")
+    collection = models.ForeignKey(Collection, blank=True, null=True, on_delete=models.SET_NULL, related_name="executions")
+    command = models.ForeignKey(Command, null=True, on_delete=models.SET_NULL, related_name="executions")
     users = models.ManyToManyField(User, through="core.ExecutionUserLink", related_name="executions")
 
     objects = ExecutionManager()
