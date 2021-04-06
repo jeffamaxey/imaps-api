@@ -18,19 +18,22 @@ class UserCreationTests(TestCase):
         self.assertIsNone(user.last_login)
         self.assertEqual(str(user), "John Locke (locke)")
         self.assertEqual(user.password, "")
+        self.assertEqual(user.password_reset_token, "")
+        self.assertEqual(user.password_reset_token_expiry, 0)
         self.assertLess(abs(time.time() - user.created), 1)
+        self.assertEqual(user.company, "")
+        self.assertEqual(user.department, "")
+        self.assertEqual(user.location, "")
+        self.assertEqual(user.lab, "")
+        self.assertEqual(user.job_title, "")
+        self.assertEqual(user.phone_number, "")
         self.assertFalse(user.groups.count())
         self.assertFalse(user.admin_groups.count())
         self.assertFalse(user.group_invitations.count())
         self.assertFalse(user.collections.count())
+        self.assertFalse(user.samples.count())
+        self.assertFalse(user.executions.count())
         self.assertNotEqual(user.id, 1)
-    
-
-    def test_editing_user_doesnt_change_created(self):
-        user = mixer.blend(User, username="locke", created=10000)
-        user.name = "Hurley"
-        user.save()
-        self.assertEqual(user.created, 10000)
     
 
     def test_user_uniqueness(self):

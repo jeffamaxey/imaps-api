@@ -34,7 +34,7 @@ class ExecutionQuerysetViewableByTests(TestCase):
             self.assertEqual(list(Execution.objects.all().viewable_by(None)), [ex3, ex4])
     
 
-    def test(self):
+    def test_user_access(self):
         user = mixer.blend(User)
         group1 = mixer.blend(Group)
         group2 = mixer.blend(Group)

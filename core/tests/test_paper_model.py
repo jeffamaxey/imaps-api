@@ -18,13 +18,3 @@ class PaperOrderingTests(TestCase):
         paper2 = mixer.blend(Paper, year=1)
         paper3 = mixer.blend(Paper, year=4)
         self.assertEqual(list(Paper.objects.all()), [paper2, paper1, paper3])
-
-
-
-class PaperCollectionsTests(TestCase):
-    
-    def test_paper_collections(self):
-        paper = mixer.blend(Paper)
-        collection1 = mixer.blend(Collection)
-        paper.collections.add(collection1)
-        self.assertEqual(list(paper.collections.all()), [collection1])

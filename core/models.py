@@ -117,24 +117,15 @@ class GroupInvitation(RandomIDModel):
 
     class Meta:
         db_table = "group_invitations"
-        ordering = ["creation_time"]
+        ordering = ["created"]
 
     group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="group_invitations")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="group_invitations")
-    creation_time = models.IntegerField(default=0)
+    created = models.IntegerField(default=time.time)
 
     def __str__(self):
         return f"{self.group.name} invitation to {self.user.name}"
     
-
-    def save(self, *args, **kwargs):
-        """If the model is being saved for the first time, set the creation
-        time."""
-        
-        if not self.id:
-            self.creation_time = int(time.time())
-        super(GroupInvitation, self).save(*args, **kwargs)
-
 
 
 class CollectionQuerySet(models.query.QuerySet):
@@ -158,11 +149,8 @@ class Collection(RandomIDModel):
     """A collection of samples that belong together in some sense, either as
     part of a single paper or to answer a single research question.
     
-    It is either private or not, which determies whether the public can view it.
-    
-    It has a single owner, which is a user with full permissions. It can be
-    associated with multiple other users, who will have varying permissions, as
-    well as multiple groups, with varying permissions."""
+    It is either private or not, which determies whether the public can view
+    it."""
 
     class Meta:
         db_table = "collections"
