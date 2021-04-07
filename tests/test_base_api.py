@@ -56,8 +56,8 @@ class AccessTokenTests(BaseApiTests):
         cookie = self.client.session.cookies._cookies["localhost.local"]["/"]["refresh_token"]
         self.assertIn("HttpOnly", cookie._rest)
         self.assertLess(time.time() - cookie.expires - 31536000, 10)
-        access_token = cookie.value
-        algorithm, payload, secret = access_token.split(".")
+        refresh_token = cookie.value
+        algorithm, payload, secret = refresh_token.split(".")
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
