@@ -10,8 +10,6 @@ class Query(graphene.ObjectType):
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
-    public_collection_count = graphene.Int()
-    public_collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
     user_collections = graphene.List("core.queries.CollectionType")
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
     execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
@@ -31,13 +29,10 @@ class Query(graphene.ObjectType):
     def resolve_user(self, info, **kwargs):
         if "username" in kwargs:
             try:
-                user = User.objects.get(username=kwargs["username"])
-                user.restricted = True
-                return user
+                return User.objects.get(username=kwargs["username"])
             except: raise GraphQLError('{"user": "Does not exist"}')
         user = info.context.user
         if not user: raise GraphQLError('{"user": "Not authorized"}')
-        user.restricted = False
         return info.context.user
     
 

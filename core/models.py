@@ -45,7 +45,6 @@ class User(RandomIDModel):
     location = models.CharField(max_length=100, default="")
     lab = models.CharField(max_length=100, default="")
     job_title = models.CharField(max_length=100, default="")
-    phone_number = models.CharField(max_length=20, default="")
 
     def __str__(self):
         return f"{self.name} ({self.username})"

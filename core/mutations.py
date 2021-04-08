@@ -26,6 +26,7 @@ class SignupMutation(graphene.Mutation):
                 "HTTP_ORIGIN", "https://imaps.goodwright.org"
             ))
             info.context.refresh_token = form.instance.make_refresh_jwt()
+            info.context.user = form.instance
             return SignupMutation(
                 access_token=form.instance.make_access_jwt(),
                 user=form.instance
@@ -48,6 +49,7 @@ class LoginMutation(graphene.Mutation):
         if user:
             if check_password(kwargs["password"], user.password):
                 info.context.refresh_token = user.make_refresh_jwt()
+                info.context.user = user
                 user.last_login = time.time()
                 user.save()
                 return LoginMutation(access_token=user.make_access_jwt(), user=user)

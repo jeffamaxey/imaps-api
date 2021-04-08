@@ -12,6 +12,11 @@ class SettingsApiTests(FunctionalTest):
         )
         self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
         self.user.set_password("livetogetha")
+        self.group = Group.objects.create(
+            id=1, name="Adam Group", slug="adam-group", description="Adam's Group"
+        )
+        self.group.users.add(self.user)
+        self.group.users.add(User.objects.create(username="user2", email="user2@gmail.com"))
 
 
 
@@ -213,3 +218,54 @@ class UserDeletionTests(SettingsApiTests):
         )
         self.assertEqual(User.objects.count(), users_at_start)
 
+
+
+class UserLeavingGroupTests(SettingsApiTests):
+
+    def test_can_leave_group(self):
+        # Leave group
+        result = self.client.execute(
+            """mutation { leaveGroup(id: "1") { 
+                group { users { username } }
+                user { username email name }
+             } }"""
+        )
+
+        # User is no longer in group
+        self.assertEqual(result["data"]["leaveGroup"]["group"], {"users": [
+            {"username": "user2"}
+        ]})
+        self.assertEqual(self.user.groups.count(), 0)
+        self.assertEqual(result["data"]["leaveGroup"]["user"], {
+            "username": "adam", "email": "adam@crick.ac.uk", "name": "Adam A"
+        })
+    
+
+    def test_cant_leave_group_if_not_appropriate(self):
+        Group.objects.create(id=2, slug="new-group")
+        # Not in group
+        self.check_query_error(
+            """mutation { leaveGroup(id: "2") { group { name } } }""",
+            message="Not in group"
+        )
+
+        # Group doesn't exist
+        self.check_query_error(
+            """mutation { leaveGroup(id: "20") { group { name } } }""",
+            message="Does not exist"
+        )
+
+        # Would be no admins
+        self.group.admins.add(self.user)
+        self.check_query_error(
+            """mutation { leaveGroup(id: "1") { group { name } } }""",
+            message="no admins"
+        )
+
+
+    def test_cant_leave_group_when_not_logged_in(self):
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { leaveGroup(id: "1") { group { name } } }""",
+            message="Not authorized"
+        )

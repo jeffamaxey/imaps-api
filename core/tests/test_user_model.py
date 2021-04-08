@@ -26,7 +26,6 @@ class UserCreationTests(TestCase):
         self.assertEqual(user.location, "")
         self.assertEqual(user.lab, "")
         self.assertEqual(user.job_title, "")
-        self.assertEqual(user.phone_number, "")
         self.assertFalse(user.groups.count())
         self.assertFalse(user.admin_groups.count())
         self.assertFalse(user.group_invitations.count())

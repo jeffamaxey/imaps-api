@@ -10,7 +10,6 @@ class BaseApiTests(FunctionalTest):
             username="adam", email="adam@crick.ac.uk", name="Adam A",
             last_login=1617712117, created=1607712117, company="The Crick",
             department="MolBio", lab="The Smith Lab", job_title="Researcher",
-            phone_number="+441234567890"
         )
         User.objects.create(
             username="sally", email="sally@crick.ac.uk", name="Sally S"
@@ -100,13 +99,13 @@ class LoggedInUserAccess(BaseApiTests):
         self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
         result = self.client.execute("""{ user {
             username email name lastLogin created jobTitle lab company
-            department phoneNumber
+            department groupInvitations { group { name } }
         } }""")
         self.assertEqual(result["data"]["user"], {
             "username": "adam", "email": "adam@crick.ac.uk", "name": "Adam A",
             "lastLogin": 1617712117, "created": 1607712117, "jobTitle": "Researcher",
             "lab": "The Smith Lab", "company": "The Crick", "department": "MolBio",
-            "phoneNumber": "+441234567890"
+            "groupInvitations": [{"group": {"name": "Davies Lab"}}]
         })
     
 

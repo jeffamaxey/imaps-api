@@ -12,7 +12,6 @@ class LoginApiTests(FunctionalTest):
             username="adam", email="adam@crick.ac.uk", name="Adam A",
             last_login=1617712117, created=1607712117, company="The Crick",
             department="MolBio", lab="The Smith Lab", job_title="Researcher",
-            phone_number="+441234567890"
         )
         self.user.set_password("livetogetha")
 
