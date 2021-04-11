@@ -10,9 +10,12 @@ class Query(graphene.ObjectType):
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
+    public_collection_count = graphene.Int()
+    public_collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
     user_collections = graphene.List("core.queries.CollectionType")
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
     execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
+    quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
 
 
     def resolve_access_token(self, info, **kwargs):
@@ -79,6 +82,43 @@ class Query(graphene.ObjectType):
         execution = executions.filter(id=kwargs["id"]).first()
         if execution: return execution
         raise GraphQLError('{"execution": "Does not exist"}')
+
+
+    def resolve_quick_search(self, info, **kwargs):
+        query = kwargs["query"]
+        if len(query) >= 3:
+            results = []
+            results += [{
+                "name": c.name, "kind": "Collection", "pk": c.id, "match": ""
+            } for c in Collection.objects.filter(name__contains=query).viewable_by(info.context.user)]
+            results += [{
+                "name": c.name, "kind": "Collection", "pk": c.id,
+                "match": c.description,
+                "match_loc": [c.description.find(query), c.description.find(query) + len(query)]
+            } for c in Collection.objects.filter(description__contains=query).viewable_by(info.context.user)]
+            results += [{
+                "name": s.name, "kind": "Sample", "pk": s.id, "match": ""
+            } for s in Sample.objects.filter(name__contains=query).viewable_by(info.context.user)]
+            results += [{
+                "name": s.name, "kind": "Sample", "pk": s.id,
+                "match": s.organism,
+                "match_loc": [s.organism.find(query), s.organism.find(query) + len(query)]
+            } for s in Sample.objects.filter(organism__contains=query).viewable_by(info.context.user)]
+            results += [{
+                "name": e.name, "kind": "Execution", "pk": e.id, "match": ""
+            } for e in Execution.objects.filter(name__contains=query).viewable_by(info.context.user)]
+            results += [{
+                "name": g.name, "kind": "Group", "pk": g.slug, "match": ""
+            } for g in Group.objects.filter(name__contains=query)]
+            results += [{
+                "name": g.name, "kind": "Group", "pk": g.slug,
+                "match": g.description,
+                "match_loc": [g.description.find(query), g.description.find(query) + len(query)]
+            } for g in Group.objects.filter(description__contains=query)]
+            results += [{
+                "name": u.name, "kind": "User", "pk": u.username, "match": ""
+            } for u in User.objects.filter(name__contains=query)]
+            return {"results": results}
 
 
 

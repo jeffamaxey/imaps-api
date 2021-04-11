@@ -198,3 +198,19 @@ class ExecutionType(DjangoObjectType):
 
     def resolve_component_executions(self, info, **kwargs):
         return self.components.viewable_by(info.context.user)
+
+
+
+class SearchType(graphene.ObjectType):
+
+    results = graphene.List("core.queries.ResultType")
+
+
+
+class ResultType(graphene.ObjectType):
+
+    name = graphene.String()
+    pk = graphene.ID()
+    kind = graphene.String()
+    match = graphene.String()
+    match_loc = graphene.List(graphene.Int)

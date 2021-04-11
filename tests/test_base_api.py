@@ -159,7 +159,6 @@ class LogoutTests(BaseApiTests):
 
 
 
-
 class GroupInvitationDeletingTests(BaseApiTests):
 
     def test_can_delete_invitation_as_invitee(self):
@@ -259,15 +258,75 @@ class GroupInvitationAcceptanceTests(BaseApiTests):
 
 
 
+class QuickSearchTests(BaseApiTests):
+
+    def test_need_three_characters(self):
+        result = self.client.execute("""{
+            quickSearch(query: "") { results { name } }
+        }""")
+        self.assertIsNone(result["data"]["quickSearch"])
+
+        result = self.client.execute("""{
+            quickSearch(query: "X") { results { name } }
+        }""")
+        self.assertIsNone(result["data"]["quickSearch"])
+
+        result = self.client.execute("""{
+            quickSearch(query: "XX") { results { name } }
+        }""")
+        self.assertIsNone(result["data"]["quickSearch"])
+    
+
+    def test_can_return_no_matches(self):
+        result = self.client.execute("""{
+            quickSearch(query: "XXX") { results { name } }
+        }""")
+        self.assertEqual(result["data"]["quickSearch"]["results"], [])
+    
+
+    def test_can_return_results(self):
+        Collection.objects.create(name="C_xyz_1", private=False, id=1)
+        Collection.objects.create(name="C_xy_1", private=False, id=2)
+        self.user.collections.add(Collection.objects.create(name="C_xyz_2", private=True, id=3))
+        self.user.collections.add(Collection.objects.create(name="C_xy_2", private=True, id=4))
+        Collection.objects.create(name="C_xyz_3", private=True, id=5)
+        Collection.objects.create(name="C_4", description="aaxyzbb", private=False, id=6)
+        self.user.collections.add(Collection.objects.create(name="C_5", description=".xyz", private=True, id=7))
+
+        Sample.objects.create(name="S_xyz_1", private=False, id=1)
+        Sample.objects.create(name="S_xy_1", private=False, id=2)
+        Sample.objects.create(name="S_xy_2", organism="Homo xyz", private=False, id=3)
+        Sample.objects.create(name="S_xy_3", organism="Homo", private=False, id=4)
+        Sample.objects.create(name="S_xyz_4", private=True, id=5, collection=self.user.collections.first())
+
+        Execution.objects.create(name="E_xyz_1", private=False, id=1)
+        Execution.objects.create(name="E_xy_1", private=False, id=2)
+        Execution.objects.create(name="E_xyz_4", private=True, id=5, collection=self.user.collections.first())
+
+        Group.objects.create(name="The 123 Group", description="We do xyz", slug="123")
+        Group.objects.create(name="The xyz Group", slug="xyz")
+        Group.objects.create(name="The abc Group", slug="abc")
+
+        User.objects.create(name="Dr xyz", email="xyz@gmail.com", username="xyz")
+        User.objects.create(name="Dr 123", email="123@gmail.com", username="123")
 
 
+        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
+        result = self.client.execute("""{
+            quickSearch(query: "xyz") { results { name kind pk match matchLoc } }
+        }""")
 
-"""accesstoken
-
-user (no username)
-
-logout
-
-acceptinvitation
-
-declineinvitation"""
+        self.assertEqual(result["data"]["quickSearch"]["results"], [
+            {"name": "C_xyz_1", "kind": "Collection", "pk": "1", "match": "", "matchLoc": None},
+            {"name": "C_xyz_2", "kind": "Collection", "pk": "3", "match": "", "matchLoc": None},
+            {"name": "C_4", "kind": "Collection", "pk": "6", "match": "aaxyzbb", "matchLoc": [2, 5]},
+            {"name": "C_5", "kind": "Collection", "pk": "7", "match": ".xyz", "matchLoc": [1, 4]},
+            {"name": "S_xyz_1", "kind": "Sample", "pk": "1", "match": "", "matchLoc": None},
+            {"name": "S_xyz_4", "kind": "Sample", "pk": "5", "match": "", "matchLoc": None},
+            {"name": "S_xy_2", "kind": "Sample", "pk": "3", "match": "Homo xyz", "matchLoc": [5, 8]},
+            {"name": "E_xyz_1", "kind": "Execution", "pk": "1", "match": "", "matchLoc": None},
+            {"name": "E_xyz_4", "kind": "Execution", "pk": "5", "match": "", "matchLoc": None},
+            {"name": "The xyz Group", "kind": "Group", "pk": "xyz", "match": "", "matchLoc": None},
+            {"name": "The 123 Group", "kind": "Group", "pk": "123", "match": "We do xyz", "matchLoc": [6, 9]},
+            {"name": "Dr xyz", "kind": "User", "pk": "xyz", "match": "", "matchLoc": None},
+        ])
