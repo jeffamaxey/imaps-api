@@ -90,34 +90,34 @@ class Query(graphene.ObjectType):
             results = []
             results += [{
                 "name": c.name, "kind": "Collection", "pk": c.id, "match": ""
-            } for c in Collection.objects.filter(name__contains=query).viewable_by(info.context.user)]
+            } for c in Collection.objects.filter(name__icontains=query).viewable_by(info.context.user)]
             results += [{
                 "name": c.name, "kind": "Collection", "pk": c.id,
                 "match": c.description,
-                "match_loc": [c.description.find(query), c.description.find(query) + len(query)]
-            } for c in Collection.objects.filter(description__contains=query).viewable_by(info.context.user)]
+                "match_loc": [c.description.lower().find(query.lower()), c.description.lower().find(query.lower()) + len(query)]
+            } for c in Collection.objects.filter(description__icontains=query).viewable_by(info.context.user)]
             results += [{
                 "name": s.name, "kind": "Sample", "pk": s.id, "match": ""
-            } for s in Sample.objects.filter(name__contains=query).viewable_by(info.context.user)]
+            } for s in Sample.objects.filter(name__icontains=query).viewable_by(info.context.user)]
             results += [{
                 "name": s.name, "kind": "Sample", "pk": s.id,
                 "match": s.organism,
-                "match_loc": [s.organism.find(query), s.organism.find(query) + len(query)]
-            } for s in Sample.objects.filter(organism__contains=query).viewable_by(info.context.user)]
+                "match_loc": [s.organism.lower().find(query.lower()), s.organism.lower().find(query.lower()) + len(query)]
+            } for s in Sample.objects.filter(organism__icontains=query).viewable_by(info.context.user)]
             results += [{
                 "name": e.name, "kind": "Execution", "pk": e.id, "match": ""
-            } for e in Execution.objects.filter(name__contains=query).viewable_by(info.context.user)]
+            } for e in Execution.objects.filter(name__icontains=query).viewable_by(info.context.user)]
             results += [{
                 "name": g.name, "kind": "Group", "pk": g.slug, "match": ""
-            } for g in Group.objects.filter(name__contains=query)]
+            } for g in Group.objects.filter(name__icontains=query)]
             results += [{
                 "name": g.name, "kind": "Group", "pk": g.slug,
                 "match": g.description,
-                "match_loc": [g.description.find(query), g.description.find(query) + len(query)]
-            } for g in Group.objects.filter(description__contains=query)]
+                "match_loc": [g.description.lower().find(query.lower()), g.description.lower().find(query.lower()) + len(query)]
+            } for g in Group.objects.filter(description__icontains=query)]
             results += [{
                 "name": u.name, "kind": "User", "pk": u.username, "match": ""
-            } for u in User.objects.filter(name__contains=query)]
+            } for u in User.objects.filter(name__icontains=query)]
             return {"results": results}
 
 

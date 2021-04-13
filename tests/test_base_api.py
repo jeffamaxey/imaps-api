@@ -290,7 +290,7 @@ class QuickSearchTests(BaseApiTests):
         self.user.collections.add(Collection.objects.create(name="C_xyz_2", private=True, id=3))
         self.user.collections.add(Collection.objects.create(name="C_xy_2", private=True, id=4))
         Collection.objects.create(name="C_xyz_3", private=True, id=5)
-        Collection.objects.create(name="C_4", description="aaxyzbb", private=False, id=6)
+        Collection.objects.create(name="C_4", description="aaxYzbb", private=False, id=6)
         self.user.collections.add(Collection.objects.create(name="C_5", description=".xyz", private=True, id=7))
 
         Sample.objects.create(name="S_xyz_1", private=False, id=1)
@@ -319,7 +319,7 @@ class QuickSearchTests(BaseApiTests):
         self.assertEqual(result["data"]["quickSearch"]["results"], [
             {"name": "C_xyz_1", "kind": "Collection", "pk": "1", "match": "", "matchLoc": None},
             {"name": "C_xyz_2", "kind": "Collection", "pk": "3", "match": "", "matchLoc": None},
-            {"name": "C_4", "kind": "Collection", "pk": "6", "match": "aaxyzbb", "matchLoc": [2, 5]},
+            {"name": "C_4", "kind": "Collection", "pk": "6", "match": "aaxYzbb", "matchLoc": [2, 5]},
             {"name": "C_5", "kind": "Collection", "pk": "7", "match": ".xyz", "matchLoc": [1, 4]},
             {"name": "S_xyz_1", "kind": "Sample", "pk": "1", "match": "", "matchLoc": None},
             {"name": "S_xyz_4", "kind": "Sample", "pk": "5", "match": "", "matchLoc": None},
