@@ -98,8 +98,7 @@ class CollectionType(DjangoObjectType):
     id = graphene.ID()
     owners = graphene.List("core.queries.UserType")
     papers = graphene.List("core.queries.PaperType")
-    samples = ConnectionField("core.queries.SampleConnection", offset=graphene.Int())
-    sample_count = graphene.Int()
+    samples = graphene.List("core.queries.SampleType")
     executions = graphene.List("core.queries.ExecutionType")
 
     def resolve_papers(self, info, **kwargs):
@@ -111,13 +110,7 @@ class CollectionType(DjangoObjectType):
 
 
     def resolve_samples(self, info, **kwargs):
-        samples = self.samples.all().viewable_by(info.context.user)
-        if "offset" in kwargs: samples = samples[kwargs["offset"]:]
-        return samples
-    
-
-    def resolve_sample_count(self, info, **kwargs):
-        return self.samples.all().viewable_by(info.context.user).count()
+        return self.samples.all().viewable_by(info.context.user)
 
 
     def resolve_executions(self, info, **kwargs):
