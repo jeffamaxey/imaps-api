@@ -189,7 +189,7 @@ class Query(graphene.ObjectType):
     def resolve_search_executions(self, info, **kwargs):
         executions = Execution.objects.filter(
             name__icontains=kwargs["query"].lower()
-        ).viewable_by(info.context.user)
+        ).select_related("command").prefetch_related("users").viewable_by(info.context.user)
         if kwargs.get("command"):
             executions = executions.filter(command__name__icontains=kwargs["command"])
         if kwargs.get("owner"):
