@@ -122,6 +122,12 @@ class CollectionConnection(Connection):
 
     class Meta:
         node = CollectionType
+    
+    count = graphene.Int()
+
+    def resolve_count(self, info, **kwargs):
+        print(self.iterable)
+        return len(self.iterable)
 
 
 
@@ -152,6 +158,11 @@ class SampleConnection(Connection):
 
     class Meta:
         node = SampleType
+    
+    count = graphene.Int()
+
+    def resolve_count(self, info, **kwargs):
+        return len(self.iterable)
 
 
 
@@ -191,6 +202,18 @@ class ExecutionType(DjangoObjectType):
 
     def resolve_component_executions(self, info, **kwargs):
         return self.components.viewable_by(info.context.user)
+
+
+
+class ExecutionConnection(Connection):
+
+    class Meta:
+        node = ExecutionType
+    
+    count = graphene.Int()
+
+    def resolve_count(self, info, **kwargs):
+        return len(self.iterable)
 
 
 

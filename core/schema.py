@@ -16,6 +16,29 @@ class Query(graphene.ObjectType):
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
     execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
+    search_collections = graphene.List(
+        "core.queries.CollectionType",
+        query=graphene.String(required=True),
+        sort=graphene.String(),
+        owner=graphene.String(),
+        created=graphene.String(),
+    )
+    search_samples = graphene.List(
+        "core.queries.SampleType",
+        query=graphene.String(required=True),
+        sort=graphene.String(),
+        organism=graphene.String(),
+        owner=graphene.String(),
+        created=graphene.String(),
+    )
+    search_executions = graphene.List(
+        "core.queries.ExecutionType",
+        query=graphene.String(required=True),
+        sort=graphene.String(),
+        command=graphene.String(),
+        owner=graphene.String(),
+        created=graphene.String(),
+    )
 
 
     def resolve_access_token(self, info, **kwargs):
@@ -119,6 +142,64 @@ class Query(graphene.ObjectType):
                 "name": u.name, "kind": "User", "pk": u.username, "match": ""
             } for u in User.objects.filter(name__icontains=query)]
             return {"results": results}
+    
+
+    def resolve_search_collections(self, info, **kwargs):
+        collections = Collection.objects.filter(
+            name__icontains=kwargs["query"].lower()
+        ).viewable_by(info.context.user)
+        if kwargs.get("owner"):
+            links = CollectionUserLink.objects.filter(
+                user__name__icontains=kwargs["owner"], is_owner=True
+            )
+            collections = collections.filter(collectionuserlink__in=links)
+        if kwargs.get("created"):
+            timestamp = time.time() - {
+                "day": 86400, "week": 604800, "month": 2592000, "6month": 15768000, "year": 31557600
+            }.get(kwargs["created"], 0)
+            collections = collections.filter(created__gte=timestamp)
+        if kwargs.get("sort"): collections = collections.order_by(kwargs["sort"])
+        return collections
+    
+
+    def resolve_search_samples(self, info, **kwargs):
+        samples = Sample.objects.filter(
+            name__icontains=kwargs["query"].lower()
+        ).viewable_by(info.context.user)
+        if kwargs.get("organism"):
+            samples = samples.filter(organism__icontains=kwargs["organism"])
+        if kwargs.get("owner"):
+            links = CollectionUserLink.objects.filter(
+                user__name__icontains=kwargs["owner"], is_owner=True
+            )
+            samples = samples.filter(collection__collectionuserlink__in=links)
+        if kwargs.get("created"):
+            timestamp = time.time() - {
+                "day": 86400, "week": 604800, "month": 2592000, "6month": 15768000, "year": 31557600
+            }.get(kwargs["created"], 0)
+            samples = samples.filter(created__gte=timestamp)
+        if kwargs.get("sort"): samples = samples.order_by(kwargs["sort"])
+        return samples
+    
+
+    def resolve_search_executions(self, info, **kwargs):
+        executions = Execution.objects.filter(
+            name__icontains=kwargs["query"].lower()
+        ).viewable_by(info.context.user)
+        if kwargs.get("command"):
+            executions = executions.filter(command__name__icontains=kwargs["command"])
+        if kwargs.get("owner"):
+            links = ExecutionUserLink.objects.filter(
+                user__name__icontains=kwargs["owner"], is_owner=True
+            )
+            executions = executions.filter(executionuserlink__in=links)
+        if kwargs.get("created"):
+            timestamp = time.time() - {
+                "day": 86400, "week": 604800, "month": 2592000, "6month": 15768000, "year": 31557600
+            }.get(kwargs["created"], 0)
+            executions = executions.filter(created__gte=timestamp)
+        if kwargs.get("sort"): executions = executions.order_by(kwargs["sort"])
+        return executions
 
 
 
