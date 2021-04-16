@@ -100,6 +100,8 @@ class CollectionType(DjangoObjectType):
     papers = graphene.List("core.queries.PaperType")
     samples = graphene.List("core.queries.SampleType")
     executions = graphene.List("core.queries.ExecutionType")
+    sample_count = graphene.Int()
+    execution_count = graphene.Int()
 
     def resolve_papers(self, info, **kwargs):
         return self.papers.all()
@@ -115,6 +117,14 @@ class CollectionType(DjangoObjectType):
 
     def resolve_executions(self, info, **kwargs):
         return self.executions.all().viewable_by(info.context.user)
+    
+
+    def resolve_sample_count(self, info, **kwargs):
+        return self.samples.count()
+
+
+    def resolve_execution_count(self, info, **kwargs):
+        return self.executions.count()
 
 
 

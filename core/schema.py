@@ -84,7 +84,11 @@ class Query(graphene.ObjectType):
     
 
     def resolve_user_collections(self, info, **kwargs):
-        return Collection.objects.all().viewable_by(info.context.user)
+        if not info.context.user: return []
+        collections = Collection.objects.filter(collectionuserlink__user=info.context.user)
+        for group in info.context.user.groups.all():
+            collections |= Collection.objects.filter(groups=group)
+        return collections.distinct()
 
 
     def resolve_public_collections(self, info, **kwargs):
