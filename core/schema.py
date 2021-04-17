@@ -10,29 +10,28 @@ class Query(graphene.ObjectType):
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
-    public_collection_count = graphene.Int()
-    public_collections = ConnectionField("core.queries.CollectionConnection", offset=graphene.Int())
-    user_collections = graphene.List("core.queries.CollectionType")
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
     execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
-    search_collections = graphene.List(
-        "core.queries.CollectionType",
+    public_collections = ConnectionField("core.queries.CollectionConnection")
+    user_collections = graphene.List("core.queries.CollectionType")
+    search_collections = ConnectionField(
+        "core.queries.CollectionConnection",
         query=graphene.String(required=True),
         sort=graphene.String(),
         owner=graphene.String(),
         created=graphene.String(),
     )
-    search_samples = graphene.List(
-        "core.queries.SampleType",
+    search_samples = ConnectionField(
+        "core.queries.SampleConnection",
         query=graphene.String(required=True),
         sort=graphene.String(),
         organism=graphene.String(),
         owner=graphene.String(),
         created=graphene.String(),
     )
-    search_executions = graphene.List(
-        "core.queries.ExecutionType",
+    search_executions = ConnectionField(
+        "core.queries.ExecutionConnection",
         query=graphene.String(required=True),
         sort=graphene.String(),
         command=graphene.String(),
@@ -93,7 +92,7 @@ class Query(graphene.ObjectType):
 
     def resolve_public_collections(self, info, **kwargs):
         collections = Collection.objects.filter(private=False)
-        if "offset" in kwargs: collections = collections[kwargs["offset"]:]
+        #if "offset" in kwargs: collections = collections[kwargs["offset"]:]
         return collections
     
 

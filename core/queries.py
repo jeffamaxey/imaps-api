@@ -1,7 +1,7 @@
 import json
 import graphene
 from graphene_django.types import DjangoObjectType
-from graphene.relay import Connection, ConnectionField
+from graphene.relay import Connection
 from .models import *
 
 class UserType(DjangoObjectType):
@@ -136,7 +136,6 @@ class CollectionConnection(Connection):
     count = graphene.Int()
 
     def resolve_count(self, info, **kwargs):
-        print(self.iterable)
         return len(self.iterable)
 
 
