@@ -116,7 +116,9 @@ class CollectionType(DjangoObjectType):
 
 
     def resolve_executions(self, info, **kwargs):
-        return self.executions.all().viewable_by(info.context.user)
+        return (Execution.objects.filter(collection=self) | 
+            Execution.objects.filter(sample__collection=self)
+        ).distinct().viewable_by(info.context.user)
     
 
     def resolve_sample_count(self, info, **kwargs):
