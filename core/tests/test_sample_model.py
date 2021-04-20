@@ -34,7 +34,7 @@ class SampleQuerysetViewableByTests(TestCase):
         s3 = mixer.blend(Sample, private=False)
         s4 = mixer.blend(Sample, private=False)
         with self.assertNumQueries(1):
-            self.assertEqual(list(Sample.objects.all().viewable_by(None)), [s3, s4])
+            self.assertEqual(set(Sample.objects.all().viewable_by(None)), {s3, s4})
     
 
     def test_user_access(self):
@@ -62,7 +62,7 @@ class SampleQuerysetViewableByTests(TestCase):
         samples[4].collection.groups.add(group1)
         samples[5].collection.groups.add(group2)
         with self.assertNumQueries(2):
-            self.assertEqual(list(Sample.objects.all().viewable_by(user)), samples[1:6])
+            self.assertEqual(set(Sample.objects.all().viewable_by(user)), set(samples[1:6]))
 
 
 
@@ -73,7 +73,7 @@ class SampleOrderingTests(TestCase):
         sample2 = mixer.blend(Sample, created=1)
         sample3 = mixer.blend(Sample, created=4)
         self.assertEqual(
-            list(Sample.objects.all()), [sample3, sample1, sample2]
+            set(Sample.objects.all()), {sample3, sample1, sample2}
         )
 
 

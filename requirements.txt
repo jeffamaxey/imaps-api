@@ -1,4 +1,4 @@
-django==2.2.18
+django==2.2.20
 django_cors_headers
 graphene_django==2.8.2
 django-random-id-model
