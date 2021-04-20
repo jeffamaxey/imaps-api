@@ -1,13 +1,10 @@
 from core.models import *
 from .base import FunctionalTest
 
-class CollectionApiTests(FunctionalTest):
+class CollectionQueryTests(FunctionalTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
-        user = User.objects.create(
-            username="adam", email="adam@crick.ac.uk", name="Adam A",
-        )
         self.collection = Collection.objects.create(
             id=1, name="Coll", description="My collection.", created=1000000, private=False
         )
@@ -16,10 +13,10 @@ class CollectionApiTests(FunctionalTest):
         Paper.objects.create(year=2020, title="Other paper", url="http://paper.com")
         CollectionUserLink.objects.create(collection=self.collection, user=User.objects.create(
             username="james", name="james", email="james@gmail.com"
-        ), is_owner=True)
+        ), permission=4)
         CollectionUserLink.objects.create(collection=self.collection, user=User.objects.create(
             username="Kate", name="kate", email="kate@gmail.com"
-        ), is_owner=True)
+        ), permission=4)
         CollectionUserLink.objects.create(collection=self.collection, user=User.objects.create(
             username="john", name="John", email="john@gmail.com"
         ))
@@ -72,9 +69,6 @@ class CollectionApiTests(FunctionalTest):
             command=Command.objects.create(name="Command 6", description="Runs analysis 6")
         )
 
-
-
-class CollectionQueryTests(CollectionApiTests):
 
     def test_can_get_collection(self):
         result = self.client.execute("""{ collection(id: "1") {

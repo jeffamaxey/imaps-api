@@ -3,19 +3,14 @@ import time
 from django.core import mail
 from core.models import *
 from .base import FunctionalTest
-
-class PasswordResetApiTests(FunctionalTest):
+class PasswordResetTests(FunctionalTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
-        self.user = User.objects.create(
-            username="adam", email="adam@crick.ac.uk", name="Adam A",
-            password_reset_token="12345", password_reset_token_expiry=time.time() + 60
-        )
-
-
-
-class PasswordResetTests(PasswordResetApiTests):
+        self.user.password_reset_token = "12345"
+        self.user.password_reset_token_expiry = time.time() + 60
+        self.user.save()
+        
 
     def test_can_reset_password(self):
         # The token allows the password to be changed

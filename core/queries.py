@@ -11,10 +11,27 @@ class UserType(DjangoObjectType):
         exclude_fields = ["password"]
     
     id = graphene.ID()
+
     groups = graphene.List("core.queries.GroupType")
     admin_groups = graphene.List("core.queries.GroupType")
-    group_invitations = graphene.List("core.queries.GroupInvitationType")
+    memberships = graphene.List("core.queries.GroupType")
+    invitations = graphene.List("core.queries.GroupType")
+
     collections = graphene.List("core.queries.CollectionType")
+    owned_collections = graphene.List("core.queries.CollectionType")
+    shareable_collections = graphene.List("core.queries.CollectionType")
+    editable_collections = graphene.List("core.queries.CollectionType")
+    public_collections = graphene.List("core.queries.CollectionType")
+
+    samples = graphene.List("core.queries.SampleType")
+    shareable_samples = graphene.List("core.queries.SampleType")
+    editable_samples = graphene.List("core.queries.SampleType")
+    public_samples = graphene.List("core.queries.SampleType")
+
+    executions = graphene.List("core.queries.ExecutionType")
+    owned_executions = graphene.List("core.queries.ExecutionType")
+    shareable_executions = graphene.List("core.queries.ExecutionType")
+    public_executions = graphene.List("core.queries.ExecutionType")
 
     def resolve_email(self, info, **kwargs):
         if self != info.context.user: return ""
@@ -24,25 +41,66 @@ class UserType(DjangoObjectType):
     def resolve_last_login(self, info, **kwargs):
         if self != info.context.user: return None
         return self.last_login
-        
+    
 
     def resolve_groups(self, info, **kwargs):
-        admin_groups = list(self.admin_groups.all())
-        return sorted(self.groups.all(), key = lambda g: g not in admin_groups)
-    
-
-    def resolve_admin_groups(self, info, **kwargs):
-        if self != info.context.user: return None
-        return self.admin_groups.all()
-    
-
-    def resolve_group_invitations(self, info, **kwargs):
-        if self != info.context.user: return None
-        return self.group_invitations.all()
-    
+        return self.groups.all()
+        
 
     def resolve_collections(self, info, **kwargs):
-        return self.collections.filter(private=False, collectionuserlink__is_owner=True)
+        return self.collections.all().viewable_by(info.context.user)
+        
+
+    def resolve_owned_collections(self, info, **kwargs):
+        return self.owned_collections.viewable_by(info.context.user)
+        
+
+    def resolve_shareable_collections(self, info, **kwargs):
+        return self.shareable_collections.viewable_by(info.context.user)
+        
+
+    def resolve_editable_collections(self, info, **kwargs):
+        return self.editable_collections.viewable_by(info.context.user)
+    
+
+    def resolve_public_collections(self, info, **kwargs):
+        return self.owned_collections.filter(private=False)
+    
+
+    def resolve_samples(self, info, **kwargs):
+        return self.samples.all().viewable_by(info.context.user)
+        
+
+    def resolve_shareable_samples(self, info, **kwargs):
+        return self.shareable_samples.viewable_by(info.context.user)
+        
+
+    def resolve_editable_samples(self, info, **kwargs):
+        return self.editable_samples.viewable_by(info.context.user)
+    
+
+    def resolve_public_samples(self, info, **kwargs):
+        return self.samples.filter(private=False)
+    
+
+    def resolve_executions(self, info, **kwargs):
+        return self.executions.all().viewable_by(info.context.user)
+        
+
+    def resolve_owned_executions(self, info, **kwargs):
+        return self.owned_executions.viewable_by(info.context.user)
+        
+
+    def resolve_shareable_executions(self, info, **kwargs):
+        return self.shareable_executions.viewable_by(info.context.user)
+        
+
+    def resolve_editable_executions(self, info, **kwargs):
+        return self.editable_executions.viewable_by(info.context.user)
+    
+
+    def resolve_public_executions(self, info, **kwargs):
+        return self.executions.filter(private=False)
 
 
 
@@ -55,38 +113,36 @@ class GroupType(DjangoObjectType):
     user_count = graphene.Int()
     users = graphene.List("core.queries.UserType")
     admins = graphene.List("core.queries.UserType")
-    group_invitations = graphene.List("core.queries.GroupInvitationType")
+    members = graphene.List("core.queries.UserType")
+    invitees = graphene.List("core.queries.UserType")
     collections = graphene.List("core.queries.CollectionType")
-
-    def resolve_user_count(self, info, **kwargs):
-        return self.users.count()
-        
+    shareable_collections = graphene.List("core.queries.CollectionType")
+    editable_collections = graphene.List("core.queries.CollectionType")
+    public_collections = graphene.List("core.queries.CollectionType")
 
     def resolve_users(self, info, **kwargs):
         return self.users.all()
-    
 
-    def resolve_admins(self, info, **kwargs):
-        return self.admins.all()
-    
 
-    def resolve_group_invitations(self, info, **kwargs):
-        if info.context.user and self.admins.filter(username=info.context.user.username):
-            return self.group_invitations.all()
-        return None
+    def resolve_user_count(self, info, **kwargs):
+        return self.members.count()
+            
+
+    def resolve_public_collections(self, info, **kwargs):
+        return self.collections.filter(private=False)
     
 
     def resolve_collections(self, info, **kwargs):
-        return self.collections.filter(private=False)
-
-
-
-class GroupInvitationType(DjangoObjectType):
+        return self.collections.viewable_by(info.context.user)
     
-    class Meta:
-        model = GroupInvitation
+
+    def resolve_shareable_collections(self, info, **kwargs):
+        return self.shareable_collections.viewable_by(info.context.user)
     
-    id = graphene.ID()
+
+    def resolve_editable_collections(self, info, **kwargs):
+        return self.editable_collections.viewable_by(info.context.user)
+
 
 
 
@@ -96,19 +152,19 @@ class CollectionType(DjangoObjectType):
         model = Collection
     
     id = graphene.ID()
-    owners = graphene.List("core.queries.UserType")
     papers = graphene.List("core.queries.PaperType")
     samples = graphene.List("core.queries.SampleType")
     executions = graphene.List("core.queries.ExecutionType")
     sample_count = graphene.Int()
     execution_count = graphene.Int()
+    owners = graphene.List("core.queries.UserType")
+    sharers = graphene.List("core.queries.UserType")
+    editors = graphene.List("core.queries.UserType")
+    group_sharers = graphene.List("core.queries.UserType")
+    group_editors = graphene.List("core.queries.UserType")
 
     def resolve_papers(self, info, **kwargs):
         return self.papers.all()
-    
-    
-    def resolve_owners(self, info, **kwargs):
-        return self.users.filter(collectionuserlink__is_owner=True)
 
 
     def resolve_samples(self, info, **kwargs):
@@ -158,6 +214,8 @@ class SampleType(DjangoObjectType):
     
     id = graphene.ID()
     executions = graphene.List("core.queries.ExecutionType")
+    sharers = graphene.List("core.queries.UserType")
+    editors = graphene.List("core.queries.UserType")
 
 
     def resolve_executions(self, info, **kwargs):
@@ -194,13 +252,12 @@ class ExecutionType(DjangoObjectType):
     id = graphene.ID()
     command = graphene.Field("core.queries.CommandType")
     owners = graphene.List("core.queries.UserType")
+    sharers = graphene.List("core.queries.UserType")
+    editors = graphene.List("core.queries.UserType")
     parent = graphene.Field("core.queries.ExecutionType")
     upstream_executions = graphene.List("core.queries.ExecutionType")
     downstream_executions = graphene.List("core.queries.ExecutionType")
     component_executions = graphene.List("core.queries.ExecutionType")
-
-    def resolve_owners(self, info, **kwargs):
-        return self.users.filter(executionuserlink__is_owner=True)
 
 
     def resolve_upstream_executions(self, info, **kwargs):

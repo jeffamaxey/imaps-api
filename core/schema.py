@@ -91,9 +91,7 @@ class Query(graphene.ObjectType):
 
 
     def resolve_public_collections(self, info, **kwargs):
-        collections = Collection.objects.filter(private=False)
-        #if "offset" in kwargs: collections = collections[kwargs["offset"]:]
-        return collections
+        return Collection.objects.filter(private=False)
     
 
     def resolve_sample(self, info, **kwargs):
@@ -153,7 +151,7 @@ class Query(graphene.ObjectType):
         ).viewable_by(info.context.user)
         if kwargs.get("owner"):
             links = CollectionUserLink.objects.filter(
-                user__name__icontains=kwargs["owner"], is_owner=True
+                user__name__icontains=kwargs["owner"], permission=4
             )
             collections = collections.filter(collectionuserlink__in=links)
         if kwargs.get("created"):
@@ -173,7 +171,7 @@ class Query(graphene.ObjectType):
             samples = samples.filter(organism__icontains=kwargs["organism"])
         if kwargs.get("owner"):
             links = CollectionUserLink.objects.filter(
-                user__name__icontains=kwargs["owner"], is_owner=True
+                user__name__icontains=kwargs["owner"], permission=4
             )
             samples = samples.filter(collection__collectionuserlink__in=links)
         if kwargs.get("created"):
@@ -193,7 +191,7 @@ class Query(graphene.ObjectType):
             executions = executions.filter(command__name__icontains=kwargs["command"])
         if kwargs.get("owner"):
             links = ExecutionUserLink.objects.filter(
-                user__name__icontains=kwargs["owner"], is_owner=True
+                user__name__icontains=kwargs["owner"], permission=4
             )
             executions = executions.filter(executionuserlink__in=links)
         if kwargs.get("created"):
@@ -223,8 +221,7 @@ class Mutation(graphene.ObjectType):
     update_group = UpdateGroupMutation.Field()
     delete_group = DeleteGroupMutation.Field()
     invite_user_to_group = InviteUserToGroup.Field()
-    delete_group_invitation = DeleteGroupInvitationMutation.Field()
-    accept_group_invitation = AcceptGroupInvitationMutation.Field()
+    process_group_invitation = ProcessGroupInvitationMutation.Field()
     make_group_admin = MakeGroupAdminMutation.Field()
     revoke_group_admin = RevokeGroupAdminMutation.Field()
     remove_user_from_group = RemoveUserFromGroup.Field()

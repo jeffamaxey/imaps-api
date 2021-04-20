@@ -1,7 +1,7 @@
 import time
 from mixer.backend.django import mixer
 from django.test import TestCase
-from core.models import User, Collection, Sample, Group
+from core.models import User, Collection, Sample, Group, SampleUserLink
 
 class SampleSavingTests(TestCase):
 
@@ -75,3 +75,20 @@ class SampleOrderingTests(TestCase):
         self.assertEqual(
             list(Sample.objects.all()), [sample3, sample1, sample2]
         )
+
+
+
+class SampleObjectsAccessTests(TestCase):
+
+    def test_sample_users(self):
+        sample = mixer.blend(Sample)
+        self.assertFalse(sample.sharers.count())
+        self.assertFalse(sample.editors.count())
+        self.assertFalse(sample.users.count())
+        u1, u2, u3 = [mixer.blend(User) for _ in range(3)]
+        link1 = SampleUserLink.objects.create(sample=sample, user=u1, permission=1)
+        link2 = SampleUserLink.objects.create(sample=sample, user=u2, permission=2)
+        link3 = SampleUserLink.objects.create(sample=sample, user=u3, permission=3)
+        self.assertEqual(set(sample.sharers), {u3})
+        self.assertEqual(set(sample.editors), {u2, u3})
+        self.assertEqual(set(sample.users.all()), {u1, u2, u3})

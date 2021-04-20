@@ -2,36 +2,12 @@ import requests
 from core.models import *
 from .base import FunctionalTest
 
-class BaseApiTests(FunctionalTest):
+class AccessTokenTests(FunctionalTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
-        self.user = User.objects.create(
-            username="adam", email="adam@crick.ac.uk", name="Adam A",
-            last_login=1617712117, created=1607712117, company="The Crick",
-            department="MolBio", lab="The Smith Lab", job_title="Researcher",
-        )
-        User.objects.create(
-            username="sally", email="sally@crick.ac.uk", name="Sally S"
-        )
-        self.user.admin_groups.add(Group.objects.create(
-            name="Smith Lab", slug="smithlab", description="lab of John Smith"
-        ))
-        self.user.groups.add(Group.objects.create(
-            name="Jones Lab", slug="joneslab", description="lab of Sarah Jones"
-        ))
-        self.user.groups.add(Group.objects.create(
-            name="Barker Lab", slug="barkerlab", description="lab of Billy Barker"
-        ))
-        GroupInvitation.objects.create(
-            id=1, user=self.user, group=Group.objects.create(
-                name="Davies Lab", slug="davies", description="lab of Dora Davies"
-            )
-        )
+        del self.client.headers["Authorization"]
 
-
-
-class AccessTokenTests(BaseApiTests):
 
     def test_can_get_access_token(self):
         # Send query with cookie
@@ -93,24 +69,34 @@ class AccessTokenTests(BaseApiTests):
 
 
 
-class LoggedInUserAccess(BaseApiTests):
+class LoggedInUserAccessTests(FunctionalTest):
+
+    def setUp(self):
+        FunctionalTest.setUp(self)
+        UserGroupLink.objects.create(user=self.user, group=Group.objects.create(slug="adamlab"), permission=3)
+        UserGroupLink.objects.create(user=self.user, group=Group.objects.create(slug="smithlab"), permission=2)
+        UserGroupLink.objects.create(user=self.user, group=Group.objects.create(slug="joneslab"), permission=2)
+        UserGroupLink.objects.create(user=self.user, group=Group.objects.create(slug="grangerlab"), permission=1)
+        Group.objects.create(slug="parkerlab")
 
     def test_can_get_logged_in_user(self):
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
         result = self.client.execute("""{ user {
             username email name lastLogin created jobTitle lab company
-            department groupInvitations { group { name } }
+            department memberships { slug } invitations { slug } adminGroups { slug }
         } }""")
         self.assertEqual(result["data"]["user"], {
             "username": "adam", "email": "adam@crick.ac.uk", "name": "Adam A",
             "lastLogin": 1617712117, "created": 1607712117, "jobTitle": "Researcher",
             "lab": "The Smith Lab", "company": "The Crick", "department": "MolBio",
-            "groupInvitations": [{"group": {"name": "Davies Lab"}}]
+            "adminGroups": [{"slug": "adamlab"}],
+            "memberships": [{"slug": "adamlab"}, {"slug": "smithlab"}, {"slug": "joneslab"}],
+            "invitations": [{"slug": "grangerlab"}],
         })
     
 
     def test_cant_get_user_if_not_authorized(self):
         # No token
+        del self.client.headers["Authorization"]
         self.check_query_error("{ user { username } }", "authorized")
 
         # Garbled token
@@ -126,7 +112,7 @@ class LoggedInUserAccess(BaseApiTests):
 
 
 
-class LogoutTests(BaseApiTests):
+class LogoutTests(FunctionalTest):
 
     def test_can_logout(self):
         # Start with refresh token
@@ -159,106 +145,86 @@ class LogoutTests(BaseApiTests):
 
 
 
-class GroupInvitationDeletingTests(BaseApiTests):
+class GroupInvitationProcessingTests(FunctionalTest):
 
-    def test_can_delete_invitation_as_invitee(self):
+    def setUp(self):
+        FunctionalTest.setUp(self)
+        self.link = UserGroupLink.objects.create(user=self.user, group=Group.objects.create(id=1, slug="adamlab"), permission=1)
+
+    def test_can_decline_invitation_as_invitee(self):
         # Delete invitation as invitee
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
         result = self.client.execute(
-            """mutation { deleteGroupInvitation(id: "1") {
-                success user { username email name }
+            """mutation { processGroupInvitation(user: "1" group: "1" accept: false) {
+                success user { username  memberships { slug } }
             } }"""
         )
 
         # The invitation is gone
-        self.assertTrue(result["data"]["deleteGroupInvitation"]["success"])
-        self.assertFalse(GroupInvitation.objects.filter(id=1).count())
-        self.assertEqual(GroupInvitation.objects.count(), 0)
-        self.assertEqual(result["data"]["deleteGroupInvitation"]["user"], {
-            "username": "adam", "email": "adam@crick.ac.uk", "name": "Adam A"
+        self.assertTrue(result["data"]["processGroupInvitation"]["success"])
+        self.assertEqual(self.user.memberships.count(), 0)
+        self.assertEqual(self.user.invitations.count(), 0)
+        self.assertEqual(result["data"]["processGroupInvitation"]["user"], {
+            "username": "adam", "memberships": []
         })
     
 
-    def test_cant_delete_invitation_if_not_appropriate(self):
-        # Group invitation does not exist
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
-        self.check_query_error(
-            """mutation { deleteGroupInvitation(id: "3") { success } }""",
-            message="Does not exist"
-        )
-
-        # Not the invitee
-        invitation = GroupInvitation.objects.create(
-            user=User.objects.get(username="sally"),
-            group=Group.objects.get(name="Davies Lab"),
-            id=2
-        )
-        self.check_query_error(
-            """mutation { deleteGroupInvitation(id: "2") { success } }""",
-            message="Does not exist"
-        )
-    
-
-    def test_cant_delete_invitation_when_not_logged_in(self):
-        self.check_query_error(
-            """mutation { deleteGroupInvitation(id: "1") { success } }""",
-            message="Not authorized"
-        ) 
-
-
-
-class GroupInvitationAcceptanceTests(BaseApiTests):
-
-    def test_can_accept_invitation(self):
-        # Accept invitation
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
+    def test_can_accept_invitation_as_invitee(self):
+        # Accept invitation as invitee
         result = self.client.execute(
-            """mutation { acceptGroupInvitation(id: "1") { 
-                group { users { username } }
-                user { username email name }
-             } }"""
+            """mutation { processGroupInvitation(user: "1" group: "1" accept: true) {
+                success user { username  memberships { slug } }
+            } }"""
         )
 
         # The invitation is gone
-        self.assertEqual(result["data"]["acceptGroupInvitation"]["group"], {"users": [
-            {"username": "adam"}
-        ]})
-        self.assertFalse(GroupInvitation.objects.filter(id=1).count())
-        self.assertEqual(GroupInvitation.objects.count(), 0)
-        self.assertEqual(result["data"]["acceptGroupInvitation"]["user"], {
-            "username": "adam", "email": "adam@crick.ac.uk", "name": "Adam A"
+        self.assertTrue(result["data"]["processGroupInvitation"]["success"])
+        self.assertEqual(self.user.memberships.count(), 1)
+        self.assertEqual(self.user.invitations.count(), 0)
+        self.assertEqual(result["data"]["processGroupInvitation"]["user"], {
+            "username": "adam", "memberships": [{"slug": "adamlab"}]
         })
     
 
-    def test_cant_accept_invitation_if_not_appropriate(self):
-        # Group invitation does not exist
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
+    def test_cant_process_invitation_if_not_appropriate(self):
+        # Not logged in
+        del self.client.headers["Authorization"]
         self.check_query_error(
-            """mutation { acceptGroupInvitation(id: "2") { group { name } } }""",
-            message="Does not exist"
-        )
-
-        # Not the invitee
-        invitation = GroupInvitation.objects.create(
-            user=User.objects.get(username="sally"),
-            group=Group.objects.get(name="Davies Lab"),
-            id=2
-        )
-        self.check_query_error(
-            """mutation { acceptGroupInvitation(id: "2") { group { name } } }""",
-            message="Does not exist"
-        )
-    
-
-    def test_cant_accept_invitation_when_not_logged_in(self):
-        self.check_query_error(
-            """mutation { acceptGroupInvitation(id: "1") { group { name } } }""",
+            """mutation { processGroupInvitation(user: "1" group: "1" accept: true) { success } }""",
             message="Not authorized"
         )
 
+        # User doesn't exist
+        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
+        self.check_query_error(
+            """mutation { processGroupInvitation(user: "2" group: "1" accept: true) { success } }""",
+            message="Does not exist"
+        )
+
+        # Not the user in question
+        User.objects.create(id=2)
+        self.check_query_error(
+            """mutation { processGroupInvitation(user: "2" group: "1" accept: true) { success } }""",
+            message="Not for you"
+        )
+
+        # Already a member
+        self.link.permission = 2
+        self.link.save()
+        self.check_query_error(
+            """mutation { processGroupInvitation(user: "1" group: "1" accept: true) { success } }""",
+            message="No invitation"
+        )
+
+        # No invitation
+        self.link.delete()
+        self.check_query_error(
+            """mutation { processGroupInvitation(user: "1" group: "1" accept: true) { success } }""",
+            message="No invitation"
+        )
 
 
-class QuickSearchTests(BaseApiTests):
+
+class QuickSearchTests(FunctionalTest):
 
     def test_need_three_characters(self):
         result = self.client.execute("""{

@@ -2,13 +2,10 @@ import json
 from core.models import *
 from .base import FunctionalTest
 
-class ExecutionApiTests(FunctionalTest):
+class ExecutionQueryTests(FunctionalTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
-        user = User.objects.create(
-            username="adam", email="adam@crick.ac.uk", name="Adam A",
-        )
         command = Command.objects.create(
             name="Investigate", description="Investigates file",
             input_schema=json.dumps([
@@ -71,24 +68,15 @@ class ExecutionApiTests(FunctionalTest):
         )
 
         ExecutionUserLink.objects.create(
-            execution=self.execution, user=User.objects.create(username="anna", email="anna@gmail.com"), is_owner=True
+            execution=self.execution, user=User.objects.create(username="anna", email="anna@gmail.com"), permission=4
         )
         ExecutionUserLink.objects.create(
-            execution=self.execution, user=User.objects.create(username="james", email="james@gmail.com"), is_owner=True
+            execution=self.execution, user=User.objects.create(username="james", email="james@gmail.com"), permission=4
         )
         ExecutionUserLink.objects.create(
             execution=self.execution, user=User.objects.create(username="sarah", email="sarah@gmail.com"),
         )
 
-
-
-class ExecutionQueryTests(ExecutionApiTests):
-    '''
-    input output
-
-    command { id name description inputSchema outputSchema }
-    downstreamExecutions { id started created finished name }
-    '''
 
     def test_can_get_execution(self):
         result = self.client.execute("""{ execution(id: "1") {

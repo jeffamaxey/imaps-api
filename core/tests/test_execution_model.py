@@ -83,6 +83,26 @@ class ExecutionOrderingTests(TestCase):
 
 
 
+class ExecutionObjectsAccessTests(TestCase):
+
+    def test_execution_users(self):
+        execution = mixer.blend(Execution)
+        self.assertFalse(execution.owners.count())
+        self.assertFalse(execution.sharers.count())
+        self.assertFalse(execution.editors.count())
+        self.assertFalse(execution.users.count())
+        u1, u2, u3, u4 = [mixer.blend(User) for _ in range(4)]
+        link1 = ExecutionUserLink.objects.create(execution=execution, user=u1, permission=1)
+        link2 = ExecutionUserLink.objects.create(execution=execution, user=u2, permission=2)
+        link3 = ExecutionUserLink.objects.create(execution=execution, user=u3, permission=3)
+        link3 = ExecutionUserLink.objects.create(execution=execution, user=u4, permission=4)
+        self.assertEqual(set(execution.owners), {u4})
+        self.assertEqual(set(execution.sharers), {u3, u4})
+        self.assertEqual(set(execution.editors), {u2, u3, u4})
+        self.assertEqual(set(execution.users.all()), {u1, u2, u3, u4})
+
+
+
 class ExecutionParentTests(TestCase):
 
     def test_can_get_no_parent(self):

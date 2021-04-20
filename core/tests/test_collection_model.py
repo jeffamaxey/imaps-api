@@ -74,3 +74,37 @@ class CollectionOrderingTests(TestCase):
         self.assertEqual(
             list(Collection.objects.all()), [collection3, collection1, collection2]
         )
+
+
+
+class CollectionObjectsAccessTests(TestCase):
+
+    def test_collection_users(self):
+        collection = mixer.blend(Collection)
+        self.assertFalse(collection.owners.count())
+        self.assertFalse(collection.sharers.count())
+        self.assertFalse(collection.editors.count())
+        self.assertFalse(collection.users.count())
+        u1, u2, u3, u4 = [mixer.blend(User) for _ in range(4)]
+        link1 = CollectionUserLink.objects.create(collection=collection, user=u1, permission=1)
+        link2 = CollectionUserLink.objects.create(collection=collection, user=u2, permission=2)
+        link3 = CollectionUserLink.objects.create(collection=collection, user=u3, permission=3)
+        link3 = CollectionUserLink.objects.create(collection=collection, user=u4, permission=4)
+        self.assertEqual(set(collection.owners), {u4})
+        self.assertEqual(set(collection.sharers), {u3, u4})
+        self.assertEqual(set(collection.editors), {u2, u3, u4})
+        self.assertEqual(set(collection.users.all()), {u1, u2, u3, u4})
+
+
+    def test_collection_groups(self):
+        collection = mixer.blend(Collection)
+        self.assertFalse(collection.group_sharers.count())
+        self.assertFalse(collection.group_editors.count())
+        self.assertFalse(collection.groups.count())
+        g1, g2, g3 = [mixer.blend(Group) for _ in range(3)]
+        link1 = CollectionGroupLink.objects.create(collection=collection, group=g1, permission=1)
+        link2 = CollectionGroupLink.objects.create(collection=collection, group=g2, permission=2)
+        link3 = CollectionGroupLink.objects.create(collection=collection, group=g3, permission=3)
+        self.assertEqual(set(collection.group_sharers), {g3})
+        self.assertEqual(set(collection.group_editors), {g2, g3})
+        self.assertEqual(set(collection.groups.all()), {g1, g2, g3})

@@ -91,6 +91,105 @@ class User(RandomIDModel):
         return jwt.encode({
             "sub": self.id, "iat": now, "expires": now + 31536000
         }, settings.SECRET_KEY, algorithm="HS256").decode()
+    
+
+    @property
+    def admin_groups(self):
+        """Groups with admin permissions."""
+
+        return Group.objects.filter(
+            usergrouplink__user=self, usergrouplink__permission=3
+        )
+    
+
+    @property
+    def memberships(self):
+        """Groups user has access to."""
+
+        return Group.objects.filter(
+            usergrouplink__user=self, usergrouplink__permission__gte=2
+        )
+    
+
+    @property
+    def invitations(self):
+        """Groups user is invoted to but not a member of."""
+
+        return Group.objects.filter(
+            usergrouplink__user=self, usergrouplink__permission=1
+        )
+    
+
+    @property
+    def owned_collections(self):
+        """Collections with owner permissions."""
+
+        return Collection.objects.filter(
+            collectionuserlink__user=self, collectionuserlink__permission=4,
+        )
+    
+
+    @property
+    def shareable_collections(self):
+        """Collections with share permissions."""
+
+        return Collection.objects.filter(
+            collectionuserlink__user=self, collectionuserlink__permission__gte=3,
+        )
+    
+
+    @property
+    def editable_collections(self):
+        """Collections with edit permissions."""
+
+        return Collection.objects.filter(
+            collectionuserlink__user=self, collectionuserlink__permission__gte=2,
+        )
+    
+
+    @property
+    def shareable_samples(self):
+        """Samples with share permissions."""
+
+        return Sample.objects.filter(
+            sampleuserlink__user=self, sampleuserlink__permission__gte=3,
+        )
+    
+
+    @property
+    def editable_samples(self):
+        """Samples with edit permissions."""
+
+        return Sample.objects.filter(
+            sampleuserlink__user=self, sampleuserlink__permission__gte=2,
+        )
+    
+
+    @property
+    def owned_executions(self):
+        """Executions with owner permissions."""
+
+        return Execution.objects.filter(
+            executionuserlink__user=self, executionuserlink__permission=4,
+        )
+    
+
+    @property
+    def shareable_executions(self):
+        """Executions with share permissions."""
+
+        return Execution.objects.filter(
+            executionuserlink__user=self, executionuserlink__permission__gte=3,
+        )
+    
+
+    @property
+    def editable_executions(self):
+        """Executions with edit permissions."""
+
+        return Execution.objects.filter(
+            executionuserlink__user=self, executionuserlink__permission__gte=2,
+        )
 
 
 
@@ -103,28 +202,56 @@ class Group(RandomIDModel):
     name = models.CharField(max_length=50)
     slug = models.SlugField(max_length=50, unique=True, validators=[slug_validator])
     description = models.CharField(max_length=200)
-    users = models.ManyToManyField(User, related_name="groups")
-    admins = models.ManyToManyField(User, related_name="admin_groups")
+    users = models.ManyToManyField(User, through="core.UserGroupLink", related_name="groups")
 
     def __str__(self):
         return self.name
-
-
-
-class GroupInvitation(RandomIDModel):
-    """An invitation to a group."""
-
-    class Meta:
-        db_table = "group_invitations"
-        ordering = ["created"]
-
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name="group_invitations")
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="group_invitations")
-    created = models.IntegerField(default=time.time)
-
-    def __str__(self):
-        return f"{self.group.name} invitation to {self.user.name}"
     
+
+    @property
+    def admins(self):
+        """Users with admin permissions."""
+
+        return User.objects.filter(
+            usergrouplink__group=self, usergrouplink__permission=3
+        )
+    
+
+    @property
+    def members(self):
+        """Users admitted to the group."""
+
+        return User.objects.filter(
+            usergrouplink__group=self, usergrouplink__permission__gte=2
+        )
+    
+
+    @property
+    def invitees(self):
+        """Users invited to the group."""
+
+        return User.objects.filter(
+            usergrouplink__group=self, usergrouplink__permission=1
+        )
+    
+
+    @property
+    def shareable_collections(self):
+        """Collections with share permissions."""
+
+        return Collection.objects.filter(
+            collectiongrouplink__group=self, collectiongrouplink__permission=3,
+        )
+    
+
+    @property
+    def editable_collections(self):
+        """Collections with edit permissions."""
+
+        return Collection.objects.filter(
+            collectiongrouplink__group=self, collectiongrouplink__permission__gte=2,
+        )
+
 
 
 class CollectionQuerySet(models.query.QuerySet):
@@ -177,34 +304,50 @@ class Collection(RandomIDModel):
         super(Collection, self).save(*args, **kwargs)
     
 
+    @property
+    def owners(self):
+        """Users with owner permissions."""
 
-class CollectionUserLink(models.Model):
-    """Describes the nature of the relationship between a user and
-    collection."""
+        return User.objects.filter(
+            collectionuserlink__collection=self, collectionuserlink__permission=4,
+        )
+    
 
-    class Meta:
-        db_table = "collection_user_links"
+    @property
+    def sharers(self):
+        """Users with share permissions."""
 
-    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    can_edit = models.BooleanField(default=False)
-    can_share = models.BooleanField(default=False)
-    is_owner = models.BooleanField(default=False)
+        return User.objects.filter(
+            collectionuserlink__collection=self, collectionuserlink__permission__gte=3,
+        )
+    
 
+    @property
+    def editors(self):
+        """Users with edit permissions."""
 
+        return User.objects.filter(
+            collectionuserlink__collection=self, collectionuserlink__permission__gte=2,
+        )
+    
 
-class CollectionGroupLink(models.Model):
-    """Describes the nature of the relationship between a group and
-    collection."""
+    @property
+    def group_sharers(self):
+        """Groups with share permissions."""
 
-    class Meta:
-        db_table = "collection_group_links"
+        return Group.objects.filter(
+            collectiongrouplink__collection=self, collectiongrouplink__permission=3,
+        )
+    
 
-    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
-    group = models.ForeignKey(Group, on_delete=models.CASCADE)
-    can_edit = models.BooleanField(default=False)
-    can_share = models.BooleanField(default=False)
+    @property
+    def group_editors(self):
+        """Groups with edit permissions."""
 
+        return Group.objects.filter(
+            collectiongrouplink__collection=self, collectiongrouplink__permission__gte=2,
+        )
+    
 
 
 class Paper(RandomIDModel):
@@ -273,20 +416,24 @@ class Sample(RandomIDModel):
         if self.id:
             self.last_modified = int(time.time())
         super(Sample, self).save(*args, **kwargs)
+    
 
+    @property
+    def sharers(self):
+        """Users with share permissions."""
 
+        return User.objects.filter(
+            sampleuserlink__sample=self, sampleuserlink__permission=3,
+        )
+    
 
-class SampleUserLink(models.Model):
-    """Describes the nature of the relationship between a user and
-    sample."""
+    @property
+    def editors(self):
+        """Users with edit permissions."""
 
-    class Meta:
-        db_table = "sample_user_links"
-
-    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    can_edit = models.BooleanField(default=False)
-    can_share = models.BooleanField(default=False)
+        return User.objects.filter(
+            sampleuserlink__sample=self, sampleuserlink__permission__gte=2,
+        )
 
 
 
@@ -354,6 +501,33 @@ class Execution(RandomIDModel):
     
 
     @property
+    def owners(self):
+        """Users with owner permissions."""
+
+        return User.objects.filter(
+            executionuserlink__execution=self, executionuserlink__permission=4,
+        )
+    
+
+    @property
+    def sharers(self):
+        """Users with share permissions."""
+
+        return User.objects.filter(
+            executionuserlink__execution=self, executionuserlink__permission__gte=3,
+        )
+    
+
+    @property
+    def editors(self):
+        """Users with edit permissions."""
+
+        return User.objects.filter(
+            executionuserlink__execution=self, executionuserlink__permission__gte=2,
+        )
+    
+
+    @property
     def parent(self):
         """Identifies the execution that spawned this one as a subcommand, if
         any."""
@@ -411,16 +585,72 @@ class Execution(RandomIDModel):
 
 
 
+class UserGroupLink(models.Model):
+    """Describes the nature of the relationship between a user and group."""
+
+    class Meta:
+        db_table = "user_group_links"
+    
+    PERMISSIONS = [[1, "invited"], [2, "member"], [3, "admin"]]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    permission = models.IntegerField(choices=PERMISSIONS, default=1)
+
+
+
+class CollectionUserLink(models.Model):
+    """Describes the nature of the relationship between a user and
+    collection."""
+
+    class Meta:
+        db_table = "collection_user_links"
+    
+    PERMISSIONS = [[1, "access"], [2, "edit"], [3, "share"], [4, "own"]]
+
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    permission = models.IntegerField(choices=PERMISSIONS, default=1)
+
+
+
+class CollectionGroupLink(models.Model):
+    """Describes the nature of the relationship between a group and
+    collection."""
+
+    class Meta:
+        db_table = "collection_group_links"
+    
+    PERMISSIONS = [[1, "access"], [2, "edit"], [3, "share"]]
+
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)
+    permission = models.IntegerField(choices=PERMISSIONS, default=1)
+
+
+
+class SampleUserLink(models.Model):
+    """Describes the nature of the relationship between a user and sample."""
+
+    class Meta:
+        db_table = "sample_user_links"
+    
+    PERMISSIONS = [[1, "access"], [2, "edit"], [3, "share"]]
+
+    sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    permission = models.IntegerField(choices=PERMISSIONS, default=1)
+
+
 
 class ExecutionUserLink(models.Model):
-    """Describes the nature of the relationship between a user and
-    execution."""
+    """Describes the nature of the relationship between a user and execution."""
 
     class Meta:
         db_table = "execution_user_links"
+    
+    PERMISSIONS = [[1, "access"], [2, "edit"], [3, "share"], [4, "own"]]
 
     execution = models.ForeignKey(Execution, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    can_edit = models.BooleanField(default=False)
-    can_share = models.BooleanField(default=False)
-    is_owner = models.BooleanField(default=False)
+    permission = models.IntegerField(choices=PERMISSIONS, default=1)

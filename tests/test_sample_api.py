@@ -1,13 +1,10 @@
 from core.models import *
 from .base import FunctionalTest
 
-class SampleApiTests(FunctionalTest):
+class SampleQueryTests(FunctionalTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
-        user = User.objects.create(
-            username="adam", email="adam@crick.ac.uk", name="Adam A",
-        )
         self.sample = Sample.objects.create(
             id=1, name="run1", organism="human", source="ecoli", pi_name="John", private=False,
             annotator_name="adam", qc_pass=True, qc_message="success", created=1000
@@ -40,9 +37,6 @@ class SampleApiTests(FunctionalTest):
             command=Command.objects.create(name="Command 6", description="Runs analysis 6")
         )
 
-
-
-class SampleQueryTests(SampleApiTests):
 
     def test_can_get_sample(self):
         result = self.client.execute("""{ sample(id: "1") {

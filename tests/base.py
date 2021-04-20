@@ -14,6 +14,13 @@ class FunctionalTest(StaticLiveServerTestCase):
         self.client.headers["Accept"] = "application/json"
         self.client.headers["Content-Type"] = "application/json"
         self.files_at_start = os.listdir("uploads")
+        self.user = User.objects.create(
+            id=1, username="adam", email="adam@crick.ac.uk", name="Adam A",
+            last_login=1617712117, created=1607712117, company="The Crick",
+            department="MolBio", lab="The Smith Lab", job_title="Researcher",
+        )
+        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
+        self.user.set_password("livetogetha")
     
 
     def tearDown(self):

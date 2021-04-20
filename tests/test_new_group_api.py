@@ -4,20 +4,7 @@ from django.core import mail
 from core.models import *
 from .base import FunctionalTest
 
-class NewGroupApiTests(FunctionalTest):
-
-    def setUp(self):
-        FunctionalTest.setUp(self)
-        self.user = User.objects.create(
-            username="adam", email="adam@crick.ac.uk", name="Adam A",
-            last_login=1617712117, created=1607712117, company="The Crick",
-            department="MolBio", lab="The Smith Lab", job_title="Researcher",
-        )
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
-
-
-
-class GroupCreationTests(NewGroupApiTests):
+class GroupCreationTests(FunctionalTest):
 
     def test_can_create_group(self):
         # User creates a group

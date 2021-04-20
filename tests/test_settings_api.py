@@ -3,24 +3,7 @@ from django.contrib.auth.hashers import check_password
 from core.models import *
 from .base import FunctionalTest
 
-class SettingsApiTests(FunctionalTest):
-
-    def setUp(self):
-        FunctionalTest.setUp(self)
-        self.user = User.objects.create(
-            username="adam", email="adam@crick.ac.uk", name="Adam A",
-        )
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
-        self.user.set_password("livetogetha")
-        self.group = Group.objects.create(
-            id=1, name="Adam Group", slug="adam-group", description="Adam's Group"
-        )
-        self.group.users.add(self.user)
-        self.group.users.add(User.objects.create(username="user2", email="user2@gmail.com"))
-
-
-
-class PasswordUpdateTests(SettingsApiTests):
+class PasswordUpdateTests(FunctionalTest):
 
     def test_can_update_password(self):
         # Send new password
@@ -75,7 +58,7 @@ class PasswordUpdateTests(SettingsApiTests):
 
 
 
-class UserModificationTests(SettingsApiTests):
+class UserModificationTests(FunctionalTest):
 
     def test_can_update_user_info(self):
         # Update info
@@ -103,7 +86,7 @@ class UserModificationTests(SettingsApiTests):
 
 
 
-class UserImageEditingTests(SettingsApiTests):
+class UserImageEditingTests(FunctionalTest):
 
     def test_can_edit_image(self):
         # Update info
@@ -164,17 +147,17 @@ class UserImageEditingTests(SettingsApiTests):
 
 
 
-class UserDeletionTests(SettingsApiTests):
+class UserDeletionTests(FunctionalTest):
 
     def test_can_delete_account(self):
         # Allowable user connections
         user2 = User.objects.create(username="u2")
         collection = Collection.objects.create(name="C1")
-        CollectionUserLink.objects.create(user=self.user, collection=collection, is_owner=True)
-        CollectionUserLink.objects.create(user=user2, collection=collection, is_owner=True)
+        CollectionUserLink.objects.create(user=self.user, collection=collection, permission=4)
+        CollectionUserLink.objects.create(user=user2, collection=collection, permission=4)
         group = Group.objects.create(name="G1")
-        group.admins.add(self.user)
-        group.admins.add(user2)
+        UserGroupLink.objects.create(user=self.user, group=group, permission=3)
+        UserGroupLink.objects.create(user=user2, group=group, permission=3)
 
         # Send deletion mutation
         users_at_start = User.objects.count()
@@ -191,14 +174,14 @@ class UserDeletionTests(SettingsApiTests):
 
         # Would leave collections without owner
         collection = Collection.objects.create(name="C1")
-        CollectionUserLink.objects.create(user=self.user, collection=collection, is_owner=True)
+        CollectionUserLink.objects.create(user=self.user, collection=collection, permission=4)
         self.check_query_error("""mutation { deleteUser { success } }""", message="collection")
         self.assertEqual(User.objects.count(), users_at_start)
         collection.delete()
 
         # Would leave groups with no admin
         group = Group.objects.create(name="G1")
-        group.admins.add(self.user)
+        UserGroupLink.objects.create(user=self.user, group=group, permission=3)
         self.check_query_error("""mutation { deleteUser { success } }""", message="only admin")
         self.assertEqual(User.objects.count(), users_at_start)
 
@@ -220,7 +203,17 @@ class UserDeletionTests(SettingsApiTests):
 
 
 
-class UserLeavingGroupTests(SettingsApiTests):
+class UserLeavingGroupTests(FunctionalTest):
+
+    def setUp(self):
+        FunctionalTest.setUp(self)
+        self.group = Group.objects.create(
+            id=1, name="Adam Group", slug="adam-group", description="Adam's Group"
+        )
+        self.link = UserGroupLink.objects.create(user=self.user, group=self.group, permission=2)
+        user2 = User.objects.create(username="user2", email="user2@gmail.com")
+        UserGroupLink.objects.create(user=user2, group=self.group, permission=2)
+
 
     def test_can_leave_group(self):
         # Leave group
@@ -256,7 +249,8 @@ class UserLeavingGroupTests(SettingsApiTests):
         )
 
         # Would be no admins
-        self.group.admins.add(self.user)
+        self.link.permission = 3
+        self.link.save()
         self.check_query_error(
             """mutation { leaveGroup(id: "1") { group { name } } }""",
             message="no admins"

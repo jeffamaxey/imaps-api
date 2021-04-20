@@ -180,8 +180,8 @@ class DeleteUserMutation(graphene.Mutation):
             for group in user.admin_groups.all():
                 if group.admins.count() == 1:
                     raise GraphQLError(json.dumps({"user": ["You are the only admin of " + group.name]}))
-            for collection in user.collections.filter(collectionuserlink__is_owner=True):
-                if collection.users.filter(collectionuserlink__is_owner=True).count() == 1:
+            for collection in user.owned_collections:
+                if collection.owners.count() == 1:
                     raise GraphQLError(json.dumps({"user": ["You are the only owner of collection: " + collection.name]}))
             user.delete()
             return DeleteUserMutation(success=True)
@@ -202,8 +202,7 @@ class CreateGroupMutation(graphene.Mutation):
         form = GroupForm(kwargs)
         if form.is_valid():
             form.save()
-            form.instance.users.add(info.context.user)
-            form.instance.admins.add(info.context.user)
+            UserGroupLink.objects.create(group=form.instance, user=info.context.user, permission=3)
             return CreateGroupMutation(group=form.instance, user=info.context.user)
         raise GraphQLError(json.dumps(form.errors))
 
@@ -257,32 +256,31 @@ class InviteUserToGroup(graphene.Mutation):
         user = graphene.ID(required=True)
         group = graphene.ID(required=True)
 
-    invitation = graphene.Field("core.queries.GroupInvitationType")
+    user = graphene.Field("core.queries.UserType")
+    group = graphene.Field("core.queries.GroupType")
 
     def mutate(self, info, **kwargs):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
-        group = Group.objects.filter(id=kwargs["group"])
+        group = Group.objects.filter(id=kwargs["group"]).first()
         if not group: raise GraphQLError('{"group": ["Does not exist"]}')
         if not info.context.user.admin_groups.filter(id=kwargs["group"]):
             raise GraphQLError('{"group": ["Not an admin"]}')
-        user = User.objects.filter(id=kwargs["user"])
+        user = User.objects.filter(id=kwargs["user"]).first()
         if not user: raise GraphQLError('{"user": ["Does not exist"]}')
-        if user.first().groups.filter(id=kwargs["group"]):
-            raise GraphQLError('{"user": ["Already a member"]}')
-        if user.first().group_invitations.filter(group=kwargs["group"]):
-            raise GraphQLError('{"user": ["Already invited"]}')
-        invitation = GroupInvitation.objects.create(
-            user=user.first(), group=group.first()
-        )
-        return InviteUserToGroup(invitation=invitation)
+        link = UserGroupLink.objects.filter(user=user, group=group).first()
+        if link: raise GraphQLError('{"user": ["Already connected"]}')
+        UserGroupLink.objects.create(user=user, group=group, permission=1)
+        return InviteUserToGroup(user=user, group=group)
 
 
 
-class DeleteGroupInvitationMutation(graphene.Mutation):
+class ProcessGroupInvitationMutation(graphene.Mutation):
 
     class Arguments:
-        id = graphene.ID(required=True)
+        user = graphene.ID(required=True)
+        group = graphene.ID(required=True)
+        accept = graphene.Boolean(required=True)
 
     success = graphene.Boolean()
     user = graphene.Field("core.queries.UserType")
@@ -290,35 +288,23 @@ class DeleteGroupInvitationMutation(graphene.Mutation):
     def mutate(self, info, **kwargs):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
-        invitation = GroupInvitation.objects.filter(id=kwargs["id"])
-        if not invitation: raise GraphQLError('{"invitation": ["Does not exist"]}')
-        if invitation.first().user != info.context.user:
-            if not invitation.first().group.admins.filter(id=info.context.user.id):
-                raise GraphQLError('{"invitation": ["Does not exist"]}')
-        invitation.first().delete()
-        return DeleteGroupInvitationMutation(success=True, user=info.context.user)
 
-
-
-class AcceptGroupInvitationMutation(graphene.Mutation):
-
-    class Arguments:
-        id = graphene.ID(required=True)
-
-    group = graphene.Field("core.queries.GroupType")
-    user = graphene.Field("core.queries.UserType")
-
-    def mutate(self, info, **kwargs):
-        if not info.context.user:
-            raise GraphQLError(json.dumps({"error": "Not authorized"}))
-        invitation = GroupInvitation.objects.filter(id=kwargs["id"])
-        if not invitation: raise GraphQLError('{"invitation": ["Does not exist"]}')
-        if invitation.first().user != info.context.user:
-            raise GraphQLError('{"invitation": ["Does not exist"]}')
-        group = invitation.first().group
-        invitation.first().delete()
-        group.users.add(info.context.user)
-        return AcceptGroupInvitationMutation(group=group, user=info.context.user)
+        group = Group.objects.filter(id=kwargs["group"]).first()
+        if not group: raise GraphQLError('{"group": ["Does not exist"]}')
+        user = User.objects.filter(id=kwargs["user"]).first()
+        if not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if user != info.context.user:
+            if not group.admins.filter(id=info.context.user.id):
+                raise GraphQLError('{"user": ["Not for you"]}')
+            if kwargs["accept"]: raise GraphQLError('{"user": ["User must accept"]}')
+        link = UserGroupLink.objects.filter(user=user, group=group, permission=1).first()
+        if not link: raise GraphQLError('{"user": ["No invitation"]}')
+        if kwargs["accept"]:
+            link.permission = 2
+            link.save()
+        else:
+            link.delete()
+        return ProcessGroupInvitationMutation(success=True, user=info.context.user)
 
 
 
@@ -334,18 +320,20 @@ class MakeGroupAdminMutation(graphene.Mutation):
     def mutate(self, info, **kwargs):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
-        group = Group.objects.filter(id=kwargs["group"])
+        group = Group.objects.filter(id=kwargs["group"]).first()
         if not group: raise GraphQLError('{"group": ["Does not exist"]}')
         if not info.context.user.admin_groups.filter(id=kwargs["group"]):
             raise GraphQLError('{"group": ["Not an admin"]}')
-        user = User.objects.filter(id=kwargs["user"])
+        user = User.objects.filter(id=kwargs["user"]).first()
         if not user: raise GraphQLError('{"user": ["Does not exist"]}')
-        if group.first().users.filter(id=user.first().id).count() == 0:
+        link = UserGroupLink.objects.filter(user=user, group=group).first()
+        if not link or link.permission == 1:
             raise GraphQLError('{"user": ["Not a member"]}')
-        if group.first().admins.filter(id=user.first().id).count():
+        if link.permission == 3:
             raise GraphQLError('{"user": ["Already an admin"]}')
-        group.first().admins.add(user.first())
-        return MakeGroupAdminMutation(group=group.first(), user=user.first())
+        link.permission = 3
+        link.save()
+        return MakeGroupAdminMutation(group=group, user=user)
 
 
 
@@ -361,18 +349,21 @@ class RevokeGroupAdminMutation(graphene.Mutation):
     def mutate(self, info, **kwargs):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
-        group = Group.objects.filter(id=kwargs["group"])
+        group = Group.objects.filter(id=kwargs["group"]).first()
         if not group: raise GraphQLError('{"group": ["Does not exist"]}')
         if not info.context.user.admin_groups.filter(id=kwargs["group"]):
             raise GraphQLError('{"group": ["Not an admin"]}')
-        user = User.objects.filter(id=kwargs["user"])
+        user = User.objects.filter(id=kwargs["user"]).first()
         if not user: raise GraphQLError('{"user": ["Does not exist"]}')
-        if group.first().admins.filter(id=user.first().id).count() == 0:
-            raise GraphQLError('{"user": ["Not an admin"]}')
-        if group.first().admins.count() == 1:
+        if not user.admin_groups.filter(id=kwargs["group"]):
+            raise GraphQLError('{"group": ["Not an admin"]}')
+        if group.admins.count() == 1:
             raise GraphQLError('{"user": ["You can\'t resign if you are the only admin"]}')
-        group.first().admins.remove(user.first())
-        return RevokeGroupAdminMutation(group=group.first(), user=user.first())
+        link = UserGroupLink.objects.filter(user=user, group=group).first()
+        if link.permission != 3: raise GraphQLError('{"user": ["Not an admin"]}')
+        link.permission = 2
+        link.save()
+        return RevokeGroupAdminMutation(group=group, user=user)
 
 
 
@@ -387,17 +378,18 @@ class RemoveUserFromGroup(graphene.Mutation):
     def mutate(self, info, **kwargs):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
-        group = Group.objects.filter(id=kwargs["group"])
+        group = Group.objects.filter(id=kwargs["group"]).first()
         if not group: raise GraphQLError('{"group": ["Does not exist"]}')
         if not info.context.user.admin_groups.filter(id=kwargs["group"]):
             raise GraphQLError('{"group": ["Not an admin"]}')
-        user = User.objects.filter(id=kwargs["user"])
+        user = User.objects.filter(id=kwargs["user"]).first()
         if not user: raise GraphQLError('{"user": ["Does not exist"]}')
-        if group.first().users.filter(id=user.first().id).count() == 0:
+
+        link = UserGroupLink.objects.filter(user=user, group=group, permission__gte=2).first()
+        if not link:
             raise GraphQLError('{"user": ["Not in group"]}')
-        group.first().users.remove(user.first())
-        group.first().admins.remove(user.first())
-        return RemoveUserFromGroup(group=group.first())
+        link.delete()
+        return RemoveUserFromGroup(group=group)
 
 
 
@@ -412,13 +404,11 @@ class LeaveGroup(graphene.Mutation):
     def mutate(self, info, **kwargs):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": ["Not authorized"]}))
-        group = Group.objects.filter(id=kwargs["id"])
+        group = Group.objects.filter(id=kwargs["id"]).first()
         if not group: raise GraphQLError('{"group": ["Does not exist"]}')
-        if group.first().users.filter(id=info.context.user.id).count() == 0:
-            raise GraphQLError('{"group": ["Not in group"]}')
-        if group.first().admins.count() == 1:
-            if group.first().admins.filter(id=info.context.user.id).count():
-                raise GraphQLError('{"group": ["If you left there would be no admins"]}')
-        group.first().users.remove(info.context.user)
-        group.first().admins.remove(info.context.user)
-        return LeaveGroup(group=group.first(), user=info.context.user)
+        link = UserGroupLink.objects.filter(user=info.context.user, group=group, permission__gte=2).first()
+        if not link: raise GraphQLError('{"group": ["Not in group"]}')
+        if link.permission == 3 and group.admins.count() == 1:
+            raise GraphQLError('{"group": ["If you left there would be no admins"]}')
+        link.delete()
+        return LeaveGroup(group=group, user=info.context.user)
