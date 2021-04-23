@@ -5,7 +5,7 @@ def data(request):
     with open("peka/data/main_heatmap.json") as f:
         data = json.load(f)
     for key, filename in [
-        ["similarity", "similarity_score"], ["iBAQ", "iBAQ"],
+        ["similarity", "similarity_score"], ["eRIC", "log2FC_eRIC"],
         ["recall", "recall"], ["introns", "3UTR%_intron%_5UTR+CDS%"],
         ["noncoding_IDR", "%_noncoding_IDR_peaks"],
         ["total_IDR", "total_IDR_peaks"], ["dendrogram", "dendrogram"]
