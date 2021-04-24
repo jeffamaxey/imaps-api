@@ -27,10 +27,10 @@ class LoginTests(FunctionalTest):
         self.assertLess(time.time() - payload["expires"] - 900, 10)
 
         # A HTTP-only cookie has been set with the refresh token
-        cookie = self.client.session.cookies._cookies["localhost.local"]["/"]["refresh_token"]
+        cookie = self.client.session.cookies._cookies["localhost.local"]["/"]["imaps_refresh_token"]
         self.assertIn("HttpOnly", cookie._rest)
         self.assertLess(abs(time.time() + 31536000 - cookie.expires), 10)
-        refresh_token = cookie.value
+        imaps_refresh_token = cookie.value
         algorithm, payload, secret = access_token.split(".")
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
@@ -47,7 +47,7 @@ class LoginTests(FunctionalTest):
         self.check_query_error("""mutation { login(
             username: "claire", password: "livetogetha"
         ) { accessToken} }""", message="Invalid credentials")
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.user.refresh_from_db()
         self.assertEqual(self.user.last_login, 1617712117)
 
@@ -55,7 +55,7 @@ class LoginTests(FunctionalTest):
         self.check_query_error("""mutation { login(
             username: "adam", password: "wrongpassword"
         ) { accessToken} }""", message="Invalid credentials")
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.user.refresh_from_db()
         self.assertEqual(self.user.last_login, 1617712117)
 

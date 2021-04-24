@@ -25,7 +25,7 @@ class SignupMutation(graphene.Mutation):
             send_welcome_email(form.instance, info.context.META.get(
                 "HTTP_ORIGIN", "https://imaps.goodwright.org"
             ))
-            info.context.refresh_token = form.instance.make_refresh_jwt()
+            info.context.imaps_refresh_token = form.instance.make_refresh_jwt()
             info.context.user = form.instance
             return SignupMutation(
                 access_token=form.instance.make_access_jwt(),
@@ -48,7 +48,7 @@ class LoginMutation(graphene.Mutation):
         user = User.objects.filter(username=kwargs["username"]).first()
         if user:
             if check_password(kwargs["password"], user.password):
-                info.context.refresh_token = user.make_refresh_jwt()
+                info.context.imaps_refresh_token = user.make_refresh_jwt()
                 info.context.user = user
                 user.last_login = time.time()
                 user.save()
@@ -62,7 +62,7 @@ class LogoutMutation(graphene.Mutation):
     success = graphene.Boolean()
 
     def mutate(self, info, **kwargs):
-        info.context.refresh_token = False
+        info.context.imaps_refresh_token = False
         return LogoutMutation(success=True)
 
 

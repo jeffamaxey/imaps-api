@@ -23,13 +23,13 @@ class AuthenticationMiddleware:
         response = self.get_response(request)
 
         try:
-            refresh_token = request.refresh_token
-        except AttributeError: refresh_token = None
-        if refresh_token is False:
-            response.delete_cookie("refresh_token")
-        elif refresh_token:
+            imaps_refresh_token = request.imaps_refresh_token
+        except AttributeError: imaps_refresh_token = None
+        if imaps_refresh_token is False:
+            response.delete_cookie("imaps_refresh_token")
+        elif imaps_refresh_token:
             response.set_cookie(
-                "refresh_token", value=refresh_token, httponly=True,
+                "imaps_refresh_token", value=imaps_refresh_token, httponly=True,
                 max_age=settings.SESSION_LENGTH_DAYS * 86400
             )
         return response

@@ -41,10 +41,10 @@ class SignupTests(FunctionalTest):
         self.assertLess(time.time() - payload["expires"] - 900, 10)
 
         # A HTTP-only cookie has been set with the refresh token
-        cookie = self.client.session.cookies._cookies["localhost.local"]["/"]["refresh_token"]
+        cookie = self.client.session.cookies._cookies["localhost.local"]["/"]["imaps_refresh_token"]
         self.assertIn("HttpOnly", cookie._rest)
         self.assertLess(abs(time.time() + 31536000 - cookie.expires), 10)
-        refresh_token = cookie.value
+        imaps_refresh_token = cookie.value
         algorithm, payload, secret = access_token.split(".")
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], new_user.id)
@@ -70,7 +70,7 @@ class SignupTests(FunctionalTest):
             username: "kate", name: "Kate Austen"
         ) { accessToken } }""", message="already exists")
         self.assertEqual(User.objects.count(), users_at_start)
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.assertEqual(len(mail.outbox), 0)
 
         # Username must be unique
@@ -79,7 +79,7 @@ class SignupTests(FunctionalTest):
             username: "adam", name: "Kate Austen"
         ) { accessToken } }""", message="already exists")
         self.assertEqual(User.objects.count(), users_at_start)
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.assertEqual(len(mail.outbox), 0)
 
         # Username must be short enough
@@ -89,7 +89,7 @@ class SignupTests(FunctionalTest):
             username: "0001112223334445556667778889990"
         ) { accessToken } }""", message="30 characters")
         self.assertEqual(User.objects.count(), users_at_start)
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.assertEqual(len(mail.outbox), 0)
 
         # Username must be long enough
@@ -99,7 +99,7 @@ class SignupTests(FunctionalTest):
             username: "1"
         ) { accessToken } }""", message="2 characters")
         self.assertEqual(User.objects.count(), users_at_start)
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.assertEqual(len(mail.outbox), 0)
 
         # Password must be 9 or more characters
@@ -108,7 +108,7 @@ class SignupTests(FunctionalTest):
             username: "kate", name: "Kate Austen"
         ) { accessToken } }""", message="too short")
         self.assertEqual(User.objects.count(), users_at_start)
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.assertEqual(len(mail.outbox), 0)
 
         # Password can't be numeric
@@ -117,7 +117,7 @@ class SignupTests(FunctionalTest):
             username: "kate", name: "Kate Austen"
         ) { accessToken } }""", message="numeric")
         self.assertEqual(User.objects.count(), users_at_start)
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.assertEqual(len(mail.outbox), 0)
 
         # Password must be reasonably uncommon
@@ -126,5 +126,5 @@ class SignupTests(FunctionalTest):
             username: "kate", name: "Kate Austen"
         ) { accessToken } }""", message="too common")
         self.assertEqual(User.objects.count(), users_at_start)
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
         self.assertEqual(len(mail.outbox), 0)

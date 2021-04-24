@@ -7,7 +7,7 @@ from core.middleware import *
 class AuthMiddlewareTests(TestCase):
 
     def setUp(self):
-        self.request = Mock(path="/", refresh_token=None)
+        self.request = Mock(path="/", imaps_refresh_token=None)
         self.response = Mock()
         self.callback = MagicMock()
         self.callback.return_value = self.response
@@ -24,25 +24,25 @@ class AuthMiddlewareTests(TestCase):
     
 
     @patch("core.middleware.User.from_token")
-    def test_middleware_does_nothing_if_no_refresh_token_flag(self, mock_from):
+    def test_middleware_does_nothing_if_no_imaps_refresh_token_flag(self, mock_from):
         response = self.mw(self.request)
         self.assertFalse(self.response.set_cookie.called)
         self.assertFalse(self.response.delete_cookie.called)
     
 
     @patch("core.middleware.User.from_token")
-    def test_middleware_deletes_refresh_token_if_false_flag(self, mock_from):
-        self.request.refresh_token = False
+    def test_middleware_deletes_imaps_refresh_token_if_false_flag(self, mock_from):
+        self.request.imaps_refresh_token = False
         response = self.mw(self.request)
         self.assertFalse(self.response.set_cookie.called)
-        self.response.delete_cookie.assert_called_with("refresh_token")
+        self.response.delete_cookie.assert_called_with("imaps_refresh_token")
     
 
     @patch("core.middleware.User.from_token")
     def test_middleware_can_set_cookie(self, mock_from):
-        self.request.refresh_token = "ABCDEFGH"
+        self.request.imaps_refresh_token = "ABCDEFGH"
         response = self.mw(self.request)
         self.assertFalse(self.response.delete_cookie.called)
         self.response.set_cookie.assert_called_with(
-            "refresh_token", value="ABCDEFGH", httponly=True, max_age=31536000
+            "imaps_refresh_token", value="ABCDEFGH", httponly=True, max_age=31536000
         )

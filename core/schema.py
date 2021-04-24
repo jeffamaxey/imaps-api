@@ -41,12 +41,12 @@ class Query(graphene.ObjectType):
 
 
     def resolve_access_token(self, info, **kwargs):
-        token = info.context.COOKIES.get("refresh_token")
+        token = info.context.COOKIES.get("imaps_refresh_token")
         if not token:
             raise GraphQLError(json.dumps({"token": "No refresh token supplied"}))
         user = User.from_token(token)
         if user:
-            info.context.refresh_token = user.make_refresh_jwt()
+            info.context.imaps_refresh_token = user.make_refresh_jwt()
             return user.make_access_jwt()
         raise GraphQLError(json.dumps({"token": "Refresh token not valid"}))
 

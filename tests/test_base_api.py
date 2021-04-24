@@ -11,10 +11,10 @@ class AccessTokenTests(FunctionalTest):
 
     def test_can_get_access_token(self):
         # Send query with cookie
-        original_refresh_token = self.user.make_refresh_jwt()
+        original_imaps_refresh_token = self.user.make_refresh_jwt()
         cookie_obj = requests.cookies.create_cookie(
-            domain="localhost.local", name="refresh_token",
-            value=original_refresh_token
+            domain="localhost.local", name="imaps_refresh_token",
+            value=original_imaps_refresh_token
         )
         self.client.session.cookies.set_cookie(cookie_obj)
         result = self.client.execute("{ accessToken }")
@@ -28,11 +28,11 @@ class AccessTokenTests(FunctionalTest):
         self.assertLess(time.time() - payload["expires"] - 900, 10)
 
         # A new HTTP-only cookie has been set with the refresh token
-        cookie = self.client.session.cookies._cookies["localhost.local"]["/"]["refresh_token"]
+        cookie = self.client.session.cookies._cookies["localhost.local"]["/"]["imaps_refresh_token"]
         self.assertIn("HttpOnly", cookie._rest)
         self.assertLess(time.time() - cookie.expires - 31536000, 10)
-        refresh_token = cookie.value
-        algorithm, payload, secret = refresh_token.split(".")
+        imaps_refresh_token = cookie.value
+        algorithm, payload, secret = imaps_refresh_token.split(".")
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
@@ -44,11 +44,11 @@ class AccessTokenTests(FunctionalTest):
         self.check_query_error(
             "{ accessToken }", message="No refresh token"
         )
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
 
         # Refresh token garbled
         cookie_obj = requests.cookies.create_cookie(
-            domain="localhost.local", name="refresh_token", value="sadafasdf"
+            domain="localhost.local", name="imaps_refresh_token", value="sadafasdf"
         )
         self.client.session.cookies.set_cookie(cookie_obj)
         self.check_query_error(
@@ -60,7 +60,7 @@ class AccessTokenTests(FunctionalTest):
             "sub": self.user.id, "iat": 1000000000000, "expires": 2000
         }, settings.SECRET_KEY, algorithm="HS256").decode()
         cookie_obj = requests.cookies.create_cookie(
-            domain="localhost.local", name="refresh_token", value=token
+            domain="localhost.local", name="imaps_refresh_token", value=token
         )
         self.client.session.cookies.set_cookie(cookie_obj)
         self.check_query_error(
@@ -116,32 +116,32 @@ class LogoutTests(FunctionalTest):
 
     def test_can_logout(self):
         # Start with refresh token
-        refresh_token = self.user.make_refresh_jwt()
+        imaps_refresh_token = self.user.make_refresh_jwt()
         cookie_obj = requests.cookies.create_cookie(
-            domain="localhost.local", name="refresh_token",
-            value=refresh_token
+            domain="localhost.local", name="imaps_refresh_token",
+            value=imaps_refresh_token
         )
         self.client.session.cookies.set_cookie(cookie_obj)
-        self.assertTrue("refresh_token" in self.client.session.cookies)
+        self.assertTrue("imaps_refresh_token" in self.client.session.cookies)
 
         # Log out
         result = self.client.execute("mutation { logout { success } }")
 
         # Cookie gone
         self.assertTrue(result["data"]["logout"]["success"])
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
     
 
     def test_logout_works_without_cookie(self):
         # No cookies
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
 
         # Log out
         result = self.client.execute("mutation { logout { success } }")
 
         # Still no cookie
         self.assertTrue(result["data"]["logout"]["success"])
-        self.assertFalse("refresh_token" in self.client.session.cookies)
+        self.assertFalse("imaps_refresh_token" in self.client.session.cookies)
 
 
 
