@@ -45,6 +45,7 @@ class LoginMutation(graphene.Mutation):
     user = graphene.Field("core.queries.UserType")
 
     def mutate(self, info, **kwargs):
+        time.sleep(1)
         user = User.objects.filter(username=kwargs["username"]).first()
         if user:
             if check_password(kwargs["password"], user.password):
