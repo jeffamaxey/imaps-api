@@ -413,3 +413,21 @@ class LeaveGroup(graphene.Mutation):
             raise GraphQLError('{"group": ["If you left there would be no admins"]}')
         link.delete()
         return LeaveGroup(group=group, user=info.context.user)
+
+
+
+class CreateCollectionMutation(graphene.Mutation):
+
+    Arguments = create_mutation_arguments(CollectionForm)
+    
+    collection = graphene.Field("core.queries.CollectionType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        form = CollectionForm(kwargs)
+        if form.is_valid():
+            form.save()
+            CollectionUserLink.objects.create(collection=form.instance, user=info.context.user, permission=4)
+            return CreateCollectionMutation(collection=form.instance)
+        raise GraphQLError(json.dumps(form.errors))

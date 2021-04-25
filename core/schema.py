@@ -227,4 +227,6 @@ class Mutation(graphene.ObjectType):
     remove_user_from_group = RemoveUserFromGroup.Field()
     leave_group = LeaveGroup.Field()
 
+    create_collection = CreateCollectionMutation.Field()
+
 schema = graphene.Schema(query=Query, mutation=Mutation)

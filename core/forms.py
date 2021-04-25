@@ -106,3 +106,12 @@ class GroupForm(ModelForm):
     class Meta:
         model = Group
         exclude = ["id", "admins", "users"]
+
+
+
+class CollectionForm(ModelForm):
+    """Creates or edits a collection."""
+
+    class Meta:
+        model = Collection
+        exclude = ["id", "users", "groups", "created", "last_modified"]
