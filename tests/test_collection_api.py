@@ -8,9 +8,9 @@ class CollectionQueryTests(FunctionalTest):
         self.collection = Collection.objects.create(
             id=1, name="Coll", description="My collection.", created=1000000, private=False
         )
-        self.collection.papers.add(Paper.objects.create(year=2019, title="My paper", url="http://paper.com"))
-        self.collection.papers.add(Paper.objects.create(year=2018, title="My 1st paper", url="http://paper.com"))
-        Paper.objects.create(year=2020, title="Other paper", url="http://paper.com")
+        Paper.objects.create(year=2019, title="My paper", url="http://paper.com", collection=self.collection)
+        Paper.objects.create(year=2018, title="My 1st paper", url="http://paper.com", collection=self.collection)
+        Paper.objects.create(year=2020, title="Other paper", url="http://paper.com", collection=Collection.objects.create())
         CollectionUserLink.objects.create(collection=self.collection, user=User.objects.create(
             username="james", name="james", email="james@gmail.com"
         ), permission=4)

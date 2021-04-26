@@ -7,7 +7,7 @@ class PaperCreationTests(TestCase):
 
     def test_can_create_paper(self):
         paper = mixer.blend(Paper)
-        self.assertFalse(paper.collections.all())
+        self.assertEqual(paper.url, None)
 
 
 
