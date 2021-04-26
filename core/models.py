@@ -360,9 +360,7 @@ class Paper(RandomIDModel):
     title = models.CharField(max_length=250)
     url = models.URLField(max_length=200, blank=True, null=True)
     year = models.IntegerField()
-    journal = models.CharField(max_length=100)
-    doi = models.CharField(max_length=100)
-    collections = models.ManyToManyField(Collection, related_name="papers")
+    collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name="papers")
 
 
 

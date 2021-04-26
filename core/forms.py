@@ -115,3 +115,12 @@ class CollectionForm(ModelForm):
     class Meta:
         model = Collection
         exclude = ["id", "users", "groups", "created", "last_modified"]
+
+
+
+class PaperForm(ModelForm):
+    """Creates or edits a paper."""
+
+    class Meta:
+        model = Paper
+        exclude = ["id"]

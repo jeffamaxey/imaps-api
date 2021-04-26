@@ -228,5 +228,6 @@ class Mutation(graphene.ObjectType):
     leave_group = LeaveGroup.Field()
 
     create_collection = CreateCollectionMutation.Field()
+    update_collection = UpdateCollectionMutation.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

@@ -431,3 +431,40 @@ class CreateCollectionMutation(graphene.Mutation):
             CollectionUserLink.objects.create(collection=form.instance, user=info.context.user, permission=4)
             return CreateCollectionMutation(collection=form.instance)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class PaperInput(graphene.InputObjectType):
+    title = graphene.String(required=True)
+    year = graphene.Int(required=True)
+    url = graphene.String(required=True)
+
+
+
+class UpdateCollectionMutation(graphene.Mutation):
+
+    Arguments = create_mutation_arguments(
+        CollectionForm, edit=True, papers=graphene.List(PaperInput)
+    )
+    
+    collection = graphene.Field("core.queries.CollectionType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        collection = Collection.objects.filter(id=kwargs["id"]).viewable_by(info.context.user).first()
+        if not collection: raise GraphQLError('{"collection": ["Does not exist"]}')
+        if info.context.user not in collection.editors:
+            raise GraphQLError('{"collection": ["You don\'t have permission to edit this collection"]}')
+        form = CollectionForm(kwargs, instance=collection)
+        if form.is_valid():
+            if "papers" in kwargs:
+                collection.papers.all().delete()
+                for paper in kwargs["papers"]:
+                    paper_form = PaperForm({**paper, "collection": collection.id})
+                    if paper_form.is_valid():
+                        paper_form.save()
+                    else: raise GraphQLError(json.dumps(paper_form.errors))
+            form.save()
+            return UpdateCollectionMutation(collection=form.instance)
+        raise GraphQLError(json.dumps(form.errors))
