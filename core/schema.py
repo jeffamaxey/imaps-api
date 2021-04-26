@@ -229,5 +229,6 @@ class Mutation(graphene.ObjectType):
 
     create_collection = CreateCollectionMutation.Field()
     update_collection = UpdateCollectionMutation.Field()
+    delete_collection = DeleteCollectionMutation.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

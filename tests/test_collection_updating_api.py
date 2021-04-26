@@ -16,6 +16,9 @@ class CollectionUpdateTest(FunctionalTest):
         Paper.objects.create(
             title="Paper 2", year=2019, url="https://paper2.com", collection=self.collection
         )
+        sample = Sample.objects.create(collection=self.collection)
+        Execution.objects.create(collection=self.collection)
+        Execution.objects.create(sample=sample)
 
 
 
@@ -211,4 +214,47 @@ class CollectionUpdatingTests(CollectionUpdateTest):
 
 class CollectionDeletingTests(CollectionUpdateTest):
     
-    pass
+    def test_can_delete_collection(self):
+        # Delete collection
+        result = self.client.execute(
+            """mutation { deleteCollection(id: "1") { success } }"""
+        )
+
+        # The collection is gone, as are the children
+        self.assertTrue(result["data"]["deleteCollection"]["success"])
+        self.assertFalse(Collection.objects.filter(id=1).count())
+        self.assertEqual(Paper.objects.count(), 0)
+        self.assertEqual(Sample.objects.count(), 0)
+        self.assertEqual(Execution.objects.count(), 0)
+    
+
+    def test_collection_deletion_validation(self):
+        # Collection must exist
+        self.check_query_error(
+            """mutation { deleteCollection(id: "10") { success } }""",
+            message="Does not exist"
+        )
+        
+        # Must be accessible
+        Collection.objects.create(id=2)
+        self.check_query_error(
+            """mutation { deleteCollection(id: "2") { success } }""",
+            message="Does not exist"
+        )
+
+        # You must be owner
+        self.link.permission = 3
+        self.link.save()
+        self.check_query_error(
+            """mutation { deleteCollection(id: "1") { success } }""",
+            message="Not an owner"
+        )
+
+        # Must be signed in
+        self.link.permission = 4
+        self.link.save()
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { deleteCollection(id: "1") { success } }""",
+            message="Not authorized"
+        )

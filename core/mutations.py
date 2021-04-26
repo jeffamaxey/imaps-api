@@ -468,3 +468,27 @@ class UpdateCollectionMutation(graphene.Mutation):
             form.save()
             return UpdateCollectionMutation(collection=form.instance)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class DeleteCollectionMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        collection = Collection.objects.filter(id=kwargs["id"]).viewable_by(info.context.user).first()
+        if not collection: raise GraphQLError('{"collection": ["Does not exist"]}')
+        if info.context.user not in collection.owners:
+            raise GraphQLError('{"collection": ["Not an owner"]}')
+        executions = (
+            Execution.objects.filter(collection=collection) |
+            Execution.objects.filter(sample__collection=collection)
+        )
+        executions.delete()
+        collection.delete()
+        return DeleteCollectionMutation(success=True)
