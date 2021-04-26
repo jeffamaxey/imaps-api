@@ -79,6 +79,7 @@ class LoggedInUserAccessTests(FunctionalTest):
         UserGroupLink.objects.create(user=self.user, group=Group.objects.create(slug="grangerlab"), permission=1)
         Group.objects.create(slug="parkerlab")
 
+
     def test_can_get_logged_in_user(self):
         result = self.client.execute("""{ user {
             username email name lastLogin created jobTitle lab company
@@ -149,7 +150,10 @@ class GroupInvitationProcessingTests(FunctionalTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
-        self.link = UserGroupLink.objects.create(user=self.user, group=Group.objects.create(id=1, slug="adamlab"), permission=1)
+        self.link = UserGroupLink.objects.create(
+            user=self.user, group=Group.objects.create(id=1, slug="adamlab"), permission=1
+        )
+
 
     def test_can_decline_invitation_as_invitee(self):
         # Delete invitation as invitee
