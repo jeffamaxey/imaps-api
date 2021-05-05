@@ -72,8 +72,9 @@ class CollectionQueryTests(FunctionalTest):
 
     def test_can_get_collection(self):
         result = self.client.execute("""{ collection(id: "1") {
-            name description created
+            name description created isOwner canShare canEdit
             papers { year title url } owners { name username }
+            users { username collectionPermission(id: "1")}
             samples {
                 name organism source piName annotatorName qcPass qcMessage created
             }
@@ -85,7 +86,13 @@ class CollectionQueryTests(FunctionalTest):
                 {"year": 2018, "title": "My 1st paper", "url": "http://paper.com"},
                 {"year": 2019, "title": "My paper", "url": "http://paper.com"}
             ],
+            "isOwner": False, "canShare": False, "canEdit": False,
             "owners": [{"name": "james", "username": "james"}, {"name": "kate", "username": "Kate"}],
+            "users": [
+                {"username": "james", "collectionPermission": 4},
+                {"username": "Kate", "collectionPermission": 4},
+                {"username": "john", "collectionPermission": 1}
+            ],
             "samples": [{
                 "name": "run5", "organism": "mouse", "source": "ecoli",
                 "piName": "Sarah", "annotatorName": "adam", "qcPass": True,
@@ -122,6 +129,99 @@ class CollectionQueryTests(FunctionalTest):
                 "name": "command5", "created": 1005,
                 "command": {"name": "Command 5", "description": "Runs analysis 5"}
             }]
+        })
+    
+
+    def test_can_detect_various_permissions_on_collection(self):
+        # No link
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": False, "canShare": False, "canEdit": False
+        })
+
+        # View access
+        link = CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=1)
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": False, "canShare": False, "canEdit": False
+        })
+
+        # Edit access
+        link.permission = 2
+        link.save()
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": False, "canShare": False, "canEdit": True
+        })
+
+        # Share access
+        link.permission = 3
+        link.save()
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": False, "canShare": True, "canEdit": True
+        })
+
+        # Owner access
+        link.permission = 4
+        link.save()
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": True, "canShare": True, "canEdit": True
+        })
+
+        # Group with lower permission
+        group = Group.objects.create(name="Group 1")
+        UserGroupLink.objects.create(user=self.user, group=group, permission=2)
+        group_link = CollectionGroupLink.objects.create(collection=self.collection, group=group, permission=3)
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": True, "canShare": True, "canEdit": True
+        })
+
+        # Group can share, user can edit
+        link.permission = 2
+        link.save()
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": False, "canShare": True, "canEdit": True
+        })
+
+        # Group can edit, user can view
+        link.permission = 1
+        link.save()
+        group_link.permission = 2
+        group_link.save()
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": False, "canShare": False, "canEdit": True
+        })
+
+        # Group can view, user cannot
+        link.delete()
+        group_link.permission = 1
+        group_link.save()
+        result = self.client.execute("""{ collection(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["collection"], {
+            "isOwner": False, "canShare": False, "canEdit": False
         })
     
 

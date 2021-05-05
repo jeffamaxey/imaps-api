@@ -9,6 +9,7 @@ class Query(graphene.ObjectType):
     user = graphene.Field("core.queries.UserType", username=graphene.String())
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
+    groups = graphene.List("core.queries.GroupType")
     collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
     execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
@@ -69,6 +70,10 @@ class Query(graphene.ObjectType):
         try:
             return Group.objects.get(slug=kwargs["slug"])
         except: raise GraphQLError('{"group": "Does not exist"}')
+    
+
+    def resolve_groups(self, info, **kwargs):
+        return Group.objects.all()
     
 
     def resolve_collection(self, info, **kwargs):
@@ -229,6 +234,7 @@ class Mutation(graphene.ObjectType):
 
     create_collection = CreateCollectionMutation.Field()
     update_collection = UpdateCollectionMutation.Field()
+    update_collection_access = UpdateCollectionAccessMutation.Field()
     delete_collection = DeleteCollectionMutation.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

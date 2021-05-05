@@ -471,6 +471,61 @@ class UpdateCollectionMutation(graphene.Mutation):
 
 
 
+class UpdateCollectionAccessMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        user = graphene.ID()
+        group = graphene.ID()
+        permission = graphene.Int(required=True)
+    
+    collection = graphene.Field("core.queries.CollectionType")
+    user = graphene.Field("core.queries.UserType")
+    group = graphene.Field("core.queries.GroupType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        collection = Collection.objects.filter(
+            id=kwargs["id"]
+        ).viewable_by(info.context.user).first()
+        if not collection: raise GraphQLError('{"collection": ["Does not exist"]}')
+        if info.context.user not in collection.sharers and all(
+            group not in collection.group_sharers for group in info.context.user.memberships
+        ):
+            raise GraphQLError('{"collection": ["You do not have share permissions"]}')
+        user = User.objects.filter(id=kwargs.get("user")).first()
+        if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        group = Group.objects.filter(id=kwargs.get("group")).first()
+        if kwargs.get("group") and not group: raise GraphQLError('{"group": ["Does not exist"]}')
+        if user:
+            if not 0 <= kwargs["permission"] <= 4:
+                raise GraphQLError('{"permission": ["Not a valid permission"]}')
+            link = CollectionUserLink.objects.get_or_create(
+                collection=collection, user=user
+            )[0]
+            if kwargs["permission"] == 4 and info.context.user not in collection.owners:
+                raise GraphQLError('{"collection": ["Only an owner can make owners"]}')
+            if link.permission == 4 and info.context.user not in collection.owners:
+                raise GraphQLError('{"collection": ["Only an owner can remove owners"]}')
+            if collection.owners.count() == 1 and link.permission == 4 and kwargs["permission"] != 4:
+                raise GraphQLError('{"collection": ["There must be at least one owner"]}')
+        elif group:
+            if not 0 <= kwargs["permission"] <= 3:
+                raise GraphQLError('{"permission": ["Not a valid permission"]}')
+            link = CollectionGroupLink.objects.get_or_create(
+                collection=collection, group=group
+            )[0]
+        else:
+            raise GraphQLError('{"user": ["Must provide user or group"]}')
+        if kwargs["permission"] == 0:
+            link.delete()
+        else:
+            link.permission = kwargs["permission"]
+            link.save()
+        return UpdateCollectionAccessMutation(user=user, collection=collection, group=group)
+
+
+
 class DeleteCollectionMutation(graphene.Mutation):
 
     class Arguments:

@@ -18,6 +18,7 @@ class UserType(DjangoObjectType):
     invitations = graphene.List("core.queries.GroupType")
 
     collections = graphene.List("core.queries.CollectionType")
+    collection_permission = graphene.Int(id=graphene.ID(required=True))
     owned_collections = graphene.List("core.queries.CollectionType")
     shareable_collections = graphene.List("core.queries.CollectionType")
     editable_collections = graphene.List("core.queries.CollectionType")
@@ -49,6 +50,14 @@ class UserType(DjangoObjectType):
 
     def resolve_collections(self, info, **kwargs):
         return self.collections.all().viewable_by(info.context.user)
+    
+
+    def resolve_collection_permission(self, info, **kwargs):
+        collection = Collection.objects.filter(
+            id=kwargs["id"]
+        ).viewable_by(info.context.user).first()
+        link = CollectionUserLink.objects.filter(user=self, collection=collection).first()
+        return link.permission if link else 0
         
 
     def resolve_owned_collections(self, info, **kwargs):
@@ -116,6 +125,7 @@ class GroupType(DjangoObjectType):
     members = graphene.List("core.queries.UserType")
     invitees = graphene.List("core.queries.UserType")
     collections = graphene.List("core.queries.CollectionType")
+    collection_permission = graphene.Int(id=graphene.ID(required=True))
     shareable_collections = graphene.List("core.queries.CollectionType")
     editable_collections = graphene.List("core.queries.CollectionType")
     public_collections = graphene.List("core.queries.CollectionType")
@@ -134,6 +144,14 @@ class GroupType(DjangoObjectType):
 
     def resolve_collections(self, info, **kwargs):
         return self.collections.viewable_by(info.context.user)
+
+
+    def resolve_collection_permission(self, info, **kwargs):
+        collection = Collection.objects.filter(
+            id=kwargs["id"]
+        ).viewable_by(info.context.user).first()
+        link = CollectionGroupLink.objects.filter(group=self, collection=collection).first()
+        return link.permission if link else 0
     
 
     def resolve_shareable_collections(self, info, **kwargs):
@@ -157,11 +175,14 @@ class CollectionType(DjangoObjectType):
     executions = graphene.List("core.queries.ExecutionType")
     sample_count = graphene.Int()
     execution_count = graphene.Int()
+    can_edit = graphene.Boolean()
+    can_share = graphene.Boolean()
+    is_owner = graphene.Boolean()
     owners = graphene.List("core.queries.UserType")
     sharers = graphene.List("core.queries.UserType")
     editors = graphene.List("core.queries.UserType")
-    group_sharers = graphene.List("core.queries.UserType")
-    group_editors = graphene.List("core.queries.UserType")
+    group_sharers = graphene.List("core.queries.GroupType")
+    group_editors = graphene.List("core.queries.GroupType")
 
     def resolve_papers(self, info, **kwargs):
         return self.papers.all()
@@ -183,6 +204,28 @@ class CollectionType(DjangoObjectType):
 
     def resolve_execution_count(self, info, **kwargs):
         return self.executions.count()
+    
+
+    def resolve_can_edit(self, info, **kwargs):
+        if info.context.user:
+            return self in info.context.user.editable_collections or any(
+                group in self.group_editors for group in info.context.user.memberships
+            )
+        return False
+    
+
+    def resolve_can_share(self, info, **kwargs):
+        if info.context.user:
+            return self in info.context.user.shareable_collections or any(
+                group in self.group_sharers for group in info.context.user.memberships
+            )
+        return False
+    
+
+    def resolve_is_owner(self, info, **kwargs):
+        if info.context.user:
+            return self in info.context.user.owned_collections
+        return False
 
 
 
