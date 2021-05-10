@@ -547,3 +547,30 @@ class DeleteCollectionMutation(graphene.Mutation):
         executions.delete()
         collection.delete()
         return DeleteCollectionMutation(success=True)
+
+
+
+class UpdateSampleMutation(graphene.Mutation):
+
+    Arguments = create_mutation_arguments(
+        SampleForm, edit=True, collection=graphene.ID(required=True)
+    )
+    
+    sample = graphene.Field("core.queries.SampleType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        sample = Sample.objects.filter(id=kwargs["id"]).viewable_by(info.context.user).first()
+        if not sample: raise GraphQLError('{"sample": ["Does not exist"]}')
+        collection = Collection.objects.filter(id=kwargs["collection"]).viewable_by(info.context.user).first()
+        if not collection: raise GraphQLError('{"collection": ["Does not exist"]}')
+        if collection not in info.context.user.owned_collections:
+            raise GraphQLError('{"collection": ["Collection not owned"]}')
+        if info.context.user not in sample.editors:
+            raise GraphQLError('{"sample": ["You don\'t have permission to edit this sample"]}')
+        form = SampleForm(kwargs, instance=sample)
+        if form.is_valid():
+            form.save()
+            return UpdateSampleMutation(sample=form.instance)
+        raise GraphQLError(json.dumps(form.errors))

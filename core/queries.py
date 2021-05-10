@@ -256,9 +256,33 @@ class SampleType(DjangoObjectType):
         model = Sample
     
     id = graphene.ID()
+    can_edit = graphene.Boolean()
+    can_share = graphene.Boolean()
+    is_owner = graphene.Boolean()
     executions = graphene.List("core.queries.ExecutionType")
     sharers = graphene.List("core.queries.UserType")
     editors = graphene.List("core.queries.UserType")
+
+    def resolve_can_edit(self, info, **kwargs):
+        if info.context.user:
+            return self in info.context.user.editable_samples or any(
+                group in self.collection.group_editors for group in info.context.user.memberships
+            ) or self.collection in info.context.user.editable_collections
+        return False
+    
+
+    def resolve_can_share(self, info, **kwargs):
+        if info.context.user:
+            return self in info.context.user.shareable_samples or any(
+                group in self.collection.group_sharers for group in info.context.user.memberships
+            ) or self.collection in info.context.user.shareable_collections
+        return False
+    
+
+    def resolve_is_owner(self, info, **kwargs):
+        if info.context.user:
+            return self.collection in info.context.user.owned_collections
+        return False
 
 
     def resolve_executions(self, info, **kwargs):

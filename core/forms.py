@@ -124,3 +124,12 @@ class PaperForm(ModelForm):
     class Meta:
         model = Paper
         exclude = ["id"]
+
+
+
+class SampleForm(ModelForm):
+    """Creates or edits a sample."""
+
+    class Meta:
+        model = Sample
+        exclude = ["id", "created", "last_modified", "qc_message", "qc_pass", "users"]

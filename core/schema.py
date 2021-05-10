@@ -237,4 +237,6 @@ class Mutation(graphene.ObjectType):
     update_collection_access = UpdateCollectionAccessMutation.Field()
     delete_collection = DeleteCollectionMutation.Field()
 
+    update_sample = UpdateSampleMutation.Field()
+
 schema = graphene.Schema(query=Query, mutation=Mutation)

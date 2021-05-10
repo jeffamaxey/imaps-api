@@ -21,6 +21,7 @@ load.py
 build.py
 pull.py
 *.sql.gz
+*.xlsx
 json/*
 emails.dat
 trim.py
