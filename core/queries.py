@@ -318,6 +318,9 @@ class ExecutionType(DjangoObjectType):
     
     id = graphene.ID()
     command = graphene.Field("core.queries.CommandType")
+    can_edit = graphene.Boolean()
+    can_share = graphene.Boolean()
+    is_owner = graphene.Boolean()
     owners = graphene.List("core.queries.UserType")
     sharers = graphene.List("core.queries.UserType")
     editors = graphene.List("core.queries.UserType")
@@ -325,6 +328,42 @@ class ExecutionType(DjangoObjectType):
     upstream_executions = graphene.List("core.queries.ExecutionType")
     downstream_executions = graphene.List("core.queries.ExecutionType")
     component_executions = graphene.List("core.queries.ExecutionType")
+
+
+    def resolve_can_edit(self, info, **kwargs):
+        if info.context.user:
+            if self in info.context.user.editable_executions: return True
+            if self.sample:
+                if self.sample in info.context.user.editable_samples: return True
+            collection = self.collection or (self.sample and self.sample.collection)
+            if collection:
+                if collection in info.context.user.editable_collections: return True
+                if any(
+                    group in collection.group_editors for group in info.context.user.memberships
+                ): return True
+        return False
+    
+
+    def resolve_can_share(self, info, **kwargs):
+        if info.context.user:
+            if self in info.context.user.shareable_executions: return True
+            if self.sample:
+                if self.sample in info.context.user.shareable_samples: return True
+            collection = self.collection or (self.sample and self.sample.collection)
+            if collection:
+                if collection in info.context.user.shareable_collections: return True
+                if any(
+                    group in collection.group_sharers for group in info.context.user.memberships
+                ): return True
+        return False
+    
+
+    def resolve_is_owner(self, info, **kwargs):
+        if info.context.user:
+            if self in info.context.user.owned_executions: return True
+            collection = self.collection or (self.sample and self.sample.collection)
+            if collection and collection in info.context.user.owned_collections: return True
+        return False
 
 
     def resolve_upstream_executions(self, info, **kwargs):

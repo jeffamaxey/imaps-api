@@ -81,6 +81,7 @@ class ExecutionQueryTests(FunctionalTest):
     def test_can_get_execution(self):
         result = self.client.execute("""{ execution(id: "1") {
             id name created status warning error input output
+            canEdit canShare isOwner
             sample { name } collection { name } owners { username }
             parent { name } upstreamExecutions { name }
             downstreamExecutions { name } componentExecutions { name }
@@ -90,6 +91,7 @@ class ExecutionQueryTests(FunctionalTest):
         self.assertEqual(result["data"]["execution"], {
             "id": "1", "name": "Investigate this file", "created": 1000,
             "status": "OK", "warning": "no warning", "error": "no error",
+            "canEdit": False, "canShare": False, "isOwner": False,
             "input": '{"genome": 10, "annotations": [20, 30], "count": 23}', "output": '{"steps": [50, 60]}',
             "collection": {"name": "Coll 1"}, "sample": {"name": "Sample 1"},
             "owners": [{"username": "anna"}, {"username": "james"}],
@@ -102,6 +104,181 @@ class ExecutionQueryTests(FunctionalTest):
                 "inputSchema": '[{"name": "genome", "type": "data:genome:"}, {"name": "annotations", "type": "list:data:genome:"}, {"name": "count", "type": "basic:int:"}]',
                 "outputSchema": '[{"name": "steps", "type": "list:data:"}]'
             }
+        })
+    
+
+    def test_can_detect_various_permissions_on_sample(self):
+        # No link
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": False, "canEdit": False
+        })
+
+        # Collection can edit
+        collection = Collection.objects.create(name="C1")
+        link = CollectionUserLink.objects.create(user=self.user, collection=collection, permission=2)
+        self.execution.collection = collection
+        self.execution.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": False, "canEdit": True
+        })
+
+        # Collection can share
+        link.permission = 3
+        link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": True, "canEdit": True
+        })
+
+        # Collection is owned
+        link.permission = 4
+        link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": True, "canShare": True, "canEdit": True
+        })
+
+        # Collection is editable by group
+        group = Group.objects.create(slug="g1")
+        UserGroupLink.objects.create(user=self.user, group=group, permission=2)
+        link.permission = 1
+        link.save()
+        g_link = CollectionGroupLink.objects.create(collection=collection, group=group, permission=2)
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": False, "canEdit": True
+        })
+
+        # Collection is shareable by group
+        g_link.permission = 3
+        g_link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": True, "canEdit": True
+        })
+
+        # Sample collection can edit
+        sample = Sample.objects.create(collection=collection)
+        self.execution.sample = sample
+        self.execution.collection = None
+        self.execution.save()
+        g_link.permission = 1
+        g_link.save()
+        link.permission = 2
+        link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": False, "canEdit": True
+        })
+
+        # Sample collection can share
+        link.permission = 3
+        link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": True, "canEdit": True
+        })
+
+        # Sample collection is owner
+        link.permission = 4
+        link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": True, "canShare": True, "canEdit": True
+        })
+
+        # Sample collection is editable by group
+        link.permission = 1
+        link.save()
+        g_link.permission = 2
+        g_link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": False, "canEdit": True
+        })
+
+        # Sample collection is shareable by group
+        g_link.permission = 3
+        g_link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": True, "canEdit": True
+        })
+
+        # Sample can edit
+        sample.collection = None
+        sample.save()
+        link = SampleUserLink.objects.create(sample=sample, user=self.user, permission=2)
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": False, "canEdit": True
+        })
+
+        # Sample can share
+        link.permission = 3
+        link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": True, "canEdit": True
+        })
+
+        # Execution is directly editable
+        self.execution.sample = None
+        self.execution.save()
+        link = ExecutionUserLink.objects.create(execution=self.execution, user=self.user, permission=2)
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": False, "canEdit": True
+        })
+
+        # Execution is directly shareable
+        link.permission = 3
+        link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": False, "canShare": True, "canEdit": True
+        })
+
+        # Execution is directly owned
+        link.permission = 4
+        link.save()
+        result = self.client.execute("""{ execution(id: "1") {
+            isOwner canShare canEdit
+        } }""")
+        self.assertEqual(result["data"]["execution"], {
+            "isOwner": True, "canShare": True, "canEdit": True
         })
     
 
