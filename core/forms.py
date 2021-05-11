@@ -128,8 +128,17 @@ class PaperForm(ModelForm):
 
 
 class SampleForm(ModelForm):
-    """Creates or edits a sample."""
+    """Edits a sample."""
 
     class Meta:
         model = Sample
         exclude = ["id", "created", "last_modified", "qc_message", "qc_pass", "users"]
+
+
+
+class ExecutionForm(ModelForm):
+    """Edits an execution."""
+
+    class Meta:
+        model = Execution
+        fields = ["name"]

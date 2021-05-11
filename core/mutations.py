@@ -595,3 +595,24 @@ class DeleteSampleMutation(graphene.Mutation):
         executions.delete()
         sample.delete()
         return DeleteSampleMutation(success=True)
+
+
+
+class UpdateExecutionMutation(graphene.Mutation):
+
+    Arguments = create_mutation_arguments(ExecutionForm, edit=True)
+    
+    execution = graphene.Field("core.queries.ExecutionType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        execution = Execution.objects.filter(id=kwargs["id"]).viewable_by(info.context.user).first()
+        if not execution: raise GraphQLError('{"execution": ["Does not exist"]}')
+        if info.context.user not in execution.editors:
+            raise GraphQLError('{"sample": ["You don\'t have permission to edit this execution"]}')
+        form = ExecutionForm(kwargs, instance=execution)
+        if form.is_valid():
+            form.save()
+            return UpdateExecutionMutation(execution=form.instance)
+        raise GraphQLError(json.dumps(form.errors))

@@ -142,6 +142,15 @@ class SampleUpdatingTests(SampleUpdateTest):
             ) { sample { id } }
         }""", message="100 characters")
 
+        # Must be signed in
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation {
+            updateSample(
+                id: 1 organism: "Homo sapiens" collection: "2" source: "Homo sapiens"
+                annotatorName: "XXX" piName: "Dr Jones" name: "James"
+            ) { sample { id } }
+        }""", message="Not authorized")
+
 
 
 class SampleDeletingTests(SampleUpdateTest):
