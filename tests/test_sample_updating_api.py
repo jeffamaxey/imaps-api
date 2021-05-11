@@ -5,7 +5,7 @@ class SampleUpdateTest(FunctionalTest):
     
     def setUp(self):
         FunctionalTest.setUp(self)
-        collection1 = Collection.objects.create(
+        self.collection1 = Collection.objects.create(
             id=1, name="My Collection", private=True,
             description="Collection desc"
         )
@@ -14,11 +14,12 @@ class SampleUpdateTest(FunctionalTest):
             description="Collection 2 desc"
         )
         self.sample = Sample.objects.create(
-            id=1, name="Sample 1", collection=collection1, pi_name="Dr Smith",
+            id=1, name="Sample 1", collection=self.collection1, pi_name="Dr Smith",
             annotator_name="Angelina", source="P452", organism="Felis catus"
         )
         self.link = SampleUserLink.objects.create(sample=self.sample, user=self.user, permission=2)
         self.c_link = CollectionUserLink.objects.create(collection=collection2, user=self.user, permission=4)
+        Execution.objects.create(sample=self.sample)
 
 
 
@@ -140,3 +141,48 @@ class SampleUpdatingTests(SampleUpdateTest):
                 annotatorName: "XXX" piName: "Dr Jones" name: "James"
             ) { sample { id } }
         }""", message="100 characters")
+
+
+
+class SampleDeletingTests(SampleUpdateTest):
+    
+    def test_can_delete_sample(self):
+        # Delete collection
+        CollectionUserLink.objects.create(collection=self.collection1, user=self.user, permission=4)
+        result = self.client.execute(
+            """mutation { deleteSample(id: "1") { success } }"""
+        )
+
+        # The collection is gone, as are the children
+        self.assertTrue(result["data"]["deleteSample"]["success"])
+        self.assertFalse(Sample.objects.filter(id=1).count())
+        self.assertEqual(Sample.objects.count(), 0)
+        self.assertEqual(Execution.objects.count(), 0)
+    
+
+    def test_sample_deletion_validation(self):
+        # Sample must exist
+        self.check_query_error(
+            """mutation { deleteSample(id: "10") { success } }""",
+            message="Does not exist"
+        )
+        
+        # Must be accessible
+        Sample.objects.create(id=5)
+        self.check_query_error(
+            """mutation { deleteSample(id: "5") { success } }""",
+            message="Does not exist"
+        )
+
+        # You must be owner
+        self.check_query_error(
+            """mutation { deleteSample(id: "1") { success } }""",
+            message="Not an owner"
+        )
+
+        # Must be signed in
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { deleteSample(id: "1") { success } }""",
+            message="Not authorized"
+        )

@@ -574,3 +574,24 @@ class UpdateSampleMutation(graphene.Mutation):
             form.save()
             return UpdateSampleMutation(sample=form.instance)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class DeleteSampleMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        sample = Sample.objects.filter(id=kwargs["id"]).viewable_by(info.context.user).first()
+        if not sample: raise GraphQLError('{"sample": ["Does not exist"]}')
+        if info.context.user not in sample.collection.owners:
+            raise GraphQLError('{"sample": ["Not an owner"]}')
+        executions = Execution.objects.filter(sample=sample)
+        executions.delete()
+        sample.delete()
+        return DeleteSampleMutation(success=True)
