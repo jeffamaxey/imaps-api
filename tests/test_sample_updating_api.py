@@ -156,13 +156,13 @@ class SampleUpdatingTests(SampleUpdateTest):
 class SampleDeletingTests(SampleUpdateTest):
     
     def test_can_delete_sample(self):
-        # Delete collection
+        # Delete sample
         CollectionUserLink.objects.create(collection=self.collection1, user=self.user, permission=4)
         result = self.client.execute(
             """mutation { deleteSample(id: "1") { success } }"""
         )
 
-        # The collection is gone, as are the children
+        # The sample is gone, as are the children
         self.assertTrue(result["data"]["deleteSample"]["success"])
         self.assertFalse(Sample.objects.filter(id=1).count())
         self.assertEqual(Sample.objects.count(), 0)

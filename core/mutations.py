@@ -616,3 +616,22 @@ class UpdateExecutionMutation(graphene.Mutation):
             form.save()
             return UpdateExecutionMutation(execution=form.instance)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class DeleteExecutionMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+
+    success = graphene.Boolean()
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        execution = Execution.objects.filter(id=kwargs["id"]).viewable_by(info.context.user).first()
+        if not execution: raise GraphQLError('{"execution": ["Does not exist"]}')
+        if info.context.user not in execution.owners:
+            raise GraphQLError('{"execution": ["Not an owner"]}')
+        execution.delete()
+        return DeleteExecutionMutation(success=True)

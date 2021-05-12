@@ -1,7 +1,7 @@
 from core.models import *
 from .base import FunctionalTest
 
-class SampleUpdateTest(FunctionalTest):
+class ExecutionUpdateTest(FunctionalTest):
     
     def setUp(self):
         FunctionalTest.setUp(self)
@@ -12,7 +12,7 @@ class SampleUpdateTest(FunctionalTest):
 
 
 
-class SampleUpdatingTests(SampleUpdateTest):
+class ExecutionUpdatingTests(ExecutionUpdateTest):
     
     def test_can_update_execution(self):
         result = self.client.execute("""mutation {
@@ -55,3 +55,46 @@ class SampleUpdatingTests(SampleUpdateTest):
         self.check_query_error("""mutation {
             updateExecution(id: 1 name: "New Name") { execution { id name } }
         }""", message="Not authorized")
+
+
+
+class ExecutionDeletingTests(ExecutionUpdateTest):
+    
+    def test_can_delete_sample(self):
+        # Delete execution
+        ExecutionUserLink.objects.create(execution=self.execution, user=self.user, permission=4)
+        result = self.client.execute(
+            """mutation { deleteExecution(id: "1") { success } }"""
+        )
+
+        # The execution is gone
+        self.assertTrue(result["data"]["deleteExecution"]["success"])
+        self.assertFalse(Execution.objects.filter(id=1).count())
+    
+
+    def test_sample_deletion_validation(self):
+        # Execution must exist
+        self.check_query_error(
+            """mutation { deleteExecution(id: "10") { success } }""",
+            message="Does not exist"
+        )
+        
+        # Must be accessible
+        Execution.objects.create(id=5)
+        self.check_query_error(
+            """mutation { deleteExecution(id: "5") { success } }""",
+            message="Does not exist"
+        )
+
+        # You must be owner
+        self.check_query_error(
+            """mutation { deleteExecution(id: "1") { success } }""",
+            message="Not an owner"
+        )
+
+        # Must be signed in
+        del self.client.headers["Authorization"]
+        self.check_query_error(
+            """mutation { deleteExecution(id: "1") { success } }""",
+            message="Not authorized"
+        )

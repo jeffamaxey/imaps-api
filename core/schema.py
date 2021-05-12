@@ -241,5 +241,6 @@ class Mutation(graphene.ObjectType):
     delete_sample = DeleteSampleMutation.Field()
 
     update_execution = UpdateExecutionMutation.Field()
+    delete_execution = DeleteExecutionMutation.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
