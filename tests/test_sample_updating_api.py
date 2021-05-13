@@ -153,6 +153,156 @@ class SampleUpdatingTests(SampleUpdateTest):
 
 
 
+class SampleAccessTests(SampleUpdateTest):
+
+    def setUp(self):
+        SampleUpdateTest.setUp(self)
+        self.user2 = User.objects.create(id=2, email="jon@gmail.com", username="jon")
+        self.user3 = User.objects.create(id=3, email="sam@gmail.com", username="sam")
+        self.link2 = SampleUserLink.objects.create(user=self.user2, sample=self.sample, permission=1)
+        self.link.permission = 3
+        self.link.save()
+
+
+    def test_can_change_sample_user_permission(self):
+        result = self.client.execute("""mutation { updateSampleAccess(
+            id: "1" user: "2" permission: 3
+        ) { 
+            sample { name sharers { username } }
+            user { username shareableSamples { name } }
+        } }""")
+        self.assertEqual(result["data"]["updateSampleAccess"]["sample"], {
+            "name": "Sample 1", "sharers": [{"username": "adam"}, {"username": "jon"}]
+        })
+        self.assertEqual(result["data"]["updateSampleAccess"]["user"], {
+            "username": "jon", "shareableSamples": [{"name": "Sample 1"}]
+        })
+        self.link2.refresh_from_db()
+        self.assertEqual(self.link2.permission, 3)
+    
+
+
+    def test_can_add_sample_user_link(self):
+        self.link.permission = 3
+        self.link.save()
+        result = self.client.execute("""mutation { updateSampleAccess(
+            id: "1" user: "3" permission: 3
+        ) { 
+            sample {  name sharers { username } }
+            user { username shareableSamples { name } }
+        } }""")
+        self.assertEqual(result["data"]["updateSampleAccess"]["sample"], {
+            "name": "Sample 1", "sharers": [{"username": "adam"}, {"username": "sam"}]
+        })
+        self.assertEqual(result["data"]["updateSampleAccess"]["user"], {
+            "username": "sam", "shareableSamples": [{"name": "Sample 1"}]
+        })
+        link = SampleUserLink.objects.get(sample=self.sample, user=self.user3)
+        self.assertEqual(link.permission, 3)
+    
+
+    def test_can_remove_sample_user_link(self):
+        result = self.client.execute("""mutation { updateSampleAccess(
+            id: "1" user: "2" permission: 0
+        ) { 
+            sample {  name sharers { username } }
+            user { username shareableSamples { name } }
+        } }""")
+        self.assertEqual(result["data"]["updateSampleAccess"]["sample"], {
+            "name": "Sample 1", "sharers": [{"username": "adam"}]
+        })
+        self.assertEqual(result["data"]["updateSampleAccess"]["user"], {
+            "username": "jon", "shareableSamples": []
+        })
+        self.assertFalse(SampleUserLink.objects.filter(sample=self.sample, user=self.user2))
+    
+
+
+    def test_can_update_via_group(self):
+        self.link.delete()
+        group = Group.objects.create(slug="group1")
+        UserGroupLink.objects.create(user=self.user, group=group, permission=2)
+        CollectionGroupLink.objects.create(collection=self.sample.collection, group=group, permission=3)
+        result = self.client.execute("""mutation { updateSampleAccess(
+            id: "1" user: "2" permission: 3
+        ) { 
+            sample {  name sharers { username } }
+            user { username shareableSamples { name } }
+        } }""")
+        self.assertEqual(result["data"]["updateSampleAccess"]["sample"], {
+            "name": "Sample 1", "sharers": [{"username": "jon"}]
+        })
+        self.assertEqual(result["data"]["updateSampleAccess"]["user"], {
+            "username": "jon", "shareableSamples": [{"name": "Sample 1"}]
+        })
+        self.link2.refresh_from_db()
+        self.assertEqual(self.link2.permission, 3)
+
+
+    def test_sample_access_validation(self):
+        # Sample must exist
+        self.check_query_error("""mutation { updateSampleAccess(
+            id: "100" user: "1" permission: 3
+        ) { 
+            sample {  name sharers { username } }
+        } }""", message="Does not exist")
+
+        # Sample must be accessible
+        Collection.objects.create(id=23)
+        self.check_query_error("""mutation { updateSampleAccess(
+            id: "23" user: "1" permission: 3
+        ) { 
+            sample {  name sharers { username } }
+        } }""", message="Does not exist")
+
+        # User must have share permissions on Sample (either directly or via collection/group)
+        self.link.permission = 2
+        self.link.save()
+        self.check_query_error("""mutation { updateSampleAccess(
+            id: "1" user: "1" permission: 2
+        ) { 
+            sample {  name sharers { username } }
+        } }""", message="permission")
+        group = Group.objects.create(slug="group1")
+        UserGroupLink.objects.create(user=self.user, group=group, permission=2)
+        CollectionGroupLink.objects.create(collection=self.sample.collection, group=group, permission=2)
+        self.check_query_error("""mutation { updateSampleAccess(
+            id: "1" user: "1" permission: 2
+        ) { 
+            sample {  name sharers { username } }
+        } }""", message="permission")
+        self.link.permission = 3
+        self.link.save()
+
+        # User must exist
+        self.check_query_error("""mutation { updateSampleAccess(
+            id: "1" user: "100" permission: 3
+        ) { 
+            sample {  name sharers { username } }
+        } }""", message="Does not exist")
+
+        # Permission must be valid for user
+        self.check_query_error("""mutation { updateSampleAccess(
+            id: "1" user: "2" permission: -1
+        ) { 
+            sample {  name sharers { username } }
+        } }""", message="valid permission")
+        self.check_query_error("""mutation { updateSampleAccess(
+            id: "1" user: "2" permission: 5
+        ) { 
+            sample {  name sharers { username } }
+        } }""", message="valid permission")
+
+        # Must be signed in
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation { updateSampleAccess(
+            id: "1" user: "1" permission: 3
+        ) { 
+            sample {  name sharers { username } }
+        } }""", message="Not authorized")
+
+
+
 class SampleDeletingTests(SampleUpdateTest):
     
     def test_can_delete_sample(self):

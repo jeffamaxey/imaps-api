@@ -238,6 +238,7 @@ class Mutation(graphene.ObjectType):
     delete_collection = DeleteCollectionMutation.Field()
 
     update_sample = UpdateSampleMutation.Field()
+    update_sample_access = UpdateSampleAccessMutation.Field()
     delete_sample = DeleteSampleMutation.Field()
 
     update_execution = UpdateExecutionMutation.Field()

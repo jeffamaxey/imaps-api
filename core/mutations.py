@@ -577,6 +577,42 @@ class UpdateSampleMutation(graphene.Mutation):
 
 
 
+class UpdateSampleAccessMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        user = graphene.ID()
+        permission = graphene.Int(required=True)
+    
+    sample = graphene.Field("core.queries.SampleType")
+    user = graphene.Field("core.queries.UserType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        sample = Sample.objects.filter(
+            id=kwargs["id"]
+        ).viewable_by(info.context.user).first()
+        if not sample: raise GraphQLError('{"sample": ["Does not exist"]}')
+        if info.context.user not in sample.sharers and all(
+            group not in sample.collection.group_sharers for group in info.context.user.memberships
+        ):
+            raise GraphQLError('{"sample": ["You do not have share permissions"]}')
+        user = User.objects.filter(id=kwargs.get("user")).first()
+        if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if not 0 <= kwargs["permission"] <= 4:
+            raise GraphQLError('{"permission": ["Not a valid permission"]}')
+        link = SampleUserLink.objects.get_or_create(
+            sample=sample, user=user
+        )[0]
+        if kwargs["permission"] == 0:
+            link.delete()
+        else:
+            link.permission = kwargs["permission"]
+            link.save()
+        return UpdateSampleAccessMutation(user=user, sample=sample)
+
+
+
 class DeleteSampleMutation(graphene.Mutation):
 
     class Arguments:

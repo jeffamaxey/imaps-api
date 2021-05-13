@@ -25,6 +25,7 @@ class UserType(DjangoObjectType):
     public_collections = graphene.List("core.queries.CollectionType")
 
     samples = graphene.List("core.queries.SampleType")
+    sample_permission = graphene.Int(id=graphene.ID(required=True))
     shareable_samples = graphene.List("core.queries.SampleType")
     editable_samples = graphene.List("core.queries.SampleType")
     public_samples = graphene.List("core.queries.SampleType")
@@ -78,6 +79,14 @@ class UserType(DjangoObjectType):
 
     def resolve_samples(self, info, **kwargs):
         return self.samples.all().viewable_by(info.context.user)
+    
+
+    def resolve_sample_permission(self, info, **kwargs):
+        sample = Sample.objects.filter(
+            id=kwargs["id"]
+        ).viewable_by(info.context.user).first()
+        link = SampleUserLink.objects.filter(user=self, sample=sample).first()
+        return link.permission if link else 0
         
 
     def resolve_shareable_samples(self, info, **kwargs):
