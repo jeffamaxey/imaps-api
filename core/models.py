@@ -299,7 +299,7 @@ class Collection(RandomIDModel):
     def save(self, *args, **kwargs):
         """If the model is being updated, change the last_modified time."""
         
-        if self.id:
+        if self._state.adding is False:
             self.last_modified = int(time.time())
         super(Collection, self).save(*args, **kwargs)
     
@@ -411,7 +411,7 @@ class Sample(RandomIDModel):
     def save(self, *args, **kwargs):
         """If the model is being updated, change the last_modified time."""
         
-        if self.id:
+        if self._state.adding is False:
             self.last_modified = int(time.time())
         super(Sample, self).save(*args, **kwargs)
     
