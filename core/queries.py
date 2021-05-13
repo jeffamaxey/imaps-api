@@ -31,6 +31,7 @@ class UserType(DjangoObjectType):
     public_samples = graphene.List("core.queries.SampleType")
 
     executions = graphene.List("core.queries.ExecutionType")
+    execution_permission = graphene.Int(id=graphene.ID(required=True))
     owned_executions = graphene.List("core.queries.ExecutionType")
     shareable_executions = graphene.List("core.queries.ExecutionType")
     public_executions = graphene.List("core.queries.ExecutionType")
@@ -103,6 +104,14 @@ class UserType(DjangoObjectType):
 
     def resolve_executions(self, info, **kwargs):
         return self.executions.all().viewable_by(info.context.user)
+    
+
+    def resolve_execution_permission(self, info, **kwargs):
+        execution = Execution.objects.filter(
+            id=kwargs["id"]
+        ).viewable_by(info.context.user).first()
+        link = ExecutionUserLink.objects.filter(user=self, execution=execution).first()
+        return link.permission if link else 0
         
 
     def resolve_owned_executions(self, info, **kwargs):

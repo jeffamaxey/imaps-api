@@ -599,7 +599,7 @@ class UpdateSampleAccessMutation(graphene.Mutation):
             raise GraphQLError('{"sample": ["You do not have share permissions"]}')
         user = User.objects.filter(id=kwargs.get("user")).first()
         if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
-        if not 0 <= kwargs["permission"] <= 4:
+        if not 0 <= kwargs["permission"] <= 3:
             raise GraphQLError('{"permission": ["Not a valid permission"]}')
         link = SampleUserLink.objects.get_or_create(
             sample=sample, user=user
@@ -652,6 +652,47 @@ class UpdateExecutionMutation(graphene.Mutation):
             form.save()
             return UpdateExecutionMutation(execution=form.instance)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class UpdateExecutionAccessMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        user = graphene.ID()
+        permission = graphene.Int(required=True)
+    
+    execution = graphene.Field("core.queries.ExecutionType")
+    user = graphene.Field("core.queries.UserType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        execution = Execution.objects.filter(
+            id=kwargs["id"]
+        ).viewable_by(info.context.user).first()
+        if not execution: raise GraphQLError('{"execution": ["Does not exist"]}')
+        if info.context.user not in execution.sharers and all(
+            group not in execution.collection.group_sharers for group in info.context.user.memberships
+        ):
+            raise GraphQLError('{"execution": ["You do not have share permissions"]}')
+        user = User.objects.filter(id=kwargs.get("user")).first()
+        if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if not 0 <= kwargs["permission"] <= 4:
+            raise GraphQLError('{"permission": ["Not a valid permission"]}')
+        link = ExecutionUserLink.objects.get_or_create(
+            execution=execution, user=user
+        )[0]
+        if kwargs["permission"] == 4 and info.context.user not in execution.owners:
+            raise GraphQLError('{"execution": ["Only an owner can make owners"]}')
+        if link.permission == 4 and info.context.user not in execution.owners:
+            raise GraphQLError('{"execution": ["Only an owner can remove owners"]}')
+        
+        if kwargs["permission"] == 0:
+            link.delete()
+        else:
+            link.permission = kwargs["permission"]
+            link.save()
+        return UpdateExecutionAccessMutation(user=user, execution=execution)
 
 
 

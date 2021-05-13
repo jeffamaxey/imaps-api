@@ -58,6 +58,141 @@ class ExecutionUpdatingTests(ExecutionUpdateTest):
 
 
 
+class ExecutionAccessTests(ExecutionUpdateTest):
+
+    def setUp(self):
+        ExecutionUpdateTest.setUp(self)
+        self.user2 = User.objects.create(id=2, email="jon@gmail.com", username="jon")
+        self.user3 = User.objects.create(id=3, email="sam@gmail.com", username="sam")
+        self.link2 = ExecutionUserLink.objects.create(user=self.user2, execution=self.execution, permission=1)
+        self.link.permission = 3
+        self.link.save()
+
+
+    def test_can_change_execution_user_permission(self):
+        result = self.client.execute("""mutation { updateExecutionAccess(
+            id: "1" user: "2" permission: 3
+        ) { 
+            execution { name sharers { username } }
+            user { username shareableExecutions { name } }
+        } }""")
+        self.assertEqual(result["data"]["updateExecutionAccess"]["execution"], {
+            "name": "Execution 1", "sharers": [{"username": "adam"}, {"username": "jon"}]
+        })
+        self.assertEqual(result["data"]["updateExecutionAccess"]["user"], {
+            "username": "jon", "shareableExecutions": [{"name": "Execution 1"}]
+        })
+        self.link2.refresh_from_db()
+        self.assertEqual(self.link2.permission, 3)
+    
+
+    def test_can_add_execution_user_link(self):
+        self.link.permission = 3
+        self.link.save()
+        result = self.client.execute("""mutation { updateExecutionAccess(
+            id: "1" user: "3" permission: 3
+        ) { 
+            execution {  name sharers { username } }
+            user { username shareableExecutions { name } }
+        } }""")
+        self.assertEqual(result["data"]["updateExecutionAccess"]["execution"], {
+            "name": "Execution 1", "sharers": [{"username": "adam"}, {"username": "sam"}]
+        })
+        self.assertEqual(result["data"]["updateExecutionAccess"]["user"], {
+            "username": "sam", "shareableExecutions": [{"name": "Execution 1"}]
+        })
+        link = ExecutionUserLink.objects.get(execution=self.execution, user=self.user3)
+        self.assertEqual(link.permission, 3)
+    
+
+    def test_can_remove_execution_user_link(self):
+        result = self.client.execute("""mutation { updateExecutionAccess(
+            id: "1" user: "2" permission: 0
+        ) { 
+            execution {  name sharers { username } }
+            user { username shareableExecutions { name } }
+        } }""")
+        self.assertEqual(result["data"]["updateExecutionAccess"]["execution"], {
+            "name": "Execution 1", "sharers": [{"username": "adam"}]
+        })
+        self.assertEqual(result["data"]["updateExecutionAccess"]["user"], {
+            "username": "jon", "shareableExecutions": []
+        })
+        self.assertFalse(ExecutionUserLink.objects.filter(execution=self.execution, user=self.user2))
+    
+
+    def test_execution_access_validation(self):
+        # Execution must exist
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "100" user: "1" permission: 3
+        ) { 
+            execution {  name sharers { username } }
+        } }""", message="Does not exist")
+
+        # Execution must be accessible
+        Collection.objects.create(id=23)
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "23" user: "1" permission: 3
+        ) { 
+            execution {  name sharers { username } }
+        } }""", message="Does not exist")
+
+        # User must have share permissions on Execution (either directly or via collection/group)
+        self.link.permission = 2
+        self.link.save()
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "1" user: "1" permission: 2
+        ) { 
+            execution {  name sharers { username } }
+        } }""", message="permission")
+        self.link.permission = 3
+        self.link.save()
+
+        # User must exist
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "1" user: "100" permission: 3
+        ) { 
+            execution {  name sharers { username } }
+        } }""", message="Does not exist")
+
+        # Permission must be valid for user
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "1" user: "2" permission: -1
+        ) { 
+            execution {  name sharers { username } }
+        } }""", message="valid permission")
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "1" user: "2" permission: 5
+        ) { 
+            execution {  name sharers { username } }
+        } }""", message="valid permission")
+
+        # Only owners can create new owners
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "1" user: "1" permission: 4
+        ) { 
+            execution { name sharers { username } }
+        } }""", message="owner")
+
+        # Only owners can demote owners
+        self.link2.permission = 4
+        self.link2.save()
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "1" user: "2" permission: 3
+        ) { 
+            execution { name sharers { username } }
+        } }""", message="owner")
+
+        # Must be signed in
+        del self.client.headers["Authorization"]
+        self.check_query_error("""mutation { updateExecutionAccess(
+            id: "1" user: "1" permission: 3
+        ) { 
+            execution {  name sharers { username } }
+        } }""", message="Not authorized")
+
+
+
 class ExecutionDeletingTests(ExecutionUpdateTest):
     
     def test_can_delete_sample(self):
