@@ -16,6 +16,8 @@ class Query(graphene.ObjectType):
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
     public_collections = ConnectionField("core.queries.CollectionConnection")
     user_collections = graphene.List("core.queries.CollectionType")
+    commands = graphene.List("core.queries.CommandType")
+    command = graphene.Field("core.queries.CommandType", id=graphene.ID())
     search_collections = ConnectionField(
         "core.queries.CollectionConnection",
         query=graphene.String(required=True),
@@ -111,6 +113,19 @@ class Query(graphene.ObjectType):
         execution = executions.filter(id=kwargs["id"]).first()
         if execution: return execution
         raise GraphQLError('{"execution": "Does not exist"}')
+    
+
+    def resolve_commands(self, info, **kwargs):
+        commands = Command.objects.all()
+        slugs = set([command.slug for command in commands])
+        slug_commands = {slug: sorted([c for c in commands if c.slug == slug], key=lambda c: c.version) for slug in slugs}
+        return [commands[-1] for commands in slug_commands.values()]
+    
+
+    def resolve_command(self, info, **kwargs):
+        command = Command.objects.filter(id=kwargs["id"]).first()
+        if command: return command
+        raise GraphQLError('{"command": "Does not exist"}')
 
 
     def resolve_quick_search(self, info, **kwargs):

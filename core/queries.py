@@ -409,6 +409,15 @@ class ExecutionConnection(Connection):
 
 
 
+class CommandType(DjangoObjectType):
+    
+    class Meta:
+        model = Command
+    
+    id = graphene.ID()
+
+
+
 class SearchType(graphene.ObjectType):
 
     results = graphene.List("core.queries.ResultType")

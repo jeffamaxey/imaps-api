@@ -441,6 +441,10 @@ class Command(RandomIDModel):
         db_table = "commands"
     
     name = models.CharField(max_length=100)
+    version = models.IntegerField()
+    slug = models.CharField(max_length=200)
+    category = models.CharField(max_length=200)
+    type = models.CharField(max_length=200)
     description = models.TextField()
     input_schema = models.TextField(default="[]")
     output_schema = models.TextField(default="[]")
