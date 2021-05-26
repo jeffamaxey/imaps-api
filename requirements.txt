@@ -5,4 +5,4 @@ django-random-id-model
 graphene_file_upload
 django-cleanup
 pyjwt==1.7.1
-Pillow
+django_environ
