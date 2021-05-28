@@ -2,6 +2,8 @@ import time
 import json
 import secrets
 import graphene
+import jinja2
+import re
 from graphql import GraphQLError
 from graphene_file_upload.scalars import Upload
 from django.contrib.auth.hashers import check_password
@@ -715,6 +717,16 @@ class DeleteExecutionMutation(graphene.Mutation):
         return DeleteExecutionMutation(success=True)
 
 
+def sample_name(id):
+    sample = Execution.objects.get(id=id).sample
+    return sample.name if sample else None
+def name(id):
+    name_ = Execution.objects.get(id=id).name
+    match = re.match(r".+ \((.+?)\)", name_)
+    if match: name_ = match[1]
+    return name_
+jinja2.filters.FILTERS["sample_name"] = sample_name
+jinja2.filters.FILTERS["name"] = name
 
 class RunCommandMutation(graphene.Mutation):
 
@@ -728,8 +740,14 @@ class RunCommandMutation(graphene.Mutation):
     def mutate(self, info, **kwargs):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        command = Command.objects.get(id=kwargs["command"])
+        template = jinja2.Template(command.data_name)
         inputs = json.loads(kwargs["inputs"])
         execution = Execution.objects.create(
-            name="Temp Name", input=kwargs["inputs"]
+            name=template.render(**inputs),
+            command=command,
+            input=kwargs["inputs"],
+            user=info.context.user,
         )
+        ExecutionUserLink.objects.create(execution=execution, user=info.context.user)
         return RunCommandMutation(execution=execution)

@@ -1,4 +1,3 @@
-import json
 import graphene
 from graphene_django.types import DjangoObjectType
 from graphene.relay import Connection
