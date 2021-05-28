@@ -3,6 +3,7 @@ import json
 import secrets
 import graphene
 from graphql import GraphQLError
+from graphene_file_upload.scalars import Upload
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from core.models import User
@@ -712,3 +713,23 @@ class DeleteExecutionMutation(graphene.Mutation):
             raise GraphQLError('{"execution": ["Not an owner"]}')
         execution.delete()
         return DeleteExecutionMutation(success=True)
+
+
+
+class RunCommandMutation(graphene.Mutation):
+
+    class Arguments:
+        command = graphene.ID(required=True)
+        inputs = graphene.String(required=True)
+        uploads = graphene.List(Upload)
+
+    execution = graphene.Field("core.queries.ExecutionType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user:
+            raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        inputs = json.loads(kwargs["inputs"])
+        execution = Execution.objects.create(
+            name="Temp Name", input=kwargs["inputs"]
+        )
+        return RunCommandMutation(execution=execution)

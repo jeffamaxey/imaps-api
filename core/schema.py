@@ -13,6 +13,11 @@ class Query(graphene.ObjectType):
     collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
     execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
+    executions = ConnectionField(
+        "core.queries.ExecutionConnection",
+        data_type=graphene.String(),
+        collection=graphene.ID(),
+    )
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
     public_collections = ConnectionField("core.queries.CollectionConnection")
     user_collections = graphene.List("core.queries.CollectionType")
@@ -113,6 +118,17 @@ class Query(graphene.ObjectType):
         execution = executions.filter(id=kwargs["id"]).first()
         if execution: return execution
         raise GraphQLError('{"execution": "Does not exist"}')
+    
+
+    def resolve_executions(self, info, **kwargs):
+        executions = Execution.objects.all().viewable_by(info.context.user)
+        if "data_type" in kwargs:
+            executions = executions.filter(command__type__contains=kwargs["data_type"])
+        if kwargs.get("collection"):
+            direct = executions.filter(collection=kwargs["collection"])
+            indirect = executions.filter(sample__collection=kwargs["collection"])
+            executions = (direct | indirect).distinct()
+        return executions
     
 
     def resolve_commands(self, info, **kwargs):
@@ -259,5 +275,7 @@ class Mutation(graphene.ObjectType):
     update_execution = UpdateExecutionMutation.Field()
     update_execution_access = UpdateExecutionAccessMutation.Field()
     delete_execution = DeleteExecutionMutation.Field()
+
+    run_command = RunCommandMutation.Field()
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

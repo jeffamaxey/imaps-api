@@ -320,15 +320,6 @@ class SampleConnection(Connection):
 
 
 
-class CommandType(DjangoObjectType):
-    
-    class Meta:
-        model = Command
-    
-    id = graphene.ID()
-
-
-
 class ExecutionType(DjangoObjectType):
     
     class Meta:
@@ -406,7 +397,6 @@ class ExecutionConnection(Connection):
 
     def resolve_count(self, info, **kwargs):
         return len(self.iterable)
-
 
 
 class CommandType(DjangoObjectType):
