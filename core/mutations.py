@@ -13,6 +13,7 @@ from core.models import User
 from core.forms import *
 from core.email import send_welcome_email, send_reset_email, send_reset_warning_email
 from core.arguments import create_mutation_arguments
+from .celery import run_command
 
 class SignupMutation(graphene.Mutation):
 
@@ -773,4 +774,5 @@ class RunCommandMutation(graphene.Mutation):
         with open(os.path.join(settings.DATA_ROOT, str(execution.id), f"run.{extension}"), "w") as f:
             template = jinja2.Template(run["program"])
             f.write(template.render(**inputs))
+        run_command.apply_async((execution.id, inputs))
         return RunCommandMutation(execution=execution)
