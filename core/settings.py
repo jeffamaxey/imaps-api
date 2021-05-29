@@ -12,6 +12,7 @@ env = environ.Env(
     DATA_ROOT=(str, "data"),
     MAILGUN_API_KEY=(str, "MAILGUN_KEY"),
     EMAIL_HOST_PASSWORD=(str, "EMAIL_HOST_PASSWORD"),
+    CELERY_BROKER_URL=(str, "amqp://guest@broker:5673//"),
     SERVE_FILES=(bool, False)
 )
 
@@ -27,6 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "graphene_django",
     "corsheaders",
+    "django_celery_results",
     "core",
     "peka",
     "django_cleanup.apps.CleanupConfig",
@@ -77,5 +79,7 @@ EMAIL_HOST_USER = "postmaster@imaps.goodwright.org"
 MAILGUN_API_KEY = env("MAILGUN_API_KEY")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
 
+CELERY_BROKER_URL = env("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = "django-db"
 
 
