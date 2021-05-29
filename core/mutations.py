@@ -1,5 +1,6 @@
 import time
 import json
+import os
 import secrets
 import graphene
 import jinja2
@@ -762,4 +763,9 @@ class RunCommandMutation(graphene.Mutation):
             user=info.context.user,
         )
         ExecutionUserLink.objects.create(execution=execution, user=info.context.user, permission=4)
+        os.mkdir(os.path.join(settings.DATA_ROOT, str(execution.id)))
+        for upload in kwargs.get("uploads", []):
+            with open(os.path.join(settings.DATA_ROOT, str(execution.id), upload.name), "wb+") as f:
+                for chunk in upload.chunks():
+                    f.write(chunk)
         return RunCommandMutation(execution=execution)
