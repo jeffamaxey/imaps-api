@@ -732,6 +732,7 @@ class RunCommandMutation(graphene.Mutation):
 
     class Arguments:
         command = graphene.ID(required=True)
+        collection = graphene.ID()
         inputs = graphene.String(required=True)
         uploads = graphene.List(Upload)
 
@@ -742,12 +743,23 @@ class RunCommandMutation(graphene.Mutation):
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
         command = Command.objects.get(id=kwargs["command"])
         template = jinja2.Template(command.data_name)
+        schema = json.loads(command.input_schema)
         inputs = json.loads(kwargs["inputs"])
+        executions = []
+        for input in schema:
+            if "list:data:" in input.get("type"):
+                executions += [Execution.objects.get(id=id) for id in inputs[input["name"]]]
+            elif "data:" in input.get("type"):
+                executions.append(Execution.objects.get(id=inputs[input["name"]]))
+        samples = set([e.sample_id for e in executions if e.sample_id])
         execution = Execution.objects.create(
             name=template.render(**inputs),
             command=command,
+            status="Running",
+            sample_id=list(samples)[0] if len(samples) == 1 else None,
+            collection_id=kwargs.get("collection"),
             input=kwargs["inputs"],
             user=info.context.user,
         )
-        ExecutionUserLink.objects.create(execution=execution, user=info.context.user)
+        ExecutionUserLink.objects.create(execution=execution, user=info.context.user, permission=4)
         return RunCommandMutation(execution=execution)
