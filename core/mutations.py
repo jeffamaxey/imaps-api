@@ -768,4 +768,9 @@ class RunCommandMutation(graphene.Mutation):
             with open(os.path.join(settings.DATA_ROOT, str(execution.id), upload.name), "wb+") as f:
                 for chunk in upload.chunks():
                     f.write(chunk)
+        run = json.loads(command.run)
+        extension = "py" if run.get("language") == "python" else "sh"
+        with open(os.path.join(settings.DATA_ROOT, str(execution.id), f"run.{extension}"), "w") as f:
+            template = jinja2.Template(run["program"])
+            f.write(template.render(**inputs))
         return RunCommandMutation(execution=execution)

@@ -446,6 +446,8 @@ class Command(RandomIDModel):
     category = models.CharField(max_length=200)
     type = models.CharField(max_length=200)
     description = models.TextField()
+    run = models.TextField(default="{}")
+    requirements = models.TextField(default="{}")
     data_name = models.CharField(max_length=200)
     input_schema = models.TextField(default="[]")
     output_schema = models.TextField(default="[]")
