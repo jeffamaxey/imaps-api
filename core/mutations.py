@@ -774,5 +774,5 @@ class RunCommandMutation(graphene.Mutation):
         with open(os.path.join(settings.DATA_ROOT, str(execution.id), f"run.{extension}"), "w") as f:
             template = jinja2.Template(run["program"])
             f.write(template.render(**inputs))
-        run_command.apply_async((execution.id, inputs))
+        run_command.apply_async((execution.id, inputs, json.loads(command.requirements)))
         return RunCommandMutation(execution=execution)

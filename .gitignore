@@ -29,3 +29,5 @@ backups
 json/*
 emails.dat
 trim.py
+*nextflow*
+commands/*
