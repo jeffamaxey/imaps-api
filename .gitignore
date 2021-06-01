@@ -4,7 +4,7 @@ __pycache__
 secrets.py
 .DS_Store
 .vscode
-data/*
+rundata/*
 uploads/*
 !uploads/.gitkeep
 tables.txt

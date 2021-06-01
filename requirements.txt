@@ -8,3 +8,4 @@ pyjwt==1.7.1
 django_environ
 celery
 django_celery_results
+jinja2

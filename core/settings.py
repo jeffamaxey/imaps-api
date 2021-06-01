@@ -1,34 +1,17 @@
-import environ
+import os
+from .secrets import *
 
-env = environ.Env(
-    DEBUG=(bool, True),
-    SECRET_KEY=(str, "12345"),
-    DB_ENGINE=(str, "django.db.backends.sqlite3"),
-    DB_NAME=(str, "db.sqlite3"),
-    DB_HOST=(str, "localhost"),
-    DB_USER=(str, ""),
-    DB_PASSWORD=(str, ""),
-    MEDIA_ROOT=(str, "uploads"),
-    DATA_ROOT=(str, "data"),
-    MAILGUN_API_KEY=(str, "MAILGUN_KEY"),
-    EMAIL_HOST_PASSWORD=(str, "EMAIL_HOST_PASSWORD"),
-    CELERY_BROKER_URL=(str, "amqp://guest@broker:5673//"),
-    SERVE_FILES=(bool, False)
-)
+ALLOWED_HOSTS = []
 
-ALLOWED_HOSTS = ["*"]
-
-DEBUG = env("DEBUG")
-
-SECRET_KEY = env("SECRET_KEY")
+DEBUG = True
 
 ROOT_URLCONF = "core.urls"
 
 INSTALLED_APPS = [
     "django.contrib.contenttypes",
+    "django.contrib.staticfiles",
     "graphene_django",
     "corsheaders",
-    "django_celery_results",
     "core",
     "peka",
     "django_cleanup.apps.CleanupConfig",
@@ -40,14 +23,6 @@ MIDDLEWARE = [
     "core.middleware.AuthenticationMiddleware"
 ]
 
-DATABASES = {"default": {
-    "ENGINE": env("DB_ENGINE"),
-    "NAME": env("DB_NAME"),
-    "USER": env("DB_USER"),
-    "HOST": env("DB_HOST"),
-    "PASSWORD": env("DB_PASSWORD"),
-}}
-
 AUTH_PASSWORD_VALIDATORS = [{
     "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     "OPTIONS": {"min_length": 9}
@@ -57,29 +32,17 @@ AUTH_PASSWORD_VALIDATORS = [{
     "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
 }]
 
+STATIC_URL = "/static/"
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "uploads") if DEBUG else\
+    os.path.join(BASE_DIR, "..", "..", "static.imaps.goodwright.org")
+MEDIA_URL = "/media/"
+
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
-TOKEN_TIMEOUT = 15
+ID_DIGITS_LENGTH = 18
+
+GRAPHENE = {"SCHEMA": "core.schema.schema"}
+
 SESSION_LENGTH_DAYS = 365
-
-GRAPHENE = {
-    "SCHEMA": "core.schema.schema"
-}
-
-SERVE_FILES = env("SERVE_FILES")
-MEDIA_URL = "/uploads/"
-MEDIA_ROOT = env("MEDIA_ROOT")
-DATA_ROOT = env("DATA_ROOT")
-
-EMAIL_HOST = "smtp.eu.mailgun.org"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "postmaster@imaps.goodwright.org"
-MAILGUN_API_KEY = env("MAILGUN_API_KEY")
-EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")
-
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_RESULT_BACKEND = "django-db"
-
-
