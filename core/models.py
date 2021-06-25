@@ -441,16 +441,9 @@ class Command(RandomIDModel):
         db_table = "commands"
     
     name = models.CharField(max_length=100)
-    version = models.IntegerField()
-    slug = models.CharField(max_length=200)
-    category = models.CharField(max_length=200)
-    type = models.CharField(max_length=200)
     description = models.TextField()
-    run = models.TextField(default="{}")
-    requirements = models.TextField(default="{}")
-    data_name = models.CharField(max_length=200)
-    input_schema = models.TextField(default="[]")
-    output_schema = models.TextField(default="[]")
+    category = models.CharField(max_length=200)
+    output_type = models.CharField(max_length=200)
 
     def __str__(self):
         return self.name
@@ -483,19 +476,26 @@ class Execution(RandomIDModel):
     
     name = models.CharField(max_length=250)
     created = models.IntegerField(default=time.time)
-    scheduled = models.IntegerField(blank=True, null=True)
     started = models.IntegerField(blank=True, null=True)
     finished = models.IntegerField(blank=True, null=True)
+    
     status = models.CharField(max_length=50, blank=True, null=True)
-    private = models.BooleanField(default=True)
     warning = models.TextField(blank=True, null=True)
     error = models.TextField(blank=True, null=True)
+
     input = models.TextField(default="{}")
     output = models.TextField(default="{}")
-    user = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL, related_name="created_executions")
+
+    command = models.ForeignKey(Command, null=True, on_delete=models.SET_NULL, related_name="executions")
+    demultiplex_execution = models.ForeignKey("core.Execution", null=True, on_delete=models.SET_NULL, related_name="demultiplexed")
+    downstream = models.ManyToManyField("core.Execution", related_name="upstream")
+    parent = models.ForeignKey("core.Execution", null=True, on_delete=models.SET_NULL, related_name="children")
+
+    private = models.BooleanField(default=True)
+
     sample = models.ForeignKey(Sample, blank=True, null=True, on_delete=models.SET_NULL, related_name="executions")
     collection = models.ForeignKey(Collection, blank=True, null=True, on_delete=models.SET_NULL, related_name="executions")
-    command = models.ForeignKey(Command, null=True, on_delete=models.SET_NULL, related_name="executions")
+    initiator = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL, related_name="initiated_executions")
     users = models.ManyToManyField(User, through="core.ExecutionUserLink", related_name="executions")
 
     objects = ExecutionManager()
@@ -532,7 +532,7 @@ class Execution(RandomIDModel):
         )
     
 
-    @property
+    '''@property
     def parent(self):
         """Identifies the execution that spawned this one as a subcommand, if
         any."""
@@ -541,10 +541,10 @@ class Execution(RandomIDModel):
         for possible in possibles:
             output = json.loads(possible.output)
             if "steps" in output and int(self.id) in output["steps"]:
-                return possible
+                return possible'''
     
 
-    @property
+    '''@property
     def upstream(self):
         """Identifies the executions whose products this execution consumes."""
 
@@ -557,10 +557,10 @@ class Execution(RandomIDModel):
                     ids.append(inputs[inp["name"]])
                 if inp["type"].startswith("list:data:"):
                     ids += inputs[inp["name"]]
-        return Execution.objects.filter(id__in=ids)
+        return Execution.objects.filter(id__in=ids)'''
     
 
-    @property
+    '''@property
     def downstream(self):
         """Identifies the executions which consume this execution's products."""
 
@@ -576,7 +576,7 @@ class Execution(RandomIDModel):
                         confirmed_ids.add(possible.id)
                     if inp["type"][:9] == "list:data" and self.id in inputs[inp["name"]]:
                         confirmed_ids.add(possible.id)
-        return Execution.objects.filter(id__in=confirmed_ids)
+        return Execution.objects.filter(id__in=confirmed_ids)'''
     
 
     @property

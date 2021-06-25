@@ -333,7 +333,7 @@ class ExecutionType(DjangoObjectType):
     sharers = graphene.List("core.queries.UserType")
     editors = graphene.List("core.queries.UserType")
     parent = graphene.Field("core.queries.ExecutionType")
-    upstream_executions = graphene.List("core.queries.ExecutionType")
+    upstream= graphene.List("core.queries.ExecutionType")
     downstream_executions = graphene.List("core.queries.ExecutionType")
     component_executions = graphene.List("core.queries.ExecutionType")
 
@@ -374,6 +374,10 @@ class ExecutionType(DjangoObjectType):
         return False
 
 
+    def resolve_upstream(self, info, **kwargs):
+        return self.upstream.all()
+
+
     def resolve_upstream_executions(self, info, **kwargs):
         return self.upstream.viewable_by(info.context.user)
     
@@ -384,6 +388,10 @@ class ExecutionType(DjangoObjectType):
 
     def resolve_component_executions(self, info, **kwargs):
         return self.components.viewable_by(info.context.user)
+    
+
+    def resolve_collection(self, info, **kwargs):
+        return self.collection or (self.sample.collection if self.sample else None)
 
 
 
