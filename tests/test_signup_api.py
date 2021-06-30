@@ -1,4 +1,3 @@
-import requests
 from django.core import mail
 from core.models import *
 from .base import FunctionalTest

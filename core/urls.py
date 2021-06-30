@@ -23,3 +23,9 @@ urlpatterns = [
     path("graphql", ReadableErrorGraphQLView.as_view()),
     path("peka/", include("peka.urls")),
 ]
+
+if True:
+    urlpatterns += static(
+        django.conf.settings.MEDIA_URL,
+        document_root=django.conf.settings.MEDIA_ROOT
+    )

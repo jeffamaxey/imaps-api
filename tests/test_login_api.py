@@ -1,9 +1,7 @@
-import requests
 import re
 from django.core import mail
 from core.models import *
 from .base import FunctionalTest
-
 
 class LoginTests(FunctionalTest):
 

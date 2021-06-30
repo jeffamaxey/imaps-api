@@ -417,14 +417,36 @@ class CommandType(DjangoObjectType):
 
 class SearchType(graphene.ObjectType):
 
-    results = graphene.List("core.queries.ResultType")
+    collections = graphene.List(CollectionType)
+    samples = graphene.List(SampleType)
+    executions = graphene.List(ExecutionType)
+    groups = graphene.List(GroupType)
+    users = graphene.List(UserType)
 
+    def resolve_collections(self, info, **kwargs):
+        return (
+            Collection.objects.filter(name__icontains=self["query"])
+          | Collection.objects.filter(description__icontains=self["query"])
+        ).distinct().viewable_by(info.context.user)
+    
 
+    def resolve_samples(self, info, **kwargs):
+        return (
+            Sample.objects.filter(name__icontains=self["query"])
+          | Sample.objects.filter(organism__icontains=self["query"])
+        ).distinct().viewable_by(info.context.user)
+    
 
-class ResultType(graphene.ObjectType):
+    def resolve_executions(self, info, **kwargs):
+        return Execution.objects.filter(name__icontains=self["query"]).viewable_by(info.context.user)
+    
 
-    name = graphene.String()
-    pk = graphene.ID()
-    kind = graphene.String()
-    match = graphene.String()
-    match_loc = graphene.List(graphene.Int)
+    def resolve_groups(self, info, **kwargs):
+        return (
+            Group.objects.filter(name__icontains=self["query"])
+          | Group.objects.filter(description__icontains=self["query"])
+        ).distinct()
+    
+
+    def resolve_users(self, info, **kwargs):
+        return User.objects.filter(name__icontains=self["query"])

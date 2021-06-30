@@ -33,10 +33,8 @@ AUTH_PASSWORD_VALIDATORS = [{
 }]
 
 STATIC_URL = "/static/"
-
-MEDIA_ROOT = os.path.join(BASE_DIR, "uploads") if DEBUG else\
-    os.path.join(BASE_DIR, "..", "..", "static.imaps.goodwright.org")
-MEDIA_URL = "/media/"
+MEDIA_URL = "/uploads/"
+MEDIA_ROOT = "./uploads"
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True

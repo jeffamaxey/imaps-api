@@ -145,40 +145,9 @@ class Query(graphene.ObjectType):
 
 
     def resolve_quick_search(self, info, **kwargs):
-        query = kwargs["query"]
-        if len(query) >= 3:
-            results = []
-            results += [{
-                "name": c.name, "kind": "Collection", "pk": c.id, "match": ""
-            } for c in Collection.objects.filter(name__icontains=query).viewable_by(info.context.user)]
-            results += [{
-                "name": c.name, "kind": "Collection", "pk": c.id,
-                "match": c.description,
-                "match_loc": [c.description.lower().find(query.lower()), c.description.lower().find(query.lower()) + len(query)]
-            } for c in Collection.objects.filter(description__icontains=query).viewable_by(info.context.user)]
-            results += [{
-                "name": s.name, "kind": "Sample", "pk": s.id, "match": ""
-            } for s in Sample.objects.filter(name__icontains=query).viewable_by(info.context.user)]
-            results += [{
-                "name": s.name, "kind": "Sample", "pk": s.id,
-                "match": s.organism,
-                "match_loc": [s.organism.lower().find(query.lower()), s.organism.lower().find(query.lower()) + len(query)]
-            } for s in Sample.objects.filter(organism__icontains=query).viewable_by(info.context.user)]
-            results += [{
-                "name": e.name, "kind": "Execution", "pk": e.id, "match": ""
-            } for e in Execution.objects.filter(name__icontains=query).viewable_by(info.context.user)]
-            results += [{
-                "name": g.name, "kind": "Group", "pk": g.slug, "match": ""
-            } for g in Group.objects.filter(name__icontains=query)]
-            results += [{
-                "name": g.name, "kind": "Group", "pk": g.slug,
-                "match": g.description,
-                "match_loc": [g.description.lower().find(query.lower()), g.description.lower().find(query.lower()) + len(query)]
-            } for g in Group.objects.filter(description__icontains=query)]
-            results += [{
-                "name": u.name, "kind": "User", "pk": u.username, "match": ""
-            } for u in User.objects.filter(name__icontains=query)]
-            return {"results": results}
+        if len(kwargs["query"]) < 3:
+            return None
+        return kwargs
     
 
     def resolve_search_collections(self, info, **kwargs):

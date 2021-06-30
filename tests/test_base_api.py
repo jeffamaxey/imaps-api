@@ -230,31 +230,8 @@ class GroupInvitationProcessingTests(FunctionalTest):
 
 class QuickSearchTests(FunctionalTest):
 
-    def test_need_three_characters(self):
-        result = self.client.execute("""{
-            quickSearch(query: "") { results { name } }
-        }""")
-        self.assertIsNone(result["data"]["quickSearch"])
-
-        result = self.client.execute("""{
-            quickSearch(query: "X") { results { name } }
-        }""")
-        self.assertIsNone(result["data"]["quickSearch"])
-
-        result = self.client.execute("""{
-            quickSearch(query: "XX") { results { name } }
-        }""")
-        self.assertIsNone(result["data"]["quickSearch"])
-    
-
-    def test_can_return_no_matches(self):
-        result = self.client.execute("""{
-            quickSearch(query: "XXX") { results { name } }
-        }""")
-        self.assertEqual(result["data"]["quickSearch"]["results"], [])
-    
-
-    def test_can_return_results(self):
+    def setUp(self):
+        FunctionalTest.setUp(self)
         Collection.objects.create(name="C_xyz_1", private=False, id=1)
         Collection.objects.create(name="C_xy_1", private=False, id=2)
         self.user.collections.add(Collection.objects.create(name="C_xyz_2", private=True, id=3))
@@ -281,22 +258,63 @@ class QuickSearchTests(FunctionalTest):
         User.objects.create(name="Dr 123", email="123@gmail.com", username="123")
 
 
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
+    def test_need_three_characters(self):
         result = self.client.execute("""{
-            quickSearch(query: "xyz") { results { name kind pk match matchLoc } }
+            quickSearch(query: "") { collections { name } }
         }""")
+        self.assertIsNone(result["data"]["quickSearch"])
 
-        self.assertEqual(result["data"]["quickSearch"]["results"], [
-            {"name": "C_xyz_1", "kind": "Collection", "pk": "1", "match": "", "matchLoc": None},
-            {"name": "C_xyz_2", "kind": "Collection", "pk": "3", "match": "", "matchLoc": None},
-            {"name": "C_4", "kind": "Collection", "pk": "6", "match": "aaxYzbb", "matchLoc": [2, 5]},
-            {"name": "C_5", "kind": "Collection", "pk": "7", "match": ".xyz", "matchLoc": [1, 4]},
-            {"name": "S_xyz_1", "kind": "Sample", "pk": "1", "match": "", "matchLoc": None},
-            {"name": "S_xyz_4", "kind": "Sample", "pk": "5", "match": "", "matchLoc": None},
-            {"name": "S_xy_2", "kind": "Sample", "pk": "3", "match": "Homo xyz", "matchLoc": [5, 8]},
-            {"name": "E_xyz_1", "kind": "Execution", "pk": "1", "match": "", "matchLoc": None},
-            {"name": "E_xyz_4", "kind": "Execution", "pk": "5", "match": "", "matchLoc": None},
-            {"name": "The xyz Group", "kind": "Group", "pk": "xyz", "match": "", "matchLoc": None},
-            {"name": "The 123 Group", "kind": "Group", "pk": "123", "match": "We do xyz", "matchLoc": [6, 9]},
-            {"name": "Dr xyz", "kind": "User", "pk": "xyz", "match": "", "matchLoc": None},
+        result = self.client.execute("""{
+            quickSearch(query: "X") { collections { name } }
+        }""")
+        self.assertIsNone(result["data"]["quickSearch"])
+
+        result = self.client.execute("""{
+            quickSearch(query: "XX") { collections { name } }
+        }""")
+        self.assertIsNone(result["data"]["quickSearch"])
+    
+
+    def test_can_find_collections(self):
+        result = self.client.execute("""{
+            quickSearch(query: "xyz") { collections { name } }
+        }""")
+        self.assertEqual(result["data"]["quickSearch"]["collections"], [
+            {"name": "C_xyz_1"}, {"name": "C_xyz_2"}, {"name": "C_4"}, {"name": "C_5"}
+        ])
+    
+
+    def test_can_find_samples(self):
+        result = self.client.execute("""{
+            quickSearch(query: "xyz") { samples { name } }
+        }""")
+        self.assertEqual(result["data"]["quickSearch"]["samples"], [
+            {"name": "S_xyz_1"}, {"name": "S_xy_2"}, {"name": "S_xyz_4"}
+        ])
+    
+
+    def test_can_find_executions(self):
+        result = self.client.execute("""{
+            quickSearch(query: "xyz") { executions { name } }
+        }""")
+        self.assertEqual(result["data"]["quickSearch"]["executions"], [
+            {"name": "E_xyz_1"}, {"name": "E_xyz_4"},
+        ])
+    
+
+    def test_can_find_groups(self):
+        result = self.client.execute("""{
+            quickSearch(query: "xyz") { groups { name } }
+        }""")
+        self.assertEqual(result["data"]["quickSearch"]["groups"], [
+            {"name": "The 123 Group"}, {"name": "The xyz Group"}, 
+        ])
+    
+
+    def test_can_find_users(self):
+        result = self.client.execute("""{
+            quickSearch(query: "xyz") { users { name } }
+        }""")
+        self.assertEqual(result["data"]["quickSearch"]["users"], [
+            {"name": "Dr xyz"},
         ])

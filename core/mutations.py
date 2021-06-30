@@ -294,7 +294,6 @@ class ProcessGroupInvitationMutation(graphene.Mutation):
     def mutate(self, info, **kwargs):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
-
         group = Group.objects.filter(id=kwargs["group"]).first()
         if not group: raise GraphQLError('{"group": ["Does not exist"]}')
         user = User.objects.filter(id=kwargs["user"]).first()
