@@ -19,6 +19,15 @@ class PublicUserTests(FunctionalTest):
         CollectionUserLink.objects.create(collection=c2, user=self.user, permission=4)
         CollectionUserLink.objects.create(collection=c3, user=self.user, permission=4)
         CollectionUserLink.objects.create(collection=c4, user=self.user, permission=3)
+
+        uploader = Command.objects.create(category="import")
+        process = Command.objects.create(category="process")
+        e1 = Execution.objects.create(name="Ex 1", command=uploader, private=False) # public import
+        e2 = Execution.objects.create(name="Ex 2", command=uploader, private=False) # public import
+        Execution.objects.create(name="Ex 3", command=process, private=False) # public non-import
+        Execution.objects.create(name="Ex 4", command=uploader, private=True) # private import
+        ExecutionUserLink.objects.create(execution=e1, user=self.user, permission=4)
+        ExecutionUserLink.objects.create(execution=e2, user=self.user, permission=3)
         del self.client.headers["Authorization"]
 
 
@@ -27,6 +36,7 @@ class PublicUserTests(FunctionalTest):
         result = self.client.execute("""{ user(username: "adam") {
             username email name lastLogin created jobTitle lab company
             department publicCollections { name } memberships { name }
+            uploads { name }
         } }""")
 
         # Everything is correct
@@ -37,6 +47,7 @@ class PublicUserTests(FunctionalTest):
             "department": "MolBio",
             "memberships": [{"name": "Group 1"}, {"name": "Group 2"}],
             "publicCollections": [{"name": "Collection 1"}, {"name": "Collection 2"}],
+            "uploads": [{"name": "Ex 1"}]
         })
     
 

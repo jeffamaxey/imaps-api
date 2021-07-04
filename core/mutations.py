@@ -149,7 +149,7 @@ class ResetPasswordMutation(graphene.Mutation):
             try:
                 validate_password(kwargs["password"])
             except ValidationError as e:
-                raise GraphQLError(json.dumps({"password": [str(e.error_list[0])]}))
+                raise GraphQLError(json.dumps({"password": [str(e.error_list[0])[2:-2]]}))
             user.set_password(kwargs["password"])
             user.password_reset_token = ""
             user.password_reset_token_expiry = 0

@@ -30,6 +30,7 @@ class UserType(DjangoObjectType):
     public_samples = graphene.List("core.queries.SampleType")
 
     executions = graphene.List("core.queries.ExecutionType")
+    uploads = graphene.List("core.queries.ExecutionType")
     execution_permission = graphene.Int(id=graphene.ID(required=True))
     owned_executions = graphene.List("core.queries.ExecutionType")
     shareable_executions = graphene.List("core.queries.ExecutionType")
@@ -103,6 +104,12 @@ class UserType(DjangoObjectType):
 
     def resolve_executions(self, info, **kwargs):
         return self.executions.all().viewable_by(info.context.user)
+
+    
+    def resolve_uploads(self, info, **kwargs):
+        return self.owned_executions.filter(
+            command__category="import"
+        ).viewable_by(info.context.user).order_by("-created")
     
 
     def resolve_execution_permission(self, info, **kwargs):
