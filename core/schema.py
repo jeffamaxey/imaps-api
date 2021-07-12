@@ -65,7 +65,7 @@ class Query(graphene.ObjectType):
                 return User.objects.get(username=kwargs["username"])
             except: raise GraphQLError('{"user": "Does not exist"}')
         user = info.context.user
-        if not user: raise GraphQLError('{"user": "Not authorized"}')
+        if not user: return None
         return info.context.user
     
 

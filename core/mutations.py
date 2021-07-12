@@ -459,7 +459,10 @@ class UpdateCollectionMutation(graphene.Mutation):
         collection = Collection.objects.filter(id=kwargs["id"]).viewable_by(info.context.user).first()
         if not collection: raise GraphQLError('{"collection": ["Does not exist"]}')
         if info.context.user not in collection.editors:
-            raise GraphQLError('{"collection": ["You don\'t have permission to edit this collection"]}')
+            for group in info.context.user.memberships.all():
+                if group in collection.group_editors: break
+            else:
+                raise GraphQLError('{"collection": ["You don\'t have permission to edit this collection"]}')
         form = CollectionForm(kwargs, instance=collection)
         if form.is_valid():
             if "papers" in kwargs:
@@ -572,7 +575,8 @@ class UpdateSampleMutation(graphene.Mutation):
         if collection not in info.context.user.owned_collections:
             raise GraphQLError('{"collection": ["Collection not owned"]}')
         if info.context.user not in sample.editors:
-            raise GraphQLError('{"sample": ["You don\'t have permission to edit this sample"]}')
+            if not sample.collection or info.context.user not in sample.collection.editors:
+                raise GraphQLError('{"sample": ["You don\'t have permission to edit this sample"]}')
         form = SampleForm(kwargs, instance=sample)
         if form.is_valid():
             form.save()
@@ -599,7 +603,7 @@ class UpdateSampleAccessMutation(graphene.Mutation):
         if not sample: raise GraphQLError('{"sample": ["Does not exist"]}')
         if info.context.user not in sample.sharers and all(
             group not in sample.collection.group_sharers for group in info.context.user.memberships
-        ):
+        ) and (not sample.collection or info.context.user not in sample.collection.sharers):
             raise GraphQLError('{"sample": ["You do not have share permissions"]}')
         user = User.objects.filter(id=kwargs.get("user")).first()
         if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
@@ -650,7 +654,7 @@ class UpdateExecutionMutation(graphene.Mutation):
         execution = Execution.objects.filter(id=kwargs["id"]).viewable_by(info.context.user).first()
         if not execution: raise GraphQLError('{"execution": ["Does not exist"]}')
         if info.context.user not in execution.editors:
-            raise GraphQLError('{"sample": ["You don\'t have permission to edit this execution"]}')
+            raise GraphQLError('{"execution": ["You don\'t have permission to edit this execution"]}')
         form = ExecutionForm(kwargs, instance=execution)
         if form.is_valid():
             form.save()

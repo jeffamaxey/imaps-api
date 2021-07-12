@@ -476,6 +476,7 @@ class Execution(RandomIDModel):
     
     name = models.CharField(max_length=250)
     created = models.IntegerField(default=time.time)
+    last_modified = models.IntegerField(default=time.time)
     started = models.IntegerField(blank=True, null=True)
     finished = models.IntegerField(blank=True, null=True)
     
@@ -487,9 +488,9 @@ class Execution(RandomIDModel):
     output = models.TextField(default="{}")
 
     command = models.ForeignKey(Command, null=True, on_delete=models.SET_NULL, related_name="executions")
-    demultiplex_execution = models.ForeignKey("core.Execution", null=True, on_delete=models.SET_NULL, related_name="demultiplexed")
+    demultiplex_execution = models.ForeignKey("core.Execution", null=True, blank=True, on_delete=models.SET_NULL, related_name="demultiplexed")
     downstream = models.ManyToManyField("core.Execution", related_name="upstream")
-    parent = models.ForeignKey("core.Execution", null=True, on_delete=models.SET_NULL, related_name="children")
+    parent = models.ForeignKey("core.Execution", null=True, blank=True, on_delete=models.SET_NULL, related_name="children")
 
     private = models.BooleanField(default=True)
 
@@ -503,6 +504,14 @@ class Execution(RandomIDModel):
 
     def __str__(self):
         return self.name
+    
+
+    def save(self, *args, **kwargs):
+        """If the model is being updated, change the last_modified time."""
+        
+        if self._state.adding is False:
+            self.last_modified = int(time.time())
+        super(Execution, self).save(*args, **kwargs)
     
 
     @property
@@ -530,63 +539,6 @@ class Execution(RandomIDModel):
         return User.objects.filter(
             executionuserlink__execution=self, executionuserlink__permission__gte=2,
         )
-    
-
-    '''@property
-    def parent(self):
-        """Identifies the execution that spawned this one as a subcommand, if
-        any."""
-
-        possibles = Execution.objects.filter(output__contains=str(self.id))
-        for possible in possibles:
-            output = json.loads(possible.output)
-            if "steps" in output and int(self.id) in output["steps"]:
-                return possible'''
-    
-
-    '''@property
-    def upstream(self):
-        """Identifies the executions whose products this execution consumes."""
-
-        input_schema = json.loads(self.command.input_schema)
-        inputs = json.loads(self.input)
-        ids = []
-        for inp in input_schema:
-            if inp["name"] in inputs and "type" in inp:
-                if inp["type"].startswith("data:"):
-                    ids.append(inputs[inp["name"]])
-                if inp["type"].startswith("list:data:"):
-                    ids += inputs[inp["name"]]
-        return Execution.objects.filter(id__in=ids)'''
-    
-
-    '''@property
-    def downstream(self):
-        """Identifies the executions which consume this execution's products."""
-
-        possibles = Execution.objects.filter(input__contains=f"{self.id}")
-        possibles = possibles.select_related("command")
-        confirmed_ids = set()
-        for possible in possibles:
-            input_schema = json.loads(possible.command.input_schema)
-            inputs = json.loads(possible.input)
-            for inp in input_schema:
-                if inp["name"] in inputs and "type" in inp:
-                    if inp["type"][:4] == "data" and inputs[inp["name"]] == self.id:
-                        confirmed_ids.add(possible.id)
-                    if inp["type"][:9] == "list:data" and self.id in inputs[inp["name"]]:
-                        confirmed_ids.add(possible.id)
-        return Execution.objects.filter(id__in=confirmed_ids)'''
-    
-
-    @property
-    def components(self):
-        """Identifies the executions spawned by this execution as
-        subcommandes."""
-
-        outputs = json.loads(self.output)
-        steps = outputs.get("steps", [])
-        return Execution.objects.filter(id__in=steps)
 
 
 

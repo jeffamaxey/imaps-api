@@ -8,7 +8,7 @@ class CommandSavingTests(TestCase):
     def test_can_create_command(self):
         command = Command.objects.create(
             name="run-code", description="Run code",
-            input_schema="{}", output_schema="{}"
+            category="process", output_type="samples:"
         )
         command.full_clean()
         self.assertEqual(str(command), "run-code")

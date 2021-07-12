@@ -98,18 +98,21 @@ class LoggedInUserAccessTests(FunctionalTest):
     def test_cant_get_user_if_not_authorized(self):
         # No token
         del self.client.headers["Authorization"]
-        self.check_query_error("{ user { username } }", "authorized")
+        result = self.client.execute("{ user { username } }")
+        self.assertIs(None, result["data"]["user"])
 
         # Garbled token
         self.client.headers["Authorization"] = "Bearer 23424"
-        self.check_query_error("{ user { username } }", "authorized")
+        result = self.client.execute("{ user { username } }")
+        self.assertIs(None, result["data"]["user"])
 
         # Expired token
         token = jwt.encode({
             "sub": self.user.id, "iat": 1000000000000, "expires": 2000
         }, settings.SECRET_KEY, algorithm="HS256").decode()
         self.client.headers["Authorization"] = token
-        self.check_query_error("{ user { username } }", "authorized")
+        result = self.client.execute("{ user { username } }")
+        self.assertIs(None, result["data"]["user"])
 
 
 

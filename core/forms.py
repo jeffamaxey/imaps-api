@@ -141,4 +141,4 @@ class ExecutionForm(ModelForm):
 
     class Meta:
         model = Execution
-        fields = ["name"]
+        fields = ["name", "private"]

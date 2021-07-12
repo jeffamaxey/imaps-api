@@ -7,7 +7,7 @@ class CollectionUpdateTest(FunctionalTest):
         FunctionalTest.setUp(self)
         self.collection = Collection.objects.create(
             id=1, name="My Collection", private=True,
-            description="Collection desc"
+            description="Collection desc", last_modified=100
         )
         self.link = CollectionUserLink.objects.create(collection=self.collection, user=self.user, permission=4)
         Paper.objects.create(

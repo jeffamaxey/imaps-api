@@ -8,6 +8,11 @@ rundata/*
 uploads/*
 !uploads/.gitkeep
 tables.txt
+Commands.md
+Docs2.md
+Projects.md
+iCount Primary Analysis.md
+prometheus
 .coverage
 *.sql
 iMaps Docs.md
