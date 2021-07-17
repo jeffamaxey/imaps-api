@@ -13,7 +13,6 @@ env = environ.Env(
     MEDIA_ROOT=(str, "uploads"),
     DATA_ROOT=(str, "data"),
     PEKA_ROOT=(str, "peka/data"),
-    ADMIN=(bool, False),
     MAILGUN_API_KEY=(str, "MAILGUN_KEY"),
     EMAIL_HOST_PASSWORD=(str, "EMAIL_HOST_PASSWORD"),
     SERVE_FILES=(bool, False)

@@ -1,0 +1,91 @@
+version: "3"
+services:
+    postgres:
+        hostname: postgres
+        container_name: imaps_postgres
+        image: postgres
+        env_file:
+            - secrets.env
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+    pgbackups:
+        hostname: backups
+        container_name: imaps_backups
+        image: prodrigestivill/postgres-backup-local
+        restart: always
+        user: postgres:postgres
+        volumes:
+            - postgres_backups:/backups
+        depends_on:
+            - postgres
+        env_file:
+            - secrets.env
+        environment:
+            - POSTGRES_HOST=postgres
+            - POSTGRES_DB=postgres
+            - POSTGRES_USER=postgres
+            - SCHEDULE=@daily
+            - BACKUP_KEEP_DAYS=7
+            - BACKUP_KEEP_WEEKS=4
+            - BACKUP_KEEP_MONTHS=6
+            - HEALTHCHECK_PORT=8080
+    core:
+        hostname: core
+        container_name: imaps_core
+        image: goodwright/imapsapi
+        env_file:
+            - secrets.env
+        expose:
+            - 80
+        environment:
+            - DEBUG=no
+            - DB_ENGINE=django.db.backends.postgresql_psycopg2
+            - DB_NAME=postgres
+            - DB_USER=postgres
+            - DB_HOST=postgres
+            - MEDIA_ROOT=/home/app/uploads
+            - DATA_ROOT=/home/app/data
+            - PEKA_ROOT=/home/app/peka
+            - VIRTUAL_HOST=api.imaps.goodwright.com
+            - LETSENCRYPT_HOST=api.imaps.goodwright.com
+        depends_on:
+            - postgres
+        volumes:
+            - uploads:/home/app/uploads
+            - /storage/goodwright/data:/home/app/data
+            - /storage/goodwright/peka:/home/app/peka
+        build:
+            context: .
+        command: bash -c "python manage.py migrate && gunicorn --bind :80 core.wsgi:application --log-level debug"
+    uploads:
+        hostname: uploads
+        container_name: imaps_uploads
+        image: goodwright/imaps_uploads
+        environment:
+            - VIRTUAL_HOST=files.imaps.goodwright.com
+            - LETSENCRYPT_HOST=files.imaps.goodwright.com
+        expose:
+            - 80
+        volumes:
+            - uploads:/home/app/uploads
+        build:
+            context: nginx
+            dockerfile: Dockerfile.uploads
+    data:
+        hostname: data
+        container_name: imaps_data
+        image: goodwright/imaps_data
+        environment:
+            - VIRTUAL_HOST=data.imaps.goodwright.com
+            - LETSENCRYPT_HOST=data.imaps.goodwright.com
+        expose:
+            - 80
+        volumes:
+            - /storage/goodwright/data:/home/app/data
+        build:
+            context: nginx
+            dockerfile: Dockerfile.data
+volumes:
+    postgres_data:
+    postgres_backups:
+    uploads:

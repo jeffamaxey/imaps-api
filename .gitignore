@@ -2,6 +2,7 @@ __pycache__
 *.pyc
 *.sqlite3
 secrets.py
+secrets.env
 .DS_Store
 .vscode
 rundata/*
