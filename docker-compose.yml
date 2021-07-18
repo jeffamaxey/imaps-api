@@ -45,7 +45,7 @@ services:
             - DB_HOST=postgres
             - MEDIA_ROOT=/home/app/uploads
             - DATA_ROOT=/home/app/data
-            - PEKA_ROOT=/home/app/peka
+            - PEKA_ROOT=/home/app/peka/data
             - VIRTUAL_HOST=api.imaps.goodwright.com
             - LETSENCRYPT_HOST=api.imaps.goodwright.com
         depends_on:
@@ -53,7 +53,7 @@ services:
         volumes:
             - uploads:/home/app/uploads
             - /storage/goodwright/data:/home/app/data
-            - /storage/goodwright/peka:/home/app/peka
+            - /storage/goodwright/peka/data:/home/app/peka/data
         build:
             context: .
         command: bash -c "python manage.py migrate && gunicorn --bind :80 core.wsgi:application --log-level debug"

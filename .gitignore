@@ -26,8 +26,11 @@ peka/create_*.py
 fastq/*
 dump.txt
 summarise.py
+conf.backup
+imaps.goodwright.com.conf
 load.py
 build.py
+transfer_data.py
 pull.py
 commands.py
 locations.py

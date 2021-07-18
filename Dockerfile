@@ -5,6 +5,7 @@ RUN mkdir -p /home/app
 WORKDIR /home/app
 
 COPY ./core ./core
+COPY ./peka ./peka
 COPY ./manage.py ./manage.py
 COPY ./requirements.txt ./requirements.txt
 
