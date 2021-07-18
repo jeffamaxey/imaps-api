@@ -18,7 +18,7 @@ class LoginTests(FunctionalTest):
 
         # An access token has been returned
         access_token = result["data"]["login"]["accessToken"]
-        algorithm, payload, secret = access_token.split(".")
+        payload = access_token.split(".")[1]
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
@@ -29,7 +29,7 @@ class LoginTests(FunctionalTest):
         self.assertIn("HttpOnly", cookie._rest)
         self.assertLess(abs(time.time() + 31536000 - cookie.expires), 10)
         imaps_refresh_token = cookie.value
-        algorithm, payload, secret = access_token.split(".")
+        payload = imaps_refresh_token.split(".")[1]
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)

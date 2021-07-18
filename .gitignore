@@ -23,6 +23,7 @@ load_collections.py
 load_samples.py
 collections.csv
 peka/create_*.py
+refactor.txt
 fastq/*
 dump.txt
 summarise.py
