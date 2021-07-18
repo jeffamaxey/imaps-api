@@ -4,10 +4,11 @@ import kirjava
 from datetime import datetime
 from unittest.mock import Mock, patch
 from django.test.utils import override_settings
-from django.contrib.staticfiles.testing import StaticLiveServerTestCase
+from django.test import LiveServerTestCase
 from core.models import User
 
-class FunctionalTest(StaticLiveServerTestCase):
+@override_settings(STATIC_URL="/static/")
+class FunctionalTest(LiveServerTestCase):
 
     def setUp(self):
         self.client = kirjava.Client(self.live_server_url + "/graphql")
