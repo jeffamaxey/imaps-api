@@ -442,6 +442,7 @@ class Command(RandomIDModel):
     
     name = models.CharField(max_length=100)
     description = models.TextField()
+    nextflow = models.CharField(blank=True, null=True, max_length=200)
     category = models.CharField(max_length=200)
     output_type = models.CharField(max_length=200)
 

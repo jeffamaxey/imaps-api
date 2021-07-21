@@ -132,10 +132,8 @@ class Query(graphene.ObjectType):
     
 
     def resolve_commands(self, info, **kwargs):
-        commands = Command.objects.all()
-        slugs = set([command.slug for command in commands])
-        slug_commands = {slug: sorted([c for c in commands if c.slug == slug], key=lambda c: c.version) for slug in slugs}
-        return [commands[-1] for commands in slug_commands.values()]
+        return Command.objects.exclude(nextflow="").exclude(nextflow=None)
+        
     
 
     def resolve_command(self, info, **kwargs):
