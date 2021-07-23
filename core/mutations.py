@@ -737,7 +737,6 @@ class RunCommandMutation(graphene.Mutation):
 
     class Arguments:
         command = graphene.ID(required=True)
-        collection = graphene.ID()
         inputs = graphene.String(required=True)
         uploads = graphene.List(Upload)
 
@@ -747,35 +746,11 @@ class RunCommandMutation(graphene.Mutation):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
         command = Command.objects.get(id=kwargs["command"])
-        template = jinja2.Template(command.data_name)
-        schema = json.loads(command.input_schema)
-        inputs = json.loads(kwargs["inputs"])
-        executions = []
-        for input in schema:
-            if "list:data:" in input.get("type"):
-                executions += [Execution.objects.get(id=id) for id in inputs[input["name"]]]
-            elif "data:" in input.get("type"):
-                executions.append(Execution.objects.get(id=inputs[input["name"]]))
-        samples = set([e.sample_id for e in executions if e.sample_id])
         execution = Execution.objects.create(
-            name=template.render(**inputs),
+            name="Temporary name",
             command=command,
-            status="Running",
-            sample_id=list(samples)[0] if len(samples) == 1 else None,
-            collection_id=kwargs.get("collection"),
             input=kwargs["inputs"],
-            user=info.context.user,
+            output="[]"
         )
-        ExecutionUserLink.objects.create(execution=execution, user=info.context.user, permission=4)
-        os.mkdir(os.path.join(settings.DATA_ROOT, str(execution.id)))
-        for upload in kwargs.get("uploads", []):
-            with open(os.path.join(settings.DATA_ROOT, str(execution.id), upload.name), "wb+") as f:
-                for chunk in upload.chunks():
-                    f.write(chunk)
-        run = json.loads(command.run)
-        extension = "py" if run.get("language") == "python" else "sh"
-        with open(os.path.join(settings.DATA_ROOT, str(execution.id), f"run.{extension}"), "w") as f:
-            template = jinja2.Template(run["program"])
-            f.write(template.render(**inputs))
-        run_command.apply_async((execution.id, inputs, json.loads(command.requirements)))
+        ExecutionUserLink.objects.create(user=info.context.user, execution=execution, permission=4)
         return RunCommandMutation(execution=execution)
