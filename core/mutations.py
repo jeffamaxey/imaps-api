@@ -748,6 +748,10 @@ class RunCommandMutation(graphene.Mutation):
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
         command = Command.objects.get(id=kwargs["command"])
 
+        # Upload name
+        if command.category == "import":
+            upload_name = json.loads(kwargs["inputs"])[0]["value"]["file"]
+
         # Collection?
         collection = None
 
@@ -755,13 +759,13 @@ class RunCommandMutation(graphene.Mutation):
         sample = None
         if command.can_create_sample and kwargs.get("create_sample"):
             sample = Sample.objects.create(
-                name=json.loads(kwargs["inputs"])[0]["value"]["file"],
+                name=upload_name,
                 collection=collection
             )
             SampleUserLink.objects.create(user=info.context.user, sample=sample, permission=3)
 
         execution = Execution.objects.create(
-            name="Temporary name",
+            name=f"Upload: {upload_name}",
             command=command,
             input=kwargs["inputs"],
             collection=collection,
