@@ -445,6 +445,7 @@ class Command(RandomIDModel):
     nextflow = models.CharField(blank=True, null=True, max_length=200)
     category = models.CharField(max_length=200)
     output_type = models.CharField(max_length=200)
+    can_create_sample = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name

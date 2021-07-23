@@ -739,6 +739,7 @@ class RunCommandMutation(graphene.Mutation):
         command = graphene.ID(required=True)
         inputs = graphene.String(required=True)
         uploads = graphene.List(Upload)
+        create_sample = graphene.Boolean()
 
     execution = graphene.Field("core.queries.ExecutionType")
 
@@ -746,10 +747,25 @@ class RunCommandMutation(graphene.Mutation):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
         command = Command.objects.get(id=kwargs["command"])
+
+        # Collection?
+        collection = None
+
+        # Sample
+        sample = None
+        if command.can_create_sample and kwargs.get("create_sample"):
+            sample = Sample.objects.create(
+                name=json.loads(kwargs["inputs"])[0]["value"]["file"],
+                collection=collection
+            )
+            SampleUserLink.objects.create(user=info.context.user, sample=sample, permission=3)
+
         execution = Execution.objects.create(
             name="Temporary name",
             command=command,
             input=kwargs["inputs"],
+            collection=collection,
+            sample=sample,
             output="[]"
         )
         ExecutionUserLink.objects.create(user=info.context.user, execution=execution, permission=4)
