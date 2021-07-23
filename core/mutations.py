@@ -722,16 +722,6 @@ class DeleteExecutionMutation(graphene.Mutation):
         return DeleteExecutionMutation(success=True)
 
 
-def sample_name(id):
-    sample = Execution.objects.get(id=id).sample
-    return sample.name if sample else None
-def name(id):
-    name_ = Execution.objects.get(id=id).name
-    match = re.match(r".+ \((.+?)\)", name_)
-    if match: name_ = match[1]
-    return name_
-jinja2.filters.FILTERS["sample_name"] = sample_name
-jinja2.filters.FILTERS["name"] = name
 
 class RunCommandMutation(graphene.Mutation):
 
@@ -773,4 +763,9 @@ class RunCommandMutation(graphene.Mutation):
             output="[]"
         )
         ExecutionUserLink.objects.create(user=info.context.user, execution=execution, permission=4)
+        os.mkdir(os.path.join(settings.DATA_ROOT, str(execution.id)))
+        for upload in kwargs.get("uploads"):
+            with open(os.path.join(settings.DATA_ROOT, str(execution.id), upload.name), "wb+") as f:
+                for chunk in upload.chunks():
+                    f.write(chunk)
         return RunCommandMutation(execution=execution)

@@ -28,4 +28,7 @@ if django.conf.settings.SERVE_FILES:
     urlpatterns += static(
         django.conf.settings.MEDIA_URL,
         document_root=django.conf.settings.MEDIA_ROOT
+    ) + static(
+        django.conf.settings.DATA_URL,
+        document_root=django.conf.settings.DATA_ROOT
     )

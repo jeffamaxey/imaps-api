@@ -73,6 +73,7 @@ GRAPHENE = {"SCHEMA": "core.schema.schema"}
 SERVE_FILES = env("SERVE_FILES")
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = env("MEDIA_ROOT")
+DATA_URL = "/data/"
 DATA_ROOT = env("DATA_ROOT")
 PEKA_ROOT = env("PEKA_ROOT")
 NF_ROOT = env("NF_ROOT")
