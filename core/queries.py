@@ -1,3 +1,4 @@
+import os
 import graphene
 from graphene_django.types import DjangoObjectType
 from graphene.relay import Connection
@@ -419,6 +420,11 @@ class CommandType(DjangoObjectType):
         model = Command
     
     id = graphene.ID()
+    input_schema = graphene.String()
+
+    def resolve_input_schema(self, info, **kwargs):
+        with open(os.path.join(settings.NF_ROOT, self.nextflow, "inputs.json")) as f:
+            return f.read()
 
 
 

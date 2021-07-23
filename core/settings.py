@@ -13,6 +13,7 @@ env = environ.Env(
     MEDIA_ROOT=(str, "uploads"),
     DATA_ROOT=(str, "data"),
     PEKA_ROOT=(str, "peka/data"),
+    NF_ROOT=(str, "."),
     MAILGUN_API_KEY=(str, "MAILGUN_KEY"),
     EMAIL_HOST_PASSWORD=(str, "EMAIL_HOST_PASSWORD"),
     SERVE_FILES=(bool, False)
@@ -74,6 +75,7 @@ MEDIA_URL = "/uploads/"
 MEDIA_ROOT = env("MEDIA_ROOT")
 DATA_ROOT = env("DATA_ROOT")
 PEKA_ROOT = env("PEKA_ROOT")
+NF_ROOT = env("NF_ROOT")
 
 EMAIL_HOST = "smtp.eu.mailgun.org"
 EMAIL_PORT = 587

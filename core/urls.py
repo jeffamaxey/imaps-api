@@ -24,7 +24,7 @@ urlpatterns = [
     path("peka/", include("peka.urls")),
 ]
 
-if True:
+if django.conf.settings.SERVE_FILES:
     urlpatterns += static(
         django.conf.settings.MEDIA_URL,
         document_root=django.conf.settings.MEDIA_ROOT
