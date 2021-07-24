@@ -1,6 +1,7 @@
 import time
 import json
 import os
+import shutil
 import secrets
 import graphene
 from graphql import GraphQLError
@@ -766,6 +767,9 @@ class RunCommandMutation(graphene.Mutation):
             with open(os.path.join(settings.DATA_ROOT, str(execution.id), upload.name), "wb+") as f:
                 for chunk in upload.chunks():
                     f.write(chunk)
-
+        shutil.copy(
+            os.path.join(settings.NF_ROOT, command.nextflow, f"{command.nextflow}.nf"),
+            os.path.join(settings.DATA_ROOT, str(execution.id), "run.nf"),
+        )
         run_command.apply_async((execution.id,), task_id=str(execution.id))
         return RunCommandMutation(execution=execution)
