@@ -3,8 +3,6 @@ import json
 import os
 import secrets
 import graphene
-import jinja2
-import re
 from graphql import GraphQLError
 from graphene_file_upload.scalars import Upload
 from django.contrib.auth.hashers import check_password
@@ -763,9 +761,11 @@ class RunCommandMutation(graphene.Mutation):
             output="[]"
         )
         ExecutionUserLink.objects.create(user=info.context.user, execution=execution, permission=4)
-        os.mkdir(os.path.join(settings.DATA_ROOT, str(execution.id)))
+        os.mkdir(os.path.join(settings.DATA_ROOT, str(execution.id)))    
         for upload in kwargs.get("uploads"):
             with open(os.path.join(settings.DATA_ROOT, str(execution.id), upload.name), "wb+") as f:
                 for chunk in upload.chunks():
                     f.write(chunk)
+
+        run_command.apply_async((execution.id,), task_id=str(execution.id))
         return RunCommandMutation(execution=execution)

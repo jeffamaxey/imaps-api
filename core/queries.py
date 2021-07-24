@@ -1,5 +1,6 @@
 import os
 import graphene
+import json
 from graphene_django.types import DjangoObjectType
 from graphene.relay import Connection
 from .models import *
@@ -423,8 +424,8 @@ class CommandType(DjangoObjectType):
     input_schema = graphene.String()
 
     def resolve_input_schema(self, info, **kwargs):
-        with open(os.path.join(settings.NF_ROOT, self.nextflow, "inputs.json")) as f:
-            return f.read()
+        with open(os.path.join(settings.NF_ROOT, self.nextflow, "schema.json")) as f:
+            return json.dumps(json.load(f)["inputs"])
 
 
 

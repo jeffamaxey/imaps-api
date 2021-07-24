@@ -16,7 +16,8 @@ env = environ.Env(
     NF_ROOT=(str, "."),
     MAILGUN_API_KEY=(str, "MAILGUN_KEY"),
     EMAIL_HOST_PASSWORD=(str, "EMAIL_HOST_PASSWORD"),
-    SERVE_FILES=(bool, False)
+    SERVE_FILES=(bool, False),
+    BROKER_URL=(str, "amqp://guest:guest@localhost")
 )
 
 ALLOWED_HOSTS = ["*"]
@@ -77,6 +78,8 @@ DATA_URL = "/data/"
 DATA_ROOT = env("DATA_ROOT")
 PEKA_ROOT = env("PEKA_ROOT")
 NF_ROOT = env("NF_ROOT")
+
+CELERY_BROKER_URL = env("BROKER_URL")
 
 EMAIL_HOST = "smtp.eu.mailgun.org"
 EMAIL_PORT = 587
