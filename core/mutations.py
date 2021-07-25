@@ -736,15 +736,9 @@ class RunCommandMutation(graphene.Mutation):
         if not info.context.user:
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
         command = Command.objects.get(id=kwargs["command"])
-
-        # Upload name
         if command.category == "import":
             upload_name = json.loads(kwargs["inputs"])[0]["value"]["file"]
-
-        # Collection?
         collection = None
-
-        # Sample
         sample = None
         if command.can_create_sample and kwargs.get("create_sample"):
             sample = Sample.objects.create(
@@ -752,24 +746,12 @@ class RunCommandMutation(graphene.Mutation):
                 collection=collection
             )
             SampleUserLink.objects.create(user=info.context.user, sample=sample, permission=3)
-
         execution = Execution.objects.create(
-            name=f"Upload: {upload_name}",
-            command=command,
-            input=kwargs["inputs"],
-            collection=collection,
-            sample=sample,
-            output="[]"
+            name=f"Upload: {upload_name}", command=command,
+            input=kwargs["inputs"], output="[]",
+            collection=collection, sample=sample,
         )
+        execution.prepare_directory(kwargs.get("uploads", []))
         ExecutionUserLink.objects.create(user=info.context.user, execution=execution, permission=4)
-        os.mkdir(os.path.join(settings.DATA_ROOT, str(execution.id)))    
-        for upload in kwargs.get("uploads"):
-            with open(os.path.join(settings.DATA_ROOT, str(execution.id), upload.name), "wb+") as f:
-                for chunk in upload.chunks():
-                    f.write(chunk)
-        shutil.copy(
-            os.path.join(settings.NF_ROOT, command.nextflow, f"{command.nextflow}.nf"),
-            os.path.join(settings.DATA_ROOT, str(execution.id), "run.nf"),
-        )
         run_command.apply_async((execution.id,), task_id=str(execution.id))
         return RunCommandMutation(execution=execution)

@@ -346,17 +346,7 @@ class ExecutionType(DjangoObjectType):
     upstream= graphene.List("core.queries.ExecutionType")
     downstream_executions = graphene.List("core.queries.ExecutionType")
     component_executions = graphene.List("core.queries.ExecutionType")
-
-    def resolve_terminal(self, info, **kwargs):
-        try:
-            with open(os.path.join(settings.DATA_ROOT, str(self.id), "output.txt")) as f:
-                return f.read()
-        except FileNotFoundError:
-            try:
-                with open(os.path.join(settings.DATA_ROOT, str(self.id), "stdout.txt")) as f:
-                    return f.read()
-            except FileNotFoundError: return ""
-
+        
 
     def resolve_can_edit(self, info, **kwargs):
         if info.context.user:
