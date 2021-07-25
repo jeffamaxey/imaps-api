@@ -425,8 +425,11 @@ class CommandType(DjangoObjectType):
     input_schema = graphene.String()
 
     def resolve_input_schema(self, info, **kwargs):
-        with open(os.path.join(settings.NF_ROOT, self.nextflow, "schema.json")) as f:
-            return json.dumps(json.load(f)["inputs"])
+        try:
+            with open(os.path.join(settings.NF_ROOT, self.nextflow, "schema.json")) as f:
+                return json.dumps(json.load(f)["inputs"])
+        except FileNotFoundError:
+            return None
 
 
 
