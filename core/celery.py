@@ -28,23 +28,19 @@ def run_command(execution_id):
             if input["type"] == "file":
                 params.append(f"--{input['name']} {input['value']['file']}")
         params = " ".join(params)
-        print(f"nextflow run run.nf {params}")
-        result = run(f"nextflow run run.nf {params}".split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=os.path.join(
+        config = os.path.join(settings.NF_ROOT, execution.command.nextflow, "nextflow.config")
+        result = run(f"nextflow -C {config} run run.nf {params}".split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=os.path.join(
             settings.DATA_ROOT, str(execution_id)
         ))
         
-        print(result.returncode, result.stdout, result.stderr)
 
         outputs = []
         with open(os.path.join(settings.NF_ROOT, execution.command.nextflow, "schema.json")) as f:
             output_schema = json.load(f)["outputs"]
-        print(output_schema)
-        print(os.listdir(os.path.join(settings.DATA_ROOT, str(execution_id))))
+
         for output in output_schema:
             if output["type"] == "file":
-                print(output)
                 matches = glob.glob(os.path.join(settings.DATA_ROOT, str(execution_id), output["match"]))
-                print(matches)
                 if matches:
                     outputs.append({
                         "name": output["name"],
@@ -54,7 +50,6 @@ def run_command(execution_id):
                             "size": os.path.getsize(os.path.join(settings.DATA_ROOT, str(execution_id), match))
                         } for match in matches]
                     })
-        print(outputs)
         execution.output = json.dumps(outputs)
         
     except Exception as e:
