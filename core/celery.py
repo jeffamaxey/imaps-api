@@ -32,6 +32,7 @@ def run_command(execution_id):
         result = run(f"nextflow -C {config} run run.nf {params}".split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=os.path.join(
             settings.DATA_ROOT, str(execution_id)
         ))
+        print(result)
         
 
         outputs = []

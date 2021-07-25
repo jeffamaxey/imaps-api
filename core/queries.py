@@ -334,6 +334,7 @@ class ExecutionType(DjangoObjectType):
         model = Execution
     
     id = graphene.ID()
+    terminal = graphene.String()
     command = graphene.Field("core.queries.CommandType")
     can_edit = graphene.Boolean()
     can_share = graphene.Boolean()
@@ -345,6 +346,16 @@ class ExecutionType(DjangoObjectType):
     upstream= graphene.List("core.queries.ExecutionType")
     downstream_executions = graphene.List("core.queries.ExecutionType")
     component_executions = graphene.List("core.queries.ExecutionType")
+
+    def resolve_terminal(self, info, **kwargs):
+        try:
+            with open(os.path.join(settings.DATA_ROOT, str(self.id), "output.txt")) as f:
+                return f.read()
+        except FileNotFoundError:
+            try:
+                with open(os.path.join(settings.DATA_ROOT, str(self.id), "stdout.txt")) as f:
+                    return f.read()
+            except FileNotFoundError: return ""
 
 
     def resolve_can_edit(self, info, **kwargs):
