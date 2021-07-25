@@ -32,12 +32,17 @@ def run_command(execution_id):
         result = run(f"nextflow -C {config} run run.nf {params}".split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=os.path.join(
             settings.DATA_ROOT, str(execution_id)
         ))
-        print(result)
         
 
         outputs = []
         with open(os.path.join(settings.NF_ROOT, execution.command.nextflow, "schema.json")) as f:
             output_schema = json.load(f)["outputs"]
+
+        try:
+            with open(os.path.join(settings.DATA_ROOT, str(execution.id), "output.txt")) as f:
+                terminal_output = f.read().splitlines()
+        except FileNotFoundError:
+            terminal_output = []
 
         for output in output_schema:
             if output["type"] == "file":
@@ -51,7 +56,20 @@ def run_command(execution_id):
                             "size": os.path.getsize(os.path.join(settings.DATA_ROOT, str(execution_id), match))
                         } for match in matches]
                     })
+            if output["type"] == "basic":
+                for line in terminal_output:
+                    if line.startswith(output["match"]):
+                        outputs.append({
+                            "name": output["name"],
+                            "type": "basic",
+                            "value": line[len(output["match"]):].strip()
+                        })
+                        terminal_output.remove(line)
+                        break
         execution.output = json.dumps(outputs)
+        print(execution.output)
+        with open(os.path.join(settings.DATA_ROOT, str(execution.id), "output.txt"), "w") as f:
+            f.write("\n".join(terminal_output))
         
     except Exception as e:
         execution.error = str(e)
