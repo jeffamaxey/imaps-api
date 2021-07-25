@@ -2,6 +2,7 @@ import os
 import json
 import glob
 import subprocess
+import shutil
 from django.conf import settings
 from subprocess import Popen, PIPE
 import time
@@ -21,6 +22,7 @@ def run_command(execution_id):
     execution = Execution.objects.get(id=execution_id)
     execution.started = time.time()
     execution.save()
+    returncode = 0
     try:
         from subprocess import PIPE, run
         params = []
@@ -32,6 +34,22 @@ def run_command(execution_id):
         result = run(f"nextflow -C {config} run run.nf {params}".split(), stdout=PIPE, stderr=PIPE, universal_newlines=True, cwd=os.path.join(
             settings.DATA_ROOT, str(execution_id)
         ))
+
+        if result.returncode == 1:
+            returncode = 1
+            directory = os.path.join(settings.DATA_ROOT, str(execution.id), "work")
+            dirs = os.listdir(directory)
+            if dirs: directory = os.path.join(directory, dirs[0])
+            dirs = os.listdir(directory)
+            if dirs: directory = os.path.join(directory, dirs[0])
+            if "output.txt" in os.listdir(directory):
+                shutil.copy(
+                    os.path.join(directory, "output.txt"),
+                    os.path.join(settings.DATA_ROOT, str(execution.id), "output.txt")
+                )
+            execution.status = "ER"
+            execution.error = "The nextflow job failed to run (see terminal)"
+
         
 
         outputs = []
@@ -67,7 +85,6 @@ def run_command(execution_id):
                         terminal_output.remove(line)
                         break
         execution.output = json.dumps(outputs)
-        print(execution.output)
         with open(os.path.join(settings.DATA_ROOT, str(execution.id), "output.txt"), "w") as f:
             f.write("\n".join(terminal_output))
         
@@ -77,5 +94,5 @@ def run_command(execution_id):
     finally:
         execution.finished = time.time()
         execution.save()
-    return 0
+    return returncode
 
