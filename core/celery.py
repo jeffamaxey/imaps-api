@@ -1,4 +1,5 @@
 import os
+import traceback
 from celery import Celery
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
@@ -16,20 +17,26 @@ def run_command(execution_id):
     the appropriate information will be collected. Any files or other data
     produced by the process will be collected and noted in the execution's
     database record."""
-    
+
     from core.models import Execution
     execution = Execution.objects.get(id=execution_id)
     execution.start_now()
     try:
         result = execution.run()
-        if result.returncode == 1:
-            execution.fetch_terminal_from_workdir()
+
+        if execution.process_status == "-":
+            execution.status = "ER"
+            execution.error = "The nextflow script failed before it could start any processes."
+        elif result.returncode == 1:
             execution.status = "ER"
             execution.error = "The nextflow job failed to run (see terminal)"
-        execution.collect_outputs_from_directory()        
+        else:
+            execution.staus = "OK"
+        execution.collect_outputs_from_directory()
     except Exception as e:
-        execution.error = str(e)
         execution.status = "ER"
+        execution.nf_terminal = traceback.format_exc()
+        execution.error = str(e)
     finally:
         execution.finish_now()
 
