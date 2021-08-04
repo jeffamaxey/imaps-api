@@ -43,9 +43,11 @@ services:
             - DB_NAME=postgres
             - DB_USER=postgres
             - DB_HOST=postgres
+            - BROKER_URL=amqp://guest@broker:5672//
             - MEDIA_ROOT=/home/app/uploads
             - DATA_ROOT=/home/app/data
             - PEKA_ROOT=/home/app/peka/data
+            - NF_ROOT=/home/app/nextflow
             - VIRTUAL_HOST=api.imaps.goodwright.com
             - LETSENCRYPT_HOST=api.imaps.goodwright.com
         depends_on:
@@ -54,6 +56,7 @@ services:
             - uploads:/home/app/uploads
             - /storage/goodwright/data:/home/app/data
             - /storage/goodwright/peka/data:/home/app/peka/data
+            - /home/goodwright/imaps-nf:/home/app/nextflow
         build:
             context: .
         command: bash -c "python manage.py migrate && gunicorn --bind :80 core.wsgi:application --log-level debug"
@@ -85,6 +88,36 @@ services:
         build:
             context: nginx
             dockerfile: Dockerfile.data
+    broker:
+        hostname: broker
+        container_name: imaps_broker
+        image: rabbitmq:latest
+    worker:
+        hostname: worker
+        container_name: imaps_worker
+        image: goodwright/imapsworker
+        env_file:
+            - secrets.env
+        environment:
+            - DEBUG=no
+            - DB_ENGINE=django.db.backends.postgresql_psycopg2
+            - DB_NAME=postgres
+            - DB_USER=postgres
+            - DB_HOST=postgres
+            - NF_ROOT=/home/app/nextflow
+            - CELERY_BROKER_URL=amqp://guest@broker:5672//
+            - DATA_ROOT=/storage/goodwright/data
+        build:
+            context: .
+        depends_on:
+            - core
+            - broker
+            - postgres
+        volumes:
+            - /storage/goodwright/data:/storage/goodwright/data
+            - /var/run/docker.sock:/var/run/docker.sock
+            - /home/goodwright/imaps-nf:/home/app/nextflow
+        command: ["celery", "-A", "core.celery", "worker", "-l", "INFO"]
 volumes:
     postgres_data:
     postgres_backups:

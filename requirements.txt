@@ -6,6 +6,8 @@ graphene_file_upload
 django-cleanup
 pyjwt==1.7.1
 django_environ
+Pillow
 celery
+sqlalchemy
 django_celery_results
 jinja2

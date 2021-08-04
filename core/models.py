@@ -497,7 +497,7 @@ class Execution(RandomIDModel):
     warning = models.TextField(blank=True, null=True)
     error = models.TextField(blank=True, null=True)
     nf_terminal = models.TextField(blank=True, null=True)
-    process_name = models.CharField(max_length=16, blank=True, null=True)
+    process_name = models.CharField(max_length=50, blank=True, null=True)
     process_status = models.CharField(max_length=8, blank=True, null=True)
     process_stdout = models.TextField(blank=True, null=True)
     process_stderr = models.TextField(blank=True, null=True)
