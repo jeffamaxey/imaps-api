@@ -32,7 +32,6 @@ class ResetEmailTests(TestCase):
 
     def test_can_send_reset_warning_email(self):
         self.assertEqual(len(mail.outbox), 0)
-        user = mixer.blend(User, name="John", email="john@gmail.com")
         send_reset_warning_email("john@gmail.com")
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ["john@gmail.com"])
