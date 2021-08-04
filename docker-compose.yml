@@ -84,7 +84,7 @@ services:
         expose:
             - 80
         volumes:
-            - /storage/goodwright/data:/home/app/data
+            - /storage/goodwright/data:/storage/goodwright/data
         build:
             context: nginx
             dockerfile: Dockerfile.data
