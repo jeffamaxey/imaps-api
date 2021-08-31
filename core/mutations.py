@@ -746,12 +746,16 @@ class RunCommandMutation(graphene.Mutation):
                 collection=collection
             )
             SampleUserLink.objects.create(user=info.context.user, sample=sample, permission=3)
+        name = command.name
+        if command.category == "import":
+            name = f"Upload: {upload_name}"
         execution = Execution.objects.create(
-            name=f"Upload: {upload_name}", command=command,
+            name=name, command=command,
             input=kwargs["inputs"], output="[]",
             collection=collection, sample=sample,
         )
         execution.prepare_directory(kwargs.get("uploads", []))
         ExecutionUserLink.objects.create(user=info.context.user, execution=execution, permission=4)
+        print("Running")
         run_command.apply_async((execution.id,), task_id=str(execution.id))
         return RunCommandMutation(execution=execution)

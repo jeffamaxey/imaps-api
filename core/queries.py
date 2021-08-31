@@ -343,10 +343,9 @@ class ExecutionType(DjangoObjectType):
     sharers = graphene.List("core.queries.UserType")
     editors = graphene.List("core.queries.UserType")
     parent = graphene.Field("core.queries.ExecutionType")
-    upstream= graphene.List("core.queries.ExecutionType")
+    upstream = graphene.List("core.queries.ExecutionType")
     downstream_executions = graphene.List("core.queries.ExecutionType")
     component_executions = graphene.List("core.queries.ExecutionType")
-        
 
     def resolve_can_edit(self, info, **kwargs):
         if info.context.user:
@@ -414,6 +413,16 @@ class ExecutionConnection(Connection):
 
     def resolve_count(self, info, **kwargs):
         return len(self.iterable)
+
+
+
+class NextflowProcessType(DjangoObjectType):
+    
+    class Meta:
+        model = NextflowProcess
+    
+    id = graphene.ID()
+
 
 
 class CommandType(DjangoObjectType):

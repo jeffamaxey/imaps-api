@@ -21,22 +21,6 @@ def run_command(execution_id):
     from core.models import Execution
     execution = Execution.objects.get(id=execution_id)
     execution.start_now()
-    try:
-        result = execution.run()
-
-        if execution.process_status == "-":
-            execution.status = "ER"
-            execution.error = "The nextflow script failed before it could start any processes."
-        elif result.returncode == 1:
-            execution.status = "ER"
-            execution.error = "The nextflow job failed to run (see terminal)"
-        else:
-            execution.staus = "OK"
-        execution.collect_outputs_from_directory()
-    except Exception as e:
-        execution.status = "ER"
-        execution.nf_terminal = traceback.format_exc()
-        execution.error = str(e)
-    finally:
-        execution.finish_now()
+    execution.run()
+    execution.finish_now()
 

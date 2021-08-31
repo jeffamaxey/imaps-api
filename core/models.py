@@ -7,6 +7,7 @@ import re
 import glob
 import base64
 import subprocess
+import traceback
 from random import randint
 from django_random_id_model import RandomIDModel
 from django.db import models
@@ -496,11 +497,10 @@ class Execution(RandomIDModel):
     status = models.CharField(max_length=50, blank=True, null=True)
     warning = models.TextField(blank=True, null=True)
     error = models.TextField(blank=True, null=True)
+
     nf_terminal = models.TextField(blank=True, null=True)
-    process_name = models.CharField(max_length=50, blank=True, null=True)
-    process_status = models.CharField(max_length=8, blank=True, null=True)
-    process_stdout = models.TextField(blank=True, null=True)
-    process_stderr = models.TextField(blank=True, null=True)
+    nf_id = models.CharField(max_length=100, blank=True, null=True)
+    post_task = models.CharField(max_length=100, blank=True, null=True)
 
     input = models.TextField(default="{}")
     output = models.TextField(default="{}")
@@ -591,31 +591,74 @@ class Execution(RandomIDModel):
 
     def run(self):
         """Runs the relevant Nextflow script. Params are passed in from the
-        inputs the user supplied when the execution object was created."""
+        inputs the user supplied when the execution object was created. This
+        method expects the execution directory to already exist and for any
+        uploaded files to be in the directory, but otherwise it handles
+        everything about the running of the command."""
+
+        try:
+            run = lambda command: subprocess.run(
+                command.split(),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
+                cwd=os.path.join(settings.DATA_ROOT, str(self.id))
+            )
+            output = run(self.generate_command())
+            self.nf_terminal = output.stdout
+            self.nf_id = re.search(r"\[(\w+_\w+)\]", output.stdout)[1]
+            output = run(f"nextflow log {self.nf_id} -f process,workdir,status")
+            processes = [l.split("\t") for l in output.stdout.strip().splitlines()]
+            for process in processes:
+                self.add_process_from_log(process)
+            self.collect_outputs_from_directory()
+            self.status = "OK"
+            self.save()
+        except Exception as e:
+            self.status = "ER"
+            self.nf_terminal = traceback.format_exc()
+            self.error = str(e)
+    
+
+    def generate_command(self):
+        """Gets the bash command to run the nextflow script."""
 
         params = []
         for input in json.loads(self.input):
             if input["type"] == "file":
                 params.append(f"--{input['name']} {input['value']['file']}")
+            if input["type"] == "data":
+                execution = Execution.objects.get(id=input["value"])
+                outputs = json.loads(execution.output)
+                files = [o for o in outputs if "file" in o["type"]]
+                if len(files):
+                    value = files[0]["value"][0] if isinstance(files[0]["value"], list) else files[0]["value"]
+                    filename = value["file"]
+                    location = os.path.join(settings.DATA_ROOT, str(input["value"]), filename)
+                    params.append(f"--{input['name']} {location}")
         params = " ".join(params)
         config = os.path.join(settings.NF_ROOT, self.command.nextflow, "nextflow.config")
-        run = lambda command: subprocess.run(
-            command.split(),
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-            cwd=os.path.join(settings.DATA_ROOT, str(self.id))
+        return f"nextflow -C {config} run run.nf {params}"
+
+
+    def add_process_from_log(self, process):
+        """Creates a child Nextflow Process from the description of it in the
+        log command."""
+
+        with open(os.path.join(process[1], ".command.out")) as f:
+            stdout = f.read()
+        with open(os.path.join(process[1], ".command.err")) as f:
+            stderr = f.read()
+        if process[2] == "-" and not self.status:
+            self.status = "ER"
+            self.error = f"Nextflow process {process[0]} failed"
+        NextflowProcess.objects.create(
+            name=process[0],
+            workdir=process[1],
+            status=process[2],
+            stdout=stdout,
+            stderr=stderr,
+            execution=self
         )
-        print(f"nextflow -C {config} run run.nf {params}")
-        output = run(f"nextflow -C {config} run run.nf {params}")
-        self.nf_terminal = output.stdout
-        log = run("nextflow log").stdout.splitlines()[1].split("\t")
-        self.process_name = log[2].strip()
-        self.process_status = log[3].strip()
-        if self.process_name:
-            self.process_stdout = run(f"nextflow log {self.process_name} -f stdout").stdout.replace("-", "").strip()
-            self.process_stderr = run(f"nextflow log {self.process_name} -f stderr").stdout.replace("-", "").strip()
-        self.save()
-        return output
- 
+
 
     def collect_outputs_from_directory(self):
         """Populates the execution object's `output` field after it has run, by
@@ -623,7 +666,6 @@ class Execution(RandomIDModel):
 
         outputs = []
         schema = self.command.output_schema
-        terminal_output = self.process_stdout.splitlines()
         directory = os.path.join(settings.DATA_ROOT, str(self.id))
         for output in schema:
             if output["type"] == "file":
@@ -637,15 +679,33 @@ class Execution(RandomIDModel):
                         } for match in matches]
                     })
             if output["type"] == "basic":
-                for line in terminal_output:
-                    if line.startswith(output["match"]):
-                        outputs.append({
-                            "name": output["name"], "type": "basic",
-                            "value": line[len(output["match"]):].strip()
-                        })
-                        break
+                for process in self.nextflow_processes.all():
+                    for line in process.stdout.splitlines():
+                        if line.startswith(output["match"]):
+                            outputs.append({
+                                "name": output["name"], "type": "basic",
+                                "value": line[len(output["match"]):].strip()
+                            })
+                            break
         self.output = json.dumps(outputs)
         self.save()
+
+
+
+class NextflowProcess(models.Model):
+
+    class Meta:
+        db_table = "nextflow_processes"
+    
+    name = models.CharField(max_length=200)
+    status = models.CharField(max_length=8)
+    workdir = models.CharField(max_length=200)
+    stdout = models.TextField()
+    stderr = models.TextField()
+    execution = models.ForeignKey(Execution, on_delete=models.CASCADE, related_name="nextflow_processes")
+    
+    def __str__(self):
+        return self.name
 
 
 
