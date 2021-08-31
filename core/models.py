@@ -602,6 +602,7 @@ class Execution(RandomIDModel):
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
                 cwd=os.path.join(settings.DATA_ROOT, str(self.id))
             )
+            self.attach_to_upstream()
             output = run(self.generate_command())
             self.nf_terminal = output.stdout
             self.nf_id = re.search(r"\[(\w+_\w+)\]", output.stdout)[1]
@@ -616,6 +617,14 @@ class Execution(RandomIDModel):
             self.status = "ER"
             self.nf_terminal = traceback.format_exc()
             self.error = str(e)
+    
+
+    def attach_to_upstream(self):
+        for input in json.loads(self.input):
+            if input["type"] == "data":
+                execution = Execution.objects.get(id=input["value"])
+                execution.downstream.add(self)
+                execution.save()
     
 
     def generate_command(self):
