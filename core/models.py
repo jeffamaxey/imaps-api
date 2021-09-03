@@ -451,6 +451,7 @@ class Command(RandomIDModel):
     nextflow = models.CharField(blank=True, null=True, max_length=200)
     category = models.CharField(max_length=200)
     output_type = models.CharField(max_length=200)
+    post_task = models.CharField(max_length=100, blank=True, null=True)
     can_create_sample = models.BooleanField(default=False)
 
     def __str__(self):
@@ -500,7 +501,6 @@ class Execution(RandomIDModel):
 
     nf_terminal = models.TextField(blank=True, null=True)
     nf_id = models.CharField(max_length=100, blank=True, null=True)
-    post_task = models.CharField(max_length=100, blank=True, null=True)
 
     input = models.TextField(default="{}")
     output = models.TextField(default="{}")
@@ -598,9 +598,9 @@ class Execution(RandomIDModel):
 
         try:
             run = lambda command: subprocess.run(
-                command.split(),
+                command,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True,
-                cwd=os.path.join(settings.DATA_ROOT, str(self.id))
+                cwd=os.path.join(settings.DATA_ROOT, str(self.id)), shell=True
             )
             self.attach_to_upstream()
             output = run(self.generate_command())
@@ -633,7 +633,8 @@ class Execution(RandomIDModel):
         params = []
         for input in json.loads(self.input):
             if input["type"] == "file":
-                params.append(f"--{input['name']} {input['value']['file']}")
+                quote = '"' if " " in input["value"]["file"] else ""
+                params.append(f"--{input['name']} {quote}{input['value']['file']}{quote}")
             if input["type"] == "data":
                 execution = Execution.objects.get(id=input["value"])
                 outputs = json.loads(execution.output)
@@ -642,7 +643,8 @@ class Execution(RandomIDModel):
                     value = files[0]["value"][0] if isinstance(files[0]["value"], list) else files[0]["value"]
                     filename = value["file"]
                     location = os.path.join(settings.DATA_ROOT, str(input["value"]), filename)
-                    params.append(f"--{input['name']} {location}")
+                    quote = '"' if " " in location else ""
+                    params.append(f"--{input['name']} {quote}{location}{quote}")
         params = " ".join(params)
         config = os.path.join(settings.NF_ROOT, self.command.nextflow, "nextflow.config")
         return f"nextflow -C {config} run run.nf {params}"

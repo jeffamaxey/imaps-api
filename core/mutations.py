@@ -756,6 +756,5 @@ class RunCommandMutation(graphene.Mutation):
         )
         execution.prepare_directory(kwargs.get("uploads", []))
         ExecutionUserLink.objects.create(user=info.context.user, execution=execution, permission=4)
-        print("Running")
         run_command.apply_async((execution.id,), task_id=str(execution.id))
         return RunCommandMutation(execution=execution)
