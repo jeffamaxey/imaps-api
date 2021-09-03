@@ -53,12 +53,12 @@ def post_demultiplex(execution_id):
         }
         matches = [f for f in outputs if f"{data['barcode']}.fastq.gz" in f]
         if len(matches):
-            
             with open(os.path.join(settings.NF_ROOT, command.nextflow, "schema.json")) as f:
                 inputs = json.load(f)["inputs"]
             inputs[0]["value"] = {"file": f"{row[0]}.fastq.gz", "size": os.path.getsize(
                 os.path.join(settings.DATA_ROOT, str(execution_id), matches[0])
             )}
+            collection = demultiplex_execution.owners.first().editable_collections.filter(name=row[1]).first()
             sample = Sample.objects.create(
                 name=row[0],
                 source=row[8],
@@ -66,7 +66,8 @@ def post_demultiplex(execution_id):
                 qc_pass="",
                 qc_message="",
                 pi_name=row[4],
-                annotator_name=row[3]
+                annotator_name=row[3],
+                collection=collection
             )
             SampleUserLink.objects.create(user=demultiplex_execution.owners.first(), sample=sample, permission=3)
             new = Execution.objects.create(
