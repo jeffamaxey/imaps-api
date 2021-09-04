@@ -709,7 +709,7 @@ class NextflowProcess(models.Model):
         db_table = "nextflow_processes"
     
     name = models.CharField(max_length=200)
-    status = models.CharField(max_length=8)
+    status = models.CharField(max_length=40)
     workdir = models.CharField(max_length=200)
     stdout = models.TextField()
     stderr = models.TextField()

@@ -126,19 +126,10 @@ class Query(graphene.ObjectType):
         executions = executions.filter(name__icontains=kwargs["name"])
         if kwargs.get("first"): executions = executions[:kwargs["first"]]
         return executions
-        """ executions = Execution.objects.all().viewable_by(info.context.user)
-        if "data_type" in kwargs:
-            executions = executions.filter(command__type__contains=kwargs["data_type"])
-        if kwargs.get("collection"):
-            direct = executions.filter(collection=kwargs["collection"])
-            indirect = executions.filter(sample__collection=kwargs["collection"])
-            executions = (direct | indirect).distinct()
-        return executions """
     
 
     def resolve_commands(self, info, **kwargs):
-        return Command.objects.exclude(nextflow="").exclude(nextflow=None)
-        
+        return Command.objects.exclude(nextflow="").exclude(nextflow=None).exclude(category="internal-import")
     
 
     def resolve_command(self, info, **kwargs):
