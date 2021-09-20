@@ -86,10 +86,10 @@ class Execution(RandomIDModel):
         return self.name
     
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, update_last_modified=True, **kwargs):
         """If the model is being updated, change the last_modified time."""
         
-        if self._state.adding is False:
+        if self._state.adding is False and update_last_modified:
             self.last_modified = int(time.time())
         super(Execution, self).save(*args, **kwargs)
     
