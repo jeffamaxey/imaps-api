@@ -1,7 +1,8 @@
+from core.permissions import groups_run_by_user
 from core.models import *
 from .base import FunctionalTest
 
-class GroupUpdatingApiTests(FunctionalTest):
+class GroupUpdatingApiTest(FunctionalTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
@@ -23,21 +24,18 @@ class MultipleUsersTests(FunctionalTest):
     def test_can_get_multiple_users(self):
         User.objects.create(
             username="jo", email="jo@crick.ac.uk", name="Jo J",
-            last_login=1627712117, created=1607912117, company="The Crick",
-            department="MolBio", lab="The Jones Lab", job_title="PI",
+            last_login=1627712117, created=1607912117,
         )
 
         result = self.client.execute("""{ users {
-            username email name lastLogin created company department lab jobTitle
+            username email name lastLogin created
         } }""")
         self.assertEqual(result["data"]["users"], [{
             "username": "adam", "email": "adam@crick.ac.uk", "name": "Adam A",
-            "lastLogin": 1617712117, "created": 1607712117, "company": "The Crick",
-            "department": "MolBio", "lab": "The Smith Lab", "jobTitle": "Researcher",
+            "lastLogin": 1617712117, "created": 1607712117,
         }, {
             "username": "jo", "email": "", "name": "Jo J",
-            "lastLogin": None, "created": 1607912117, "company": "The Crick",
-            "department": "MolBio", "lab": "The Jones Lab", "jobTitle": "PI",
+            "lastLogin": None, "created": 1607912117,
         }])
 
 
@@ -95,7 +93,7 @@ class GroupUpdatingTests(FunctionalTest):
 
 
 
-class GroupAdminAddTests(GroupUpdatingApiTests):
+class GroupAdminAddTests(GroupUpdatingApiTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
@@ -105,6 +103,7 @@ class GroupAdminAddTests(GroupUpdatingApiTests):
         self.link = UserGroupLink.objects.create(user=self.user, group=self.group, permission=3)
         self.user2 = User.objects.create(id=2, username="charles", email="charles@gmail.com")
         self.link2 = UserGroupLink.objects.create(user=self.user2, group=self.group, permission=2)
+
 
     def test_can_make_admin(self):
         # Make admin
@@ -119,7 +118,7 @@ class GroupAdminAddTests(GroupUpdatingApiTests):
         self.assertEqual(result["data"]["makeGroupAdmin"]["group"], {"admins": [
             {"username": "adam"}, {"username": "charles"}
         ]})
-        self.assertTrue(User.objects.get(username="charles").admin_groups.count())
+        self.assertTrue(groups_run_by_user(User.objects.get(username="charles")).count())
         self.assertEqual(result["data"]["makeGroupAdmin"]["user"], {
             "username": "charles", "email": "", "name": ""
         })
@@ -172,7 +171,7 @@ class GroupAdminAddTests(GroupUpdatingApiTests):
 
 
 
-class GroupAdminRevokeTests(GroupUpdatingApiTests):
+class GroupAdminRevokeTests(GroupUpdatingApiTest):
 
     def setUp(self):
         FunctionalTest.setUp(self)
@@ -197,7 +196,7 @@ class GroupAdminRevokeTests(GroupUpdatingApiTests):
         self.assertEqual(result["data"]["revokeGroupAdmin"]["group"], {"admins": [
             {"username": "charles"}
         ]})
-        self.assertFalse(User.objects.get(username="adam").admin_groups.count())
+        self.assertFalse(groups_run_by_user(User.objects.get(username="adam")).count())
         self.assertEqual(result["data"]["revokeGroupAdmin"]["user"], {
             "username": "adam", "email": "adam@crick.ac.uk", "name": "Adam A"
         })
@@ -235,7 +234,7 @@ class GroupAdminRevokeTests(GroupUpdatingApiTests):
         )
 
         # Logged in user isn't an admin
-        self.client.headers["Authorization"] = f"Bearer {self.user2.make_access_jwt()}"
+        self.client.headers["Authorization"] = f"Bearer {self.user2.make_jwt(900)}"
         self.check_query_error(
             """mutation { revokeGroupAdmin(group: "1", user: "1") { group { name } } }""",
             message="Not an admin"
@@ -302,7 +301,7 @@ class UserRemovalFromGroupTests(FunctionalTest):
         # Not an admin of group
         self.link2.permission = 2
         self.link2.save()
-        self.client.headers["Authorization"] = f"Bearer {self.user2.make_access_jwt()}"
+        self.client.headers["Authorization"] = f"Bearer {self.user2.make_jwt(900)}"
         self.check_query_error(
             """mutation { removeUserFromGroup(group: "1", user: "2") { group { name } } }""",
             message="Not an admin"
@@ -342,9 +341,9 @@ class GroupInvitingTests(FunctionalTest):
         self.assertEqual(result["data"]["inviteUserToGroup"], {
             "user": {"username": "charles"}, "group": {"name": "The Group"}
         })
-        self.assertEqual(
-            User.objects.get(id=2).invitations.first().name, "The Group"
-        )
+        self.assertEqual(Group.objects.filter(
+            usergrouplink__user=User.objects.get(id=2), usergrouplink__permission=1
+        ).first().name, "The Group")
     
 
     def test_invitation_must_be_appropriate(self):
@@ -380,7 +379,7 @@ class GroupInvitingTests(FunctionalTest):
         }""", message="Already connected")
 
         # Must be admin of group
-        self.client.headers["Authorization"] = f"Bearer {self.user2.make_access_jwt()}"
+        self.client.headers["Authorization"] = f"Bearer {self.user2.make_jwt(900)}"
         self.check_query_error("""mutation {
             inviteUserToGroup(user: "2" group: "1") {
                 user { username } group { name }

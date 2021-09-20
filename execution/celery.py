@@ -6,7 +6,7 @@ from celery import Celery
 from django.conf import settings
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-app = Celery("core")
+app = Celery("execution")
 app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
@@ -21,7 +21,7 @@ def run_command(execution_id):
     produced by the process will be collected and noted in the execution's
     database record."""
 
-    from core.models import Execution
+    from execution.models import Execution
     execution = Execution.objects.get(id=execution_id)
     execution.start_now()
     execution.run()
@@ -34,7 +34,9 @@ def run_command(execution_id):
 
 
 def post_demultiplex(execution_id):
-    from core.models import Sample, Execution, Command, ExecutionUserLink, SampleUserLink
+    from core.permissions import execution_owners
+    from samples.models import Collection, Sample, SampleUserLink
+    from execution.models import Execution, Command, ExecutionUserLink
     demultiplex_execution = Execution.objects.get(id=execution_id)
     annotation_execution = demultiplex_execution.upstream.get(command__output_type="samplelist")
     location = os.path.join(
@@ -58,7 +60,9 @@ def post_demultiplex(execution_id):
             inputs[0]["value"] = {"file": f"{row[0]}.fastq.gz", "size": os.path.getsize(
                 os.path.join(settings.DATA_ROOT, str(execution_id), matches[0])
             )}
-            collection = demultiplex_execution.owners.first().editable_collections.filter(name=row[1]).first()
+            owner = execution_owners(demultiplex_execution).first()
+
+            collection = Collection.objects.filter(collectionuserlink__user=owner, collectionuserlink__permission__gte=2, name=row[1]).first()
             sample = Sample.objects.create(
                 name=row[0],
                 source=row[8],
@@ -69,14 +73,14 @@ def post_demultiplex(execution_id):
                 annotator_name=row[3],
                 collection=collection
             )
-            SampleUserLink.objects.create(user=demultiplex_execution.owners.first(), sample=sample, permission=3)
+            SampleUserLink.objects.create(user=owner, sample=sample, permission=3)
             new = Execution.objects.create(
                 name=row[0], command=command,
                 input=json.dumps(inputs), output="[]",
                 demultiplex_execution=demultiplex_execution,
                 sample=sample
             )
-            ExecutionUserLink.objects.create(user=demultiplex_execution.owners.first(), execution=new, permission=4)
+            ExecutionUserLink.objects.create(user=owner, execution=new, permission=4)
             os.mkdir(os.path.join(settings.DATA_ROOT, str(new.id)))    
             shutil.move(
                 os.path.join(settings.DATA_ROOT, str(demultiplex_execution.id), matches[0]),

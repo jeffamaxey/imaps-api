@@ -1,4 +1,6 @@
-from core.models import *
+from core.models import Group, UserGroupLink
+from samples.models import Collection, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink
+from execution.models import Execution, Command
 from .base import FunctionalTest
 
 class SampleQueryTests(FunctionalTest):
@@ -158,5 +160,7 @@ class SampleQueryTests(FunctionalTest):
 
         # Not accessible
         self.sample.private = True
+        self.sample.collection.private = True
         self.sample.save()
+        self.sample.collection.save()
         self.check_query_error("""{ sample(id: "1") { name } }""", message="Does not exist")

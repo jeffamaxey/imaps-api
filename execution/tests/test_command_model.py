@@ -1,7 +1,7 @@
 import time
 from mixer.backend.django import mixer
 from django.test import TestCase
-from core.models import Command
+from execution.models import Command
 
 class CommandSavingTests(TestCase):
 

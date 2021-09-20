@@ -4,7 +4,8 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.hashers import check_password
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from core.models import *
+from core.models import User, Group
+from samples.models import Collection
 
 class SignupForm(ModelForm):
     """Creates a user object."""
@@ -106,39 +107,3 @@ class GroupForm(ModelForm):
     class Meta:
         model = Group
         exclude = ["id", "admins", "users"]
-
-
-
-class CollectionForm(ModelForm):
-    """Creates or edits a collection."""
-
-    class Meta:
-        model = Collection
-        exclude = ["id", "users", "groups", "created", "last_modified"]
-
-
-
-class PaperForm(ModelForm):
-    """Creates or edits a paper."""
-
-    class Meta:
-        model = Paper
-        exclude = ["id"]
-
-
-
-class SampleForm(ModelForm):
-    """Edits a sample."""
-
-    class Meta:
-        model = Sample
-        exclude = ["id", "created", "last_modified", "qc_message", "qc_pass", "users"]
-
-
-
-class ExecutionForm(ModelForm):
-    """Edits an execution."""
-
-    class Meta:
-        model = Execution
-        fields = ["name", "private"]

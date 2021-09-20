@@ -1,5 +1,7 @@
 import json
-from core.models import *
+from core.models import User, Group, UserGroupLink
+from samples.models import Collection, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink
+from execution.models import Execution, Command, ExecutionUserLink
 from .base import FunctionalTest
 
 class ExecutionQueryTests(FunctionalTest):

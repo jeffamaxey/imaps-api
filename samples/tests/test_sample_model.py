@@ -1,4 +1,4 @@
-import time
+'''import time
 from mixer.backend.django import mixer
 from django.test import TestCase
 from core.models import User, Collection, Sample, Group, SampleUserLink
@@ -91,4 +91,4 @@ class SampleObjectsAccessTests(TestCase):
         link3 = SampleUserLink.objects.create(sample=sample, user=u3, permission=3)
         self.assertEqual(set(sample.sharers), {u3})
         self.assertEqual(set(sample.editors), {u2, u3})
-        self.assertEqual(set(sample.users.all()), {u1, u2, u3})
+        self.assertEqual(set(sample.users.all()), {u1, u2, u3})'''

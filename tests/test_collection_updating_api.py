@@ -1,4 +1,6 @@
-from core.models import *
+from core.models import User, Group, UserGroupLink
+from samples.models import Collection, Sample, Paper, CollectionUserLink, CollectionGroupLink
+from execution.models import Execution, ExecutionUserLink
 from .base import FunctionalTest
 
 class CollectionUpdateTest(FunctionalTest):
@@ -16,7 +18,7 @@ class CollectionUpdateTest(FunctionalTest):
         Paper.objects.create(
             title="Paper 2", year=2019, url="https://paper2.com", collection=self.collection
         )
-        sample = Sample.objects.create(collection=self.collection)
+        sample = Sample.objects.create(collection=self.collection, private=True)
         Execution.objects.create(collection=self.collection)
         Execution.objects.create(sample=sample)
 
@@ -27,7 +29,12 @@ class CollectionUpdatingTests(CollectionUpdateTest):
     def test_can_update_collection_ignoring_papers(self):
         result = self.client.execute("""mutation {
             updateCollection(id: 1 name: "New name" private: false description: "DDD") {
-                collection { id name description private papers { title year url } }
+                collection {
+                    id name description private
+                    papers { title year url }
+                    samples { private executions { private } }
+                    executions { private }
+                }
             }
         }""")
         self.assertEqual(result["data"]["updateCollection"]["collection"], {
@@ -35,7 +42,9 @@ class CollectionUpdatingTests(CollectionUpdateTest):
             "papers": [
                 {"title": "Paper 1", "year": 2018, "url": "https://paper1.com"},
                 {"title": "Paper 2", "year": 2019, "url": "https://paper2.com"},
-            ]
+            ],
+            "samples": [{"private": False, "executions": [{"private": False}]}],
+            "executions": [{"private": False}]
         })
     
 
@@ -276,35 +285,23 @@ class CollectionAccessTests(CollectionUpdateTest):
 
 
     def test_can_change_collection_user_permission(self):
-        result = self.client.execute("""mutation { updateCollectionAccess(
+        self.client.execute("""mutation { updateCollectionAccess(
             id: "1" user: "2" permission: 3
         ) { 
-            collection {  name sharers { username } }
-            user { username shareableCollections { name } }
+            collection { name }
+            user { username }
         } }""")
-        self.assertEqual(result["data"]["updateCollectionAccess"]["collection"], {
-            "name": "My Collection", "sharers": [{"username": "adam"}, {"username": "jon"}]
-        })
-        self.assertEqual(result["data"]["updateCollectionAccess"]["user"], {
-            "username": "jon", "shareableCollections": [{"name": "My Collection"}]
-        })
         self.link2.refresh_from_db()
         self.assertEqual(self.link2.permission, 3)
     
 
     def test_can_change_collection_group_permission(self):
-        result = self.client.execute("""mutation { updateCollectionAccess(
+        self.client.execute("""mutation { updateCollectionAccess(
             id: "1" group: "1" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
-            group { slug shareableCollections { name } }
+            collection {  name  }
+            group { slug }
         } }""")
-        self.assertEqual(result["data"]["updateCollectionAccess"]["collection"], {
-            "name": "My Collection", "groupSharers": [{"slug": "group1"}]
-        })
-        self.assertEqual(result["data"]["updateCollectionAccess"]["group"], {
-            "slug": "group1", "shareableCollections": [{"name": "My Collection"}]
-        })
         self.link3.refresh_from_db()
         self.assertEqual(self.link3.permission, 3)
 
@@ -312,35 +309,23 @@ class CollectionAccessTests(CollectionUpdateTest):
     def test_can_add_collection_user_link(self):
         self.link.permission = 4
         self.link.save()
-        result = self.client.execute("""mutation { updateCollectionAccess(
+        self.client.execute("""mutation { updateCollectionAccess(
             id: "1" user: "3" permission: 4
         ) { 
-            collection {  name sharers { username } }
-            user { username shareableCollections { name } }
+            collection {  name }
+            user { username }
         } }""")
-        self.assertEqual(result["data"]["updateCollectionAccess"]["collection"], {
-            "name": "My Collection", "sharers": [{"username": "adam"}, {"username": "sam"}]
-        })
-        self.assertEqual(result["data"]["updateCollectionAccess"]["user"], {
-            "username": "sam", "shareableCollections": [{"name": "My Collection"}]
-        })
         link = CollectionUserLink.objects.get(collection=self.collection, user=self.user3)
         self.assertEqual(link.permission, 4)
 
 
     def test_can_add_collection_group_permission(self):
-        result = self.client.execute("""mutation { updateCollectionAccess(
+        self.client.execute("""mutation { updateCollectionAccess(
             id: "1" group: "2" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
-            group { slug shareableCollections { name } }
+            collection {  name }
+            group { slug }
         } }""")
-        self.assertEqual(result["data"]["updateCollectionAccess"]["collection"], {
-            "name": "My Collection", "groupSharers": [{"slug": "group2"}]
-        })
-        self.assertEqual(result["data"]["updateCollectionAccess"]["group"], {
-            "slug": "group2", "shareableCollections": [{"name": "My Collection"}]
-        })
         link = CollectionGroupLink.objects.get(collection=self.collection, group=self.group2)
         self.assertEqual(link.permission, 3)
     
@@ -349,31 +334,19 @@ class CollectionAccessTests(CollectionUpdateTest):
         result = self.client.execute("""mutation { updateCollectionAccess(
             id: "1" user: "2" permission: 0
         ) { 
-            collection {  name sharers { username } }
-            user { username shareableCollections { name } }
+            collection { name }
+            user { username }
         } }""")
-        self.assertEqual(result["data"]["updateCollectionAccess"]["collection"], {
-            "name": "My Collection", "sharers": [{"username": "adam"}]
-        })
-        self.assertEqual(result["data"]["updateCollectionAccess"]["user"], {
-            "username": "jon", "shareableCollections": []
-        })
         self.assertFalse(CollectionUserLink.objects.filter(collection=self.collection, user=self.user2))
     
 
     def test_can_remove_collection_group_permission(self):
-        result = self.client.execute("""mutation { updateCollectionAccess(
+        self.client.execute("""mutation { updateCollectionAccess(
             id: "1" group: "1" permission: 0
         ) { 
-            collection {  name groupSharers { slug } }
-            group { slug shareableCollections { name } }
+            collection {  name }
+            group { slug }
         } }""")
-        self.assertEqual(result["data"]["updateCollectionAccess"]["collection"], {
-            "name": "My Collection", "groupSharers": []
-        })
-        self.assertEqual(result["data"]["updateCollectionAccess"]["group"], {
-            "slug": "group1", "shareableCollections": []
-        })
         self.assertFalse(CollectionGroupLink.objects.filter(collection=self.collection, group=self.group1))
     
 
@@ -385,15 +358,9 @@ class CollectionAccessTests(CollectionUpdateTest):
         result = self.client.execute("""mutation { updateCollectionAccess(
             id: "1" user: "2" permission: 3
         ) { 
-            collection {  name sharers { username } }
-            user { username shareableCollections { name } }
+            collection {  name }
+            user { username }
         } }""")
-        self.assertEqual(result["data"]["updateCollectionAccess"]["collection"], {
-            "name": "My Collection", "sharers": [{"username": "jon"}]
-        })
-        self.assertEqual(result["data"]["updateCollectionAccess"]["user"], {
-            "username": "jon", "shareableCollections": [{"name": "My Collection"}]
-        })
         self.link2.refresh_from_db()
         self.assertEqual(self.link2.permission, 3)
 
@@ -403,7 +370,7 @@ class CollectionAccessTests(CollectionUpdateTest):
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "100" group: "1" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="Does not exist")
 
         # Collection must be accessible
@@ -411,7 +378,7 @@ class CollectionAccessTests(CollectionUpdateTest):
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "23" group: "1" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="Does not exist")
 
         # User must have share permissions on collection (either directly or via group)
@@ -420,7 +387,7 @@ class CollectionAccessTests(CollectionUpdateTest):
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" group: "1" permission: 2
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="permission")
         UserGroupLink.objects.create(user=self.user, group=self.group1, permission=2)
         self.link3.permission = 2
@@ -428,7 +395,7 @@ class CollectionAccessTests(CollectionUpdateTest):
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" group: "1" permission: 2
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name  }
         } }""", message="permission")
         self.link.permission = 3
         self.link.save()
@@ -437,52 +404,52 @@ class CollectionAccessTests(CollectionUpdateTest):
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" user: "100" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="Does not exist")
 
         # Group must exist
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" group: "100" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="Does not exist")
 
         # Either user or group must be provided
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="user or group")
 
         # Permission must be valid for user
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" user: "2" permission: -1
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name  }
         } }""", message="valid permission")
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" user: "2" permission: 5
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name  }
         } }""", message="valid permission")
 
         # Permission must be valid for group
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" group: "2" permission: -1
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="valid permission")
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" group: "2" permission: 4
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="valid permission")
 
         # Only owners can create new owners
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" user: "2" permission: 4
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="owner")
 
         # Only owners can demote owners
@@ -491,7 +458,7 @@ class CollectionAccessTests(CollectionUpdateTest):
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" user: "2" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="owner")
 
         # Must always be an owner
@@ -502,7 +469,7 @@ class CollectionAccessTests(CollectionUpdateTest):
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" user: "1" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="owner")
 
         # Must be signed in
@@ -510,6 +477,6 @@ class CollectionAccessTests(CollectionUpdateTest):
         self.check_query_error("""mutation { updateCollectionAccess(
             id: "1" group: "1" permission: 3
         ) { 
-            collection {  name groupSharers { slug } }
+            collection {  name }
         } }""", message="Not authorized")
 

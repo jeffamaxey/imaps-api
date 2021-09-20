@@ -1,6 +1,9 @@
+from execution.models import Execution
 import os
 from django.contrib.auth.hashers import check_password
-from core.models import *
+from core.models import User, Group, UserGroupLink
+from samples.models import Collection, CollectionUserLink
+from execution.models import Execution, ExecutionUserLink
 from .base import FunctionalTest
 
 class PasswordUpdateTests(FunctionalTest):
@@ -150,14 +153,24 @@ class UserImageEditingTests(FunctionalTest):
 class UserDeletionTests(FunctionalTest):
 
     def test_can_delete_account(self):
-        # Allowable user connections
+        # There's a group for which the user is the only member
+        UserGroupLink.objects.create(user=self.user, group=Group.objects.create(), permission=2)
+
+        # There's a group that the user is the admin of, with another admin
+        group = Group.objects.create(slug=".")
         user2 = User.objects.create(username="u2")
+        UserGroupLink.objects.create(user=self.user, group=group, permission=3)
+        UserGroupLink.objects.create(user=user2, group=group, permission=3)
+
+        # User owns a collection with someone else
         collection = Collection.objects.create(name="C1")
         CollectionUserLink.objects.create(user=self.user, collection=collection, permission=4)
         CollectionUserLink.objects.create(user=user2, collection=collection, permission=4)
-        group = Group.objects.create(name="G1")
-        UserGroupLink.objects.create(user=self.user, group=group, permission=3)
-        UserGroupLink.objects.create(user=user2, group=group, permission=3)
+
+        # User owns an execution with someone else
+        execution = Execution.objects.create(name="E1")
+        ExecutionUserLink.objects.create(user=self.user, execution=execution, permission=4)
+        ExecutionUserLink.objects.create(user=user2, execution=execution, permission=4)
 
         # Send deletion mutation
         users_at_start = User.objects.count()
@@ -172,6 +185,13 @@ class UserDeletionTests(FunctionalTest):
     def test_account_deletion_can_fail(self):
         users_at_start = User.objects.count()
 
+        # Would leave groups with no admin
+        group = Group.objects.create(name="G1")
+        UserGroupLink.objects.create(user=self.user, group=group, permission=3)
+        self.check_query_error("""mutation { deleteUser { success } }""", message="only admin")
+        self.assertEqual(User.objects.count(), users_at_start)
+        group.delete()
+
         # Would leave collections without owner
         collection = Collection.objects.create(name="C1")
         CollectionUserLink.objects.create(user=self.user, collection=collection, permission=4)
@@ -179,11 +199,12 @@ class UserDeletionTests(FunctionalTest):
         self.assertEqual(User.objects.count(), users_at_start)
         collection.delete()
 
-        # Would leave groups with no admin
-        group = Group.objects.create(name="G1")
-        UserGroupLink.objects.create(user=self.user, group=group, permission=3)
-        self.check_query_error("""mutation { deleteUser { success } }""", message="only admin")
+        # Would leave executions without owner
+        execution = Execution.objects.create(name="E1")
+        ExecutionUserLink.objects.create(user=self.user, execution=execution, permission=4)
+        self.check_query_error("""mutation { deleteUser { success } }""", message="execution")
         self.assertEqual(User.objects.count(), users_at_start)
+        execution.delete()
 
         # Invalid token
         self.client.headers["Authorization"] = "Bearer qwerty"

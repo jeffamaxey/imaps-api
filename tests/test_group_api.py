@@ -1,4 +1,6 @@
-from core.models import *
+from django.test.testcases import TestCase
+from core.models import User, Group, UserGroupLink
+from samples.models import Collection
 from .base import FunctionalTest
 
 class GroupQueryTests(FunctionalTest):
@@ -32,7 +34,7 @@ class GroupQueryTests(FunctionalTest):
     def test_can_get_group(self):
         # Get group
         result = self.client.execute("""{ group(slug: "the-group") {
-            name slug description
+            name slug description userCount
             members { username } admins { username } publicCollections { name }
             invitees { username }
         } }""")
@@ -40,6 +42,7 @@ class GroupQueryTests(FunctionalTest):
         # Everything is correct
         self.assertEqual(result["data"]["group"], {
             "name": "The Group", "slug": "the-group", "description": "The group's page.",
+            "userCount": 3,
             "members": [{"username": "adam"}, {"username": "sarah"}, {"username": "john"}],
             "admins": [{"username": "john"}],
             "publicCollections": [{"name": "C1"}, {"name": "C2"}],

@@ -1,4 +1,6 @@
-from core.models import *
+from core.models import Group
+from samples.models import Collection, CollectionUserLink, CollectionGroupLink, Sample
+from execution.models import Execution
 from .base import FunctionalTest
 
 class PublicCollectionsQueryTests(FunctionalTest):
@@ -32,13 +34,13 @@ class PublicCollectionsQueryTests(FunctionalTest):
 
 
     def test_can_get_public_collections(self):
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
+        self.client.headers["Authorization"] = f"Bearer {self.user.make_jwt(900)}"
         result = self.client.execute("""{ publicCollections { edges { node {
             name private sampleCount executionCount
-            groups { slug } owners { username }
+            owners { username }
         } } } }""")
         self.assertEqual(result["data"]["publicCollections"]["edges"], [
-            {"node": {"name": "C7", "private": False, "sampleCount": 0, "executionCount": 0, "groups": [{"slug": "g2"}], "owners": []}},
-            {"node": {"name": "C4", "private": False, "sampleCount": 2, "executionCount": 3, "groups": [], "owners": [{"username": "adam"}]}},
-            {"node": {"name": "C2", "private": False, "sampleCount": 0, "executionCount": 0, "groups": [], "owners": []}},
+            {"node": {"name": "C7", "private": False, "sampleCount": 0, "executionCount": 0, "owners": []}},
+            {"node": {"name": "C4", "private": False, "sampleCount": 2, "executionCount": 3, "owners": [{"username": "adam"}]}},
+            {"node": {"name": "C2", "private": False, "sampleCount": 0, "executionCount": 0, "owners": []}},
         ])

@@ -1,7 +1,7 @@
 import time
 from mixer.backend.django import mixer
 from django.test import TestCase
-from core.models import Collection, Paper
+from samples.models import Collection, Paper
 
 class PaperCreationTests(TestCase):
 

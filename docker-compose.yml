@@ -117,7 +117,7 @@ services:
             - /storage/goodwright/data:/storage/goodwright/data
             - /var/run/docker.sock:/var/run/docker.sock
             - /home/goodwright/imaps-nf:/home/app/nextflow
-        command: ["celery", "-A", "core.celery", "worker", "-l", "INFO"]
+        command: ["celery", "-A", "execution.celery", "worker", "-l", "INFO"]
 volumes:
     postgres_data:
     postgres_backups:

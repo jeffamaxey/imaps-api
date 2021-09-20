@@ -1,51 +1,40 @@
 import graphene
 from graphql import GraphQLError
 from graphene.relay import ConnectionField
+from core.permissions import can_user_view_collection, can_user_view_sample, can_user_view_execution
 from core.mutations import *
+from samples.mutations import *
+from execution.mutations import *
+from samples.models import Collection, Sample
+from execution.models import Execution, Command
 
 class Query(graphene.ObjectType):
 
     access_token = graphene.String()
-    user = graphene.Field("core.queries.UserType", username=graphene.String())
+    me = graphene.Field("core.queries.UserType")
+
+    user = graphene.Field("core.queries.UserType", username=graphene.String(required=True))
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     groups = graphene.List("core.queries.GroupType")
-    collection = graphene.Field("core.queries.CollectionType", id=graphene.ID())
+
+    public_collections = ConnectionField("samples.queries.CollectionConnection")
+    user_collections = graphene.List("core.queries.CollectionType")
+
+    collection = graphene.Field("samples.queries.CollectionType", id=graphene.ID())
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
     execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
-    executions = ConnectionField(
-        "core.queries.ExecutionConnection",
+    executions = graphene.List(
+        "execution.queries.ExecutionType",
+        first=graphene.Int(),
         data_type=graphene.String(),
         name=graphene.String(),
     )
+
+    command = graphene.Field("execution.queries.CommandType", id=graphene.ID())
+    commands = graphene.List("execution.queries.CommandType")
+
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
-    public_collections = ConnectionField("core.queries.CollectionConnection")
-    user_collections = graphene.List("core.queries.CollectionType")
-    commands = graphene.List("core.queries.CommandType")
-    command = graphene.Field("core.queries.CommandType", id=graphene.ID())
-    search_collections = ConnectionField(
-        "core.queries.CollectionConnection",
-        query=graphene.String(required=True),
-        sort=graphene.String(),
-        owner=graphene.String(),
-        created=graphene.String(),
-    )
-    search_samples = ConnectionField(
-        "core.queries.SampleConnection",
-        query=graphene.String(required=True),
-        sort=graphene.String(),
-        organism=graphene.String(),
-        owner=graphene.String(),
-        created=graphene.String(),
-    )
-    search_executions = ConnectionField(
-        "core.queries.ExecutionConnection",
-        query=graphene.String(required=True),
-        sort=graphene.String(),
-        command=graphene.String(),
-        owner=graphene.String(),
-        created=graphene.String(),
-    )
 
 
     def resolve_access_token(self, info, **kwargs):
@@ -54,19 +43,19 @@ class Query(graphene.ObjectType):
             raise GraphQLError(json.dumps({"token": "No refresh token supplied"}))
         user = User.from_token(token)
         if user:
-            info.context.imaps_refresh_token = user.make_refresh_jwt()
-            return user.make_access_jwt()
+            info.context.imaps_refresh_token = user.make_jwt(31536000)
+            return user.make_jwt(900)
         raise GraphQLError(json.dumps({"token": "Refresh token not valid"}))
+    
 
+    def resolve_me(self, info, **kwargs):
+        return info.context.user
+    
 
     def resolve_user(self, info, **kwargs):
-        if "username" in kwargs:
-            try:
-                return User.objects.get(username=kwargs["username"])
-            except: raise GraphQLError('{"user": "Does not exist"}')
-        user = info.context.user
-        if not user: return None
-        return info.context.user
+        try:
+            return User.objects.get(username=kwargs["username"])
+        except: raise GraphQLError('{"user": "Does not exist"}')
     
 
     def resolve_users(self, info, **kwargs):
@@ -83,15 +72,8 @@ class Query(graphene.ObjectType):
         return Group.objects.all()
     
 
-    def resolve_collection(self, info, **kwargs):
-        collections = Collection.objects.all().viewable_by(info.context.user)
-        collection = collections.filter(id=kwargs["id"]).first()
-        if collection: return collection
-        raise GraphQLError('{"collection": "Does not exist"}')
-
-
-    def resolve_public_collection_count(self, info, **kwargs):
-        return Collection.objects.filter(private=False).count()
+    def resolve_public_collections(self, info, **kwargs):
+        return Collection.objects.filter(private=False)
     
 
     def resolve_user_collections(self, info, **kwargs):
@@ -100,107 +82,47 @@ class Query(graphene.ObjectType):
         for group in info.context.user.groups.all():
             collections |= Collection.objects.filter(groups=group)
         return collections.distinct()
+    
 
-
-    def resolve_public_collections(self, info, **kwargs):
-        return Collection.objects.filter(private=False)
+    def resolve_collection(self, info, **kwargs):
+        collection = Collection.objects.filter(id=kwargs["id"]).first()
+        if collection and can_user_view_collection(info.context.user, collection): return collection
+        raise GraphQLError('{"collection": "Does not exist"}')
     
 
     def resolve_sample(self, info, **kwargs):
-        samples = Sample.objects.all().viewable_by(info.context.user)
-        sample = samples.filter(id=kwargs["id"]).first()
-        if sample: return sample
+        sample = Sample.objects.filter(id=kwargs["id"]).first()
+        if sample and can_user_view_sample(info.context.user, sample): return sample
         raise GraphQLError('{"sample": "Does not exist"}')
     
 
     def resolve_execution(self, info, **kwargs):
-        executions = Execution.objects.all().viewable_by(info.context.user)
-        execution = executions.filter(id=kwargs["id"]).first()
-        if execution: return execution
+        execution = Execution.objects.filter(id=kwargs["id"]).first()
+        if execution and can_user_view_execution(info.context.user, execution): return execution
         raise GraphQLError('{"execution": "Does not exist"}')
     
 
     def resolve_executions(self, info, **kwargs):
-        executions = Execution.objects.all().viewable_by(info.context.user)
+        executions = readable_executions(Execution.objects.all(), info.context.user)
         executions = executions.filter(command__output_type__contains=kwargs["data_type"])
         executions = executions.filter(name__icontains=kwargs["name"])
         if kwargs.get("first"): executions = executions[:kwargs["first"]]
         return executions
     
 
-    def resolve_commands(self, info, **kwargs):
-        return Command.objects.exclude(nextflow="").exclude(nextflow=None).exclude(category="internal-import")
-    
-
     def resolve_command(self, info, **kwargs):
         command = Command.objects.filter(id=kwargs["id"]).first()
         if command: return command
         raise GraphQLError('{"command": "Does not exist"}')
+    
 
+    def resolve_commands(self, info, **kwargs):
+        return Command.objects.exclude(nextflow="").exclude(nextflow=None).exclude(category="internal-import")
+    
 
     def resolve_quick_search(self, info, **kwargs):
-        if len(kwargs["query"]) < 3:
-            return None
+        if len(kwargs["query"]) < 3: return None
         return kwargs
-    
-
-    def resolve_search_collections(self, info, **kwargs):
-        collections = Collection.objects.filter(
-            name__icontains=kwargs["query"].lower()
-        ).viewable_by(info.context.user)
-        if kwargs.get("owner"):
-            links = CollectionUserLink.objects.filter(
-                user__name__icontains=kwargs["owner"], permission=4
-            )
-            collections = collections.filter(collectionuserlink__in=links)
-        if kwargs.get("created"):
-            timestamp = time.time() - {
-                "day": 86400, "week": 604800, "month": 2592000, "6month": 15768000, "year": 31557600
-            }.get(kwargs["created"], 0)
-            collections = collections.filter(created__gte=timestamp)
-        if kwargs.get("sort"): collections = collections.order_by(kwargs["sort"])
-        return collections
-    
-
-    def resolve_search_samples(self, info, **kwargs):
-        samples = Sample.objects.filter(
-            name__icontains=kwargs["query"].lower()
-        ).viewable_by(info.context.user)
-        if kwargs.get("organism"):
-            samples = samples.filter(organism__icontains=kwargs["organism"])
-        if kwargs.get("owner"):
-            links = CollectionUserLink.objects.filter(
-                user__name__icontains=kwargs["owner"], permission=4
-            )
-            samples = samples.filter(collection__collectionuserlink__in=links)
-        if kwargs.get("created"):
-            timestamp = time.time() - {
-                "day": 86400, "week": 604800, "month": 2592000, "6month": 15768000, "year": 31557600
-            }.get(kwargs["created"], 0)
-            samples = samples.filter(created__gte=timestamp)
-        if kwargs.get("sort"): samples = samples.order_by(kwargs["sort"])
-        return samples
-    
-
-    def resolve_search_executions(self, info, **kwargs):
-        executions = Execution.objects.filter(
-            name__icontains=kwargs["query"].lower()
-        ).select_related("command").prefetch_related("users").viewable_by(info.context.user)
-        if kwargs.get("command"):
-            executions = executions.filter(command__name__icontains=kwargs["command"])
-        if kwargs.get("owner"):
-            links = ExecutionUserLink.objects.filter(
-                user__name__icontains=kwargs["owner"], permission=4
-            )
-            executions = executions.filter(executionuserlink__in=links)
-        if kwargs.get("created"):
-            timestamp = time.time() - {
-                "day": 86400, "week": 604800, "month": 2592000, "6month": 15768000, "year": 31557600
-            }.get(kwargs["created"], 0)
-            executions = executions.filter(created__gte=timestamp)
-        if kwargs.get("sort"): executions = executions.order_by(kwargs["sort"])
-        return executions
-
 
 
 
@@ -218,27 +140,30 @@ class Mutation(graphene.ObjectType):
 
     create_group = CreateGroupMutation.Field()
     update_group = UpdateGroupMutation.Field()
-    delete_group = DeleteGroupMutation.Field()
-    invite_user_to_group = InviteUserToGroup.Field()
+    
     process_group_invitation = ProcessGroupInvitationMutation.Field()
+    invite_user_to_group = InviteUserToGroupMutation.Field()
     make_group_admin = MakeGroupAdminMutation.Field()
     revoke_group_admin = RevokeGroupAdminMutation.Field()
-    remove_user_from_group = RemoveUserFromGroup.Field()
-    leave_group = LeaveGroup.Field()
+    remove_user_from_group = RemoveUserFromGroupMutation.Field()
+    leave_group = LeaveGroupMutation.Field()
+    delete_group = DeleteGroupMutation.Field()
 
     create_collection = CreateCollectionMutation.Field()
     update_collection = UpdateCollectionMutation.Field()
-    update_collection_access = UpdateCollectionAccessMutation.Field()
     delete_collection = DeleteCollectionMutation.Field()
+    update_collection_access = UpdateCollectionAccessMutation.Field()
 
     update_sample = UpdateSampleMutation.Field()
-    update_sample_access = UpdateSampleAccessMutation.Field()
     delete_sample = DeleteSampleMutation.Field()
+    update_sample_access = UpdateSampleAccessMutation.Field()
 
     update_execution = UpdateExecutionMutation.Field()
-    update_execution_access = UpdateExecutionAccessMutation.Field()
     delete_execution = DeleteExecutionMutation.Field()
+    update_execution_access = UpdateExecutionAccessMutation.Field()
 
     run_command = RunCommandMutation.Field()
+
+
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

@@ -1,4 +1,6 @@
-from core.models import *
+from core.models import User, Group, UserGroupLink
+from samples.models import Collection, CollectionUserLink
+from execution.models import Execution, Command, ExecutionUserLink
 from .base import FunctionalTest
 class PublicUserTests(FunctionalTest):
 
@@ -34,17 +36,14 @@ class PublicUserTests(FunctionalTest):
     def test_can_get_user_information(self):
         # Get user
         result = self.client.execute("""{ user(username: "adam") {
-            username email name lastLogin created jobTitle lab company
-            department publicCollections { name } memberships { name }
-            uploads { name }
+            username email name lastLogin created
+            publicCollections { name } memberships { name } uploads { name }
         } }""")
 
         # Everything is correct
         self.assertEqual(result["data"]["user"], {
             "username": "adam", "email": "",
             "name": "Adam A", "lastLogin": None, "created": 1607712117,
-            "jobTitle": "Researcher", "lab": "The Smith Lab", "company": "The Crick",
-            "department": "MolBio",
             "memberships": [{"name": "Group 1"}, {"name": "Group 2"}],
             "publicCollections": [{"name": "Collection 1"}, {"name": "Collection 2"}],
             "uploads": [{"name": "Ex 1"}]

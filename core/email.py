@@ -16,7 +16,7 @@ def send_welcome_email(user, hostname):
         subject="Welcome to iMaps",
         message=message,
         html_message=message,
-        from_email="iMaps <noreply@imaps.goodwright.org>",
+        from_email="iMaps <noreply@imaps.goodwright.com>",
         recipient_list=[user.email],
         fail_silently=True
     )
@@ -42,7 +42,7 @@ def send_reset_email(user, reset_url):
         subject="iMaps Password Reset",
         message=message,
         html_message=message,
-        from_email="iMaps <noreply@imaps.goodwright.org>",
+        from_email="iMaps <noreply@imaps.goodwright.com>",
         recipient_list=[user.email],
         fail_silently=True
     )
@@ -63,7 +63,7 @@ def send_reset_warning_email(email):
         subject="iMaps Password Reset",
         message=message,
         html_message=message,
-        from_email="iMaps <noreply@imaps.goodwright.org>",
+        from_email="iMaps <noreply@imaps.goodwright.com>",
         recipient_list=[email],
         fail_silently=True
     )

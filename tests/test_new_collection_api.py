@@ -1,4 +1,3 @@
-from core.models import *
 from .base import FunctionalTest
 
 class CollectionCreationTests(FunctionalTest):

@@ -1,7 +1,9 @@
+import json
+import time
+import base64
 from django.core import mail
-from core.models import *
+from core.models import User
 from .base import FunctionalTest
-
 class SignupTests(FunctionalTest):
 
     def test_can_signup(self):

@@ -1,5 +1,8 @@
 import requests
+import json
 from core.models import *
+from samples.models import Collection, Sample
+from execution.models import Execution
 from .base import FunctionalTest
 
 class AccessTokenTests(FunctionalTest):
@@ -21,7 +24,7 @@ class AccessTokenTests(FunctionalTest):
 
         # An access token has been returned
         access_token = result["data"]["accessToken"]
-        algorithm, payload, secret = access_token.split(".")
+        payload = access_token.split(".")[1]
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
@@ -32,7 +35,7 @@ class AccessTokenTests(FunctionalTest):
         self.assertIn("HttpOnly", cookie._rest)
         self.assertLess(time.time() - cookie.expires - 31536000, 10)
         imaps_refresh_token = cookie.value
-        algorithm, payload, secret = imaps_refresh_token.split(".")
+        payload = imaps_refresh_token.split(".")[1]
         payload = json.loads(base64.b64decode(payload + "==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
@@ -81,14 +84,13 @@ class LoggedInUserAccessTests(FunctionalTest):
 
 
     def test_can_get_logged_in_user(self):
-        result = self.client.execute("""{ user {
-            username email name lastLogin created jobTitle lab company
-            department memberships { slug } invitations { slug } adminGroups { slug }
+        result = self.client.execute("""{ me {
+            username email name lastLogin created
+            memberships { slug } invitations { slug } adminGroups { slug }
         } }""")
-        self.assertEqual(result["data"]["user"], {
+        self.assertEqual(result["data"]["me"], {
             "username": "adam", "email": "adam@crick.ac.uk", "name": "Adam A",
-            "lastLogin": 1617712117, "created": 1607712117, "jobTitle": "Researcher",
-            "lab": "The Smith Lab", "company": "The Crick", "department": "MolBio",
+            "lastLogin": 1617712117, "created": 1607712117,
             "adminGroups": [{"slug": "adamlab"}],
             "memberships": [{"slug": "adamlab"}, {"slug": "smithlab"}, {"slug": "joneslab"}],
             "invitations": [{"slug": "grangerlab"}],
@@ -98,21 +100,21 @@ class LoggedInUserAccessTests(FunctionalTest):
     def test_cant_get_user_if_not_authorized(self):
         # No token
         del self.client.headers["Authorization"]
-        result = self.client.execute("{ user { username } }")
-        self.assertIs(None, result["data"]["user"])
+        result = self.client.execute("{ me { username } }")
+        self.assertIs(None, result["data"]["me"])
 
         # Garbled token
         self.client.headers["Authorization"] = "Bearer 23424"
-        result = self.client.execute("{ user { username } }")
-        self.assertIs(None, result["data"]["user"])
+        result = self.client.execute("{ me { username } }")
+        self.assertIs(None, result["data"]["me"])
 
         # Expired token
         token = jwt.encode({
             "sub": self.user.id, "iat": 1000000000000, "expires": 2000
         }, settings.SECRET_KEY, algorithm="HS256").decode()
         self.client.headers["Authorization"] = token
-        result = self.client.execute("{ user { username } }")
-        self.assertIs(None, result["data"]["user"])
+        result = self.client.execute("{ me { username } }")
+        self.assertIs(None, result["data"]["me"])
 
 
 
@@ -168,8 +170,8 @@ class GroupInvitationProcessingTests(FunctionalTest):
 
         # The invitation is gone
         self.assertTrue(result["data"]["processGroupInvitation"]["success"])
-        self.assertEqual(self.user.memberships.count(), 0)
-        self.assertEqual(self.user.invitations.count(), 0)
+        self.assertEqual(UserGroupLink.objects.filter(user=self.user, permission=2).count(), 0)
+        self.assertEqual(UserGroupLink.objects.filter(user=self.user, permission=1).count(), 0)
         self.assertEqual(result["data"]["processGroupInvitation"]["user"], {
             "username": "adam", "memberships": []
         })
@@ -185,8 +187,8 @@ class GroupInvitationProcessingTests(FunctionalTest):
 
         # The invitation is gone
         self.assertTrue(result["data"]["processGroupInvitation"]["success"])
-        self.assertEqual(self.user.memberships.count(), 1)
-        self.assertEqual(self.user.invitations.count(), 0)
+        self.assertEqual(UserGroupLink.objects.filter(user=self.user, permission=2).count(), 1)
+        self.assertEqual(UserGroupLink.objects.filter(user=self.user, permission=1).count(), 0)
         self.assertEqual(result["data"]["processGroupInvitation"]["user"], {
             "username": "adam", "memberships": [{"slug": "adamlab"}]
         })
@@ -201,7 +203,7 @@ class GroupInvitationProcessingTests(FunctionalTest):
         )
 
         # User doesn't exist
-        self.client.headers["Authorization"] = f"Bearer {self.user.make_access_jwt()}"
+        self.client.headers["Authorization"] = f"Bearer {self.user.make_jwt(900)}"
         self.check_query_error(
             """mutation { processGroupInvitation(user: "2" group: "1" accept: true) { success } }""",
             message="Does not exist"
@@ -248,10 +250,12 @@ class QuickSearchTests(FunctionalTest):
         Sample.objects.create(name="S_xy_2", organism="Homo xyz", private=False, id=3)
         Sample.objects.create(name="S_xy_3", organism="Homo", private=False, id=4)
         Sample.objects.create(name="S_xyz_4", private=True, id=5, collection=self.user.collections.first())
+        Sample.objects.create(name="S_xyz_6", private=True, id=6)
 
         Execution.objects.create(name="E_xyz_1", private=False, id=1)
         Execution.objects.create(name="E_xy_1", private=False, id=2)
         Execution.objects.create(name="E_xyz_4", private=True, id=5, collection=self.user.collections.first())
+        Execution.objects.create(name="E_xyz_6", private=True, id=6)
 
         Group.objects.create(name="The 123 Group", description="We do xyz", slug="123")
         Group.objects.create(name="The xyz Group", slug="xyz")

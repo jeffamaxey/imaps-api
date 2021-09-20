@@ -33,6 +33,8 @@ INSTALLED_APPS = [
     "graphene_django",
     "corsheaders",
     "core",
+    "samples",
+    "execution",
     "peka",
     "django_cleanup.apps.CleanupConfig",
 ]
@@ -84,6 +86,6 @@ CELERY_BROKER_URL = env("BROKER_URL")
 EMAIL_HOST = "smtp.eu.mailgun.org"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "postmaster@imaps.goodwright.org"
+EMAIL_HOST_USER = "postmaster@imaps.goodwright.com"
 MAILGUN_API_KEY = env("MAILGUN_API_KEY")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD")

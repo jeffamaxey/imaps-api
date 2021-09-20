@@ -1,4 +1,6 @@
-from core.models import *
+from core.models import User, Group, UserGroupLink
+from samples.models import Collection, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink
+from execution.models import Execution
 from .base import FunctionalTest
 
 class SampleUpdateTest(FunctionalTest):
@@ -19,7 +21,7 @@ class SampleUpdateTest(FunctionalTest):
         )
         self.link = SampleUserLink.objects.create(sample=self.sample, user=self.user, permission=2)
         self.c_link = CollectionUserLink.objects.create(collection=collection2, user=self.user, permission=4)
-        Execution.objects.create(sample=self.sample)
+        Execution.objects.create(sample=self.sample, private=True)
 
 
 
@@ -28,13 +30,34 @@ class SampleUpdatingTests(SampleUpdateTest):
     def test_can_update_sample(self):
         result = self.client.execute("""mutation {
             updateSample(id: 1 name: "New name" collection: "2" organism: "Homo sapiens" source: "XXX" piName: "Dr Jones" annotatorName: "James") {
-                sample { id name collection { name } organism source piName annotatorName }
+                sample {
+                    id name organism source piName annotatorName
+                    collection { name }
+                }
             }
         }""")
         self.assertEqual(result["data"]["updateSample"]["sample"], {
             "id": "1", "name": "New name", "source": "XXX", "piName": "Dr Jones",
             "annotatorName": "James", "organism": "Homo sapiens",
-            "collection": {"name": "My Other Collection"}
+            "collection": {"name": "My Other Collection"},
+        })
+    
+
+    def test_can_update_sample_privacy(self):
+        self.sample.collection = None
+        self.sample.save()
+        result = self.client.execute("""mutation {
+            updateSample(id: 1 name: "New name" organism: "Homo sapiens" source: "XXX" piName: "Dr Jones" annotatorName: "James" private: false) {
+                sample {
+                    id name private organism source piName annotatorName
+                    collection { name } executions { private }
+                }
+            }
+        }""")
+        self.assertEqual(result["data"]["updateSample"]["sample"], {
+            "id": "1", "name": "New name", "source": "XXX", "piName": "Dr Jones",
+            "annotatorName": "James", "organism": "Homo sapiens", "private": False,
+            "collection": None, "executions": [{"private": False}]
         })
     
 
@@ -106,6 +129,16 @@ class SampleUpdatingTests(SampleUpdateTest):
         self.c_link.permission = 4
         self.c_link.save()
 
+        # Can't change privacy if there is a collection
+        result = self.client.execute("""mutation {
+            updateSample(
+                id: 1 name: "New name" collection: "2" organism: "Homo sapiens"
+                source: "XXX" piName: "Dr Jones" annotatorName: "James" private: false
+            ) { sample { id private} }
+        }""")
+        self.assertTrue(result["data"]["updateSample"]["sample"]["private"])
+
+
         # PI Name must be short enough
         name = f'"{"X" * 101}"'
         self.check_query_error("""mutation {
@@ -128,7 +161,7 @@ class SampleUpdatingTests(SampleUpdateTest):
         source = f'"{"X" * 101}"'
         self.check_query_error("""mutation {
             updateSample(
-                id: 1 source: """ + name + """ collection: "2" organism: "Homo sapiens"
+                id: 1 source: """ + source + """ collection: "2" organism: "Homo sapiens"
                 annotatorName: "XXX" piName: "Dr Jones" name: "James"
             ) { sample { id } }
         }""", message="100 characters")
@@ -168,18 +201,11 @@ class SampleAccessTests(SampleUpdateTest):
         result = self.client.execute("""mutation { updateSampleAccess(
             id: "1" user: "2" permission: 3
         ) { 
-            sample { name sharers { username } }
-            user { username shareableSamples { name } }
+            sample { name }
+            user { username }
         } }""")
-        self.assertEqual(result["data"]["updateSampleAccess"]["sample"], {
-            "name": "Sample 1", "sharers": [{"username": "adam"}, {"username": "jon"}]
-        })
-        self.assertEqual(result["data"]["updateSampleAccess"]["user"], {
-            "username": "jon", "shareableSamples": [{"name": "Sample 1"}]
-        })
         self.link2.refresh_from_db()
         self.assertEqual(self.link2.permission, 3)
-    
 
 
     def test_can_add_sample_user_link(self):
@@ -188,15 +214,9 @@ class SampleAccessTests(SampleUpdateTest):
         result = self.client.execute("""mutation { updateSampleAccess(
             id: "1" user: "3" permission: 3
         ) { 
-            sample {  name sharers { username } }
-            user { username shareableSamples { name } }
+            sample {  name }
+            user { username }
         } }""")
-        self.assertEqual(result["data"]["updateSampleAccess"]["sample"], {
-            "name": "Sample 1", "sharers": [{"username": "adam"}, {"username": "sam"}]
-        })
-        self.assertEqual(result["data"]["updateSampleAccess"]["user"], {
-            "username": "sam", "shareableSamples": [{"name": "Sample 1"}]
-        })
         link = SampleUserLink.objects.get(sample=self.sample, user=self.user3)
         self.assertEqual(link.permission, 3)
     
@@ -205,15 +225,9 @@ class SampleAccessTests(SampleUpdateTest):
         result = self.client.execute("""mutation { updateSampleAccess(
             id: "1" user: "2" permission: 0
         ) { 
-            sample {  name sharers { username } }
-            user { username shareableSamples { name } }
+            sample {  name }
+            user { username }
         } }""")
-        self.assertEqual(result["data"]["updateSampleAccess"]["sample"], {
-            "name": "Sample 1", "sharers": [{"username": "adam"}]
-        })
-        self.assertEqual(result["data"]["updateSampleAccess"]["user"], {
-            "username": "jon", "shareableSamples": []
-        })
         self.assertFalse(SampleUserLink.objects.filter(sample=self.sample, user=self.user2))
     
 
@@ -226,15 +240,9 @@ class SampleAccessTests(SampleUpdateTest):
         result = self.client.execute("""mutation { updateSampleAccess(
             id: "1" user: "2" permission: 3
         ) { 
-            sample {  name sharers { username } }
-            user { username shareableSamples { name } }
+            sample { name }
+            user { username }
         } }""")
-        self.assertEqual(result["data"]["updateSampleAccess"]["sample"], {
-            "name": "Sample 1", "sharers": [{"username": "jon"}]
-        })
-        self.assertEqual(result["data"]["updateSampleAccess"]["user"], {
-            "username": "jon", "shareableSamples": [{"name": "Sample 1"}]
-        })
         self.link2.refresh_from_db()
         self.assertEqual(self.link2.permission, 3)
 
@@ -244,7 +252,7 @@ class SampleAccessTests(SampleUpdateTest):
         self.check_query_error("""mutation { updateSampleAccess(
             id: "100" user: "1" permission: 3
         ) { 
-            sample {  name sharers { username } }
+            sample { name }
         } }""", message="Does not exist")
 
         # Sample must be accessible
@@ -252,7 +260,7 @@ class SampleAccessTests(SampleUpdateTest):
         self.check_query_error("""mutation { updateSampleAccess(
             id: "23" user: "1" permission: 3
         ) { 
-            sample {  name sharers { username } }
+            sample {  name }
         } }""", message="Does not exist")
 
         # User must have share permissions on Sample (either directly or via collection/group)
@@ -261,7 +269,7 @@ class SampleAccessTests(SampleUpdateTest):
         self.check_query_error("""mutation { updateSampleAccess(
             id: "1" user: "1" permission: 2
         ) { 
-            sample {  name sharers { username } }
+            sample {  name }
         } }""", message="permission")
         group = Group.objects.create(slug="group1")
         UserGroupLink.objects.create(user=self.user, group=group, permission=2)
@@ -269,7 +277,7 @@ class SampleAccessTests(SampleUpdateTest):
         self.check_query_error("""mutation { updateSampleAccess(
             id: "1" user: "1" permission: 2
         ) { 
-            sample {  name sharers { username } }
+            sample {  name }
         } }""", message="permission")
         self.link.permission = 3
         self.link.save()
@@ -278,19 +286,19 @@ class SampleAccessTests(SampleUpdateTest):
         self.check_query_error("""mutation { updateSampleAccess(
             id: "1" user: "100" permission: 3
         ) { 
-            sample {  name sharers { username } }
+            sample {  name }
         } }""", message="Does not exist")
 
         # Permission must be valid for user
         self.check_query_error("""mutation { updateSampleAccess(
             id: "1" user: "2" permission: -1
         ) { 
-            sample {  name sharers { username } }
+            sample {  name }
         } }""", message="valid permission")
         self.check_query_error("""mutation { updateSampleAccess(
             id: "1" user: "2" permission: 5
         ) { 
-            sample {  name sharers { username } }
+            sample {  name }
         } }""", message="valid permission")
 
         # Must be signed in
@@ -298,7 +306,7 @@ class SampleAccessTests(SampleUpdateTest):
         self.check_query_error("""mutation { updateSampleAccess(
             id: "1" user: "1" permission: 3
         ) { 
-            sample {  name sharers { username } }
+            sample {  name }
         } }""", message="Not authorized")
 
 
