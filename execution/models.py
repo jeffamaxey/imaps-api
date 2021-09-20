@@ -160,6 +160,11 @@ class Execution(RandomIDModel):
             if input["type"] == "data":
                 execution = Execution.objects.get(id=input["value"])
                 execution.downstream.add(self)
+                if not self.sample and execution.sample:
+                    self.sample = execution.sample
+                if not self.collection and execution.collection:
+                    self.collection = execution.collection
+                self.save()
                 execution.save()
     
 

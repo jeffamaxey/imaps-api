@@ -69,7 +69,7 @@ class UserType(DjangoObjectType):
         return collections_owned_by_user(self)
 
     def resolve_uploads(self, info, **kwargs):
-        return executions_owned_by_user(self).filter(private=False)
+        return readable_executions(executions_owned_by_user(self), info.context.user)
 
 
 
