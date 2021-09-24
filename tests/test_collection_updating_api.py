@@ -173,7 +173,7 @@ class CollectionUpdatingTests(CollectionUpdateTest):
         # Collection name must be short enough
         self.link.permission = 2
         self.link.save()
-        name = f'"{"N" * 201}"'
+        name = f'"{"N" * 151}"'
         self.check_query_error("""mutation {
             updateCollection(
                 id: 1 name: """ + name + """ private: false description: "DDD"
@@ -182,7 +182,7 @@ class CollectionUpdatingTests(CollectionUpdateTest):
                     {title: "Paper 2" year: 2019 url: "https://paper2.com"}
                 ]
             ) { collection { id } }
-        }""", message="200 characters")
+        }""", message="150 characters")
 
         # Paper titles must be short enough
         title = f'"{"N" * 251}"'

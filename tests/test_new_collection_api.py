@@ -25,12 +25,12 @@ class CollectionCreationTests(FunctionalTest):
         }""", message="already exists")
 
         # Name must be short enough
-        name = f'"{"N" * 201}"'
+        name = f'"{"N" * 151}"'
         self.check_query_error("""mutation {
             createCollection(name: """ + name + """ description: "Data" private: false) {
                 collection { name description private owners { name } }
             }
-        }""", message="200 characters")
+        }""", message="150 characters")
 
         # Must be signed in
         del self.client.headers["Authorization"]
