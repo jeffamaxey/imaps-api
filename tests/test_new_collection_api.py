@@ -1,4 +1,5 @@
 from .base import FunctionalTest
+from samples.models import Collection
 
 class CollectionCreationTests(FunctionalTest):
 
@@ -15,6 +16,14 @@ class CollectionCreationTests(FunctionalTest):
     
 
     def test_collection_creation_validation(self):
+        # Name must be unique
+        Collection.objects.create(name="N")
+        self.check_query_error("""mutation {
+            createCollection(name: "N" description: "Data" private: false) {
+                collection { name description private owners { name } }
+            }
+        }""", message="already exists")
+
         # Name must be short enough
         name = f'"{"N" * 201}"'
         self.check_query_error("""mutation {

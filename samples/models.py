@@ -14,7 +14,7 @@ class Collection(RandomIDModel):
         db_table = "collections"
         ordering = ["-created"]
 
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     created = models.IntegerField(default=time.time)
     last_modified = models.IntegerField(default=time.time)
     description = models.TextField(default="", blank=True)
