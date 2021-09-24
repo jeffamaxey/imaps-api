@@ -47,7 +47,7 @@ class Sample(RandomIDModel):
     private = models.BooleanField(default=True)
     source = models.CharField(max_length=100)
     organism = models.CharField(max_length=100)
-    qc_pass = models.NullBooleanField()
+    qc_pass = models.BooleanField(null=True)
     qc_message = models.CharField(max_length=100)
     pi_name = models.CharField(max_length=100)
     annotator_name = models.CharField(max_length=100)
