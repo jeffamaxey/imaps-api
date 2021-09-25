@@ -46,7 +46,7 @@ class Command(RandomIDModel):
 
 
 
-class Execution(RandomIDModel):
+class Execution(models.Model):
 
     class Meta:
         db_table = "executions"

@@ -3,7 +3,7 @@ from django_random_id_model import RandomIDModel
 from django.db import models
 from core.models import User, Group
 
-class Collection(RandomIDModel):
+class Collection(models.Model):
     """A collection of samples that belong together in some sense, either as
     part of a single paper or to answer a single research question.
     
@@ -34,7 +34,7 @@ class Collection(RandomIDModel):
 
 
 
-class Sample(RandomIDModel):
+class Sample(models.Model):
     """A single CLIP experiment."""
 
     class Meta:
