@@ -65,6 +65,7 @@ class SampleType(DjangoObjectType):
         model = Sample
     
     id = graphene.ID()
+    qc_pass = graphene.Boolean()
     is_owner = graphene.Boolean()
     can_share = graphene.Boolean()
     can_edit = graphene.Boolean()
