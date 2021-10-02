@@ -49,3 +49,14 @@ def motif(request):
                     return JsonResponse(data)
         return JsonResponse({"error": "No such motif"}, status=404)
     return JsonResponse({"error": "No motif sequence given"}, status=400)
+
+
+def motif_lines(request):
+    sequence = request.GET.get("sequence")
+    if sequence:
+        try:
+            with open(f"{settings.PEKA_ROOT}/motif/{sequence}_lineplot.json") as f:
+                return JsonResponse(json.load(f))
+        except FileNotFoundError:
+            return JsonResponse({"error": "No such motif"}, status=404)
+    return JsonResponse({"error": "No motif sequence given"}, status=400)
