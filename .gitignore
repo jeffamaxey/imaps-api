@@ -10,6 +10,7 @@ uploads/*
 !uploads/.gitkeep
 .coverage
 peka/create_*.py
+peka/data
 
 Commands.md
 Docs2.md
