@@ -3,7 +3,7 @@ services:
     postgres:
         hostname: postgres
         container_name: imaps_postgres
-        image: postgres
+        image: postgres:13.4-buster
         env_file:
             - secrets.env
         volumes:

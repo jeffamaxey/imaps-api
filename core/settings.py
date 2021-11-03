@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "graphene_django",
     "corsheaders",
     "core",
+    "django_nextflow",
     "samples",
     "execution",
     "peka",
