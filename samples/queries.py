@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 from core.permissions import can_user_edit_collection, can_user_share_collection, collection_owners, is_user_owner_of_collection
 from core.permissions import can_user_edit_sample, can_user_share_sample, collection_owners, is_user_owner_of_sample
 from .models import Collection, Sample, Paper
+from django_nextflow.models import Data
 
 class CollectionType(DjangoObjectType):
     
@@ -22,7 +23,7 @@ class CollectionType(DjangoObjectType):
         return self.samples.count()
 
     def resolve_execution_count(self, info, **kwargs):
-        return self.executions.count()
+        return 0
 
     def resolve_owners(self, info, **kwargs):
         return collection_owners(self)
@@ -78,3 +79,12 @@ class SampleType(DjangoObjectType):
     
     def resolve_can_edit(self, info, **kwargs):
         return can_user_edit_sample(info.context.user, self)
+
+
+
+class DataType(DjangoObjectType):
+
+    class Meta:
+        model  = Data
+    
+    id = graphene.ID()

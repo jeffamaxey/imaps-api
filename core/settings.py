@@ -35,7 +35,6 @@ INSTALLED_APPS = [
     "core",
     "django_nextflow",
     "samples",
-    "execution",
     "peka",
     "django_cleanup.apps.CleanupConfig",
 ]

@@ -12,6 +12,7 @@ uploads/*
 peka/create_*.py
 peka/data
 
+sync/*
 Commands.md
 Docs2.md
 Projects.md

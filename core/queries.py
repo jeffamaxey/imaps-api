@@ -1,17 +1,64 @@
 import graphene
 from graphene_django.types import DjangoObjectType
 from .models import User, Group
-from .permissions import can_user_view_collection, can_user_view_execution, can_user_view_sample
-from .permissions import collections_owned_by_user, executions_owned_by_user
+from .permissions import can_user_view_collection, can_user_view_sample
+from .permissions import collections_owned_by_user, data_owned_by_user
 from .permissions import group_admins, group_members
-from .permissions import readable_collections, readable_samples, readable_executions
+from .permissions import readable_collections, readable_samples
 from .permissions import groups_run_by_user, groups_with_user_as_member
 from samples.models import Collection, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink
 from samples.queries import CollectionType, SampleType
-from execution.queries import ExecutionType
-from execution.models import Execution, ExecutionUserLink
 
 class UserType(DjangoObjectType):
+    
+    class Meta:
+        model = User
+        exclude_fields = ["password"]
+
+    id = graphene.ID()
+    admin_groups = graphene.List("core.queries.GroupType")
+    memberships = graphene.List("core.queries.GroupType")
+    invitations = graphene.List("core.queries.GroupType")
+
+    public_collections = graphene.List("samples.queries.CollectionType")
+
+    public_uploads = graphene.List("samples.queries.DataType")
+
+    def resolve_email(self, info, **kwargs):
+        return self.email if info.context.user == self else ""
+    
+    def resolve_last_login(self, info, **kwargs):
+        return self.last_login if info.context.user == self else None
+
+    def resolve_admin_groups(self, info, **kwargs):
+        return groups_run_by_user(self)
+    
+    def resolve_memberships(self, info, **kwargs):
+        return groups_with_user_as_member(self)
+    
+    def resolve_invitations(self, info, **kwargs):
+        return Group.objects.filter(usergrouplink__user=self, usergrouplink__permission=1)
+    
+
+    def resolve_public_collections(self, info, **kwargs):
+        return collections_owned_by_user(self).filter(private=False)
+    
+
+    def resolve_public_uploads(self, info, **kwargs):
+        return data_owned_by_user(self).filter(private=False, upstream_process_execution=None)
+
+
+
+class GroupType(DjangoObjectType):
+    
+    class Meta:
+        model = Group
+    
+    id = graphene.ID()
+
+
+
+'''class UserType(DjangoObjectType):
     
     class Meta:
         model = User
@@ -148,4 +195,4 @@ class SearchType(graphene.ObjectType):
     
 
     def resolve_users(self, info, **kwargs):
-        return User.objects.filter(name__icontains=self["query"])
+        return User.objects.filter(name__icontains=self["query"])'''

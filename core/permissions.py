@@ -4,8 +4,8 @@ a user should be able to see/know about, (3) returning the objects that some
 other object has a particular permission relationship with."""
 
 from core.models import User, Group
-from samples.models import Collection, CollectionGroupLink, CollectionUserLink, Sample, SampleUserLink
-from execution.models import Execution, ExecutionUserLink
+from samples.models import Collection, CollectionGroupLink, CollectionUserLink, Sample, SampleUserLink, Job, JobUserLink
+from django_nextflow.models import Data
 
 def is_user_owner_of_collection(user, collection):
     """Checks whether a user is the owner of a collection."""
@@ -94,48 +94,48 @@ def can_user_view_sample(user, sample):
     return False
 
 
-def is_user_owner_of_execution(user, execution):
-    """Checks whether a user has ownership rights on an execution."""
+def is_user_owner_of_job(user, job):
+    """Checks whether a user has ownership rights on an job."""
 
-    if ExecutionUserLink.objects.filter(
-        execution=execution, user=user, permission__gte=4
+    if JobUserLink.objects.filter(
+        job=job, user=user, permission__gte=4
     ).count() > 0: return True
-    if execution.collection: return is_user_owner_of_collection(user, execution.collection)
-    if execution.sample: return is_user_owner_of_sample(user, execution.sample)
+    if job.collection: return is_user_owner_of_collection(user, job.collection)
+    if job.sample: return is_user_owner_of_sample(user, job.sample)
     return False
 
 
-def can_user_share_execution(user, execution):
-    """Checks whether a user is permitted to share an execution."""
+def can_user_share_job(user, job):
+    """Checks whether a user is permitted to share an job."""
 
-    if ExecutionUserLink.objects.filter(
-        execution=execution, user=user, permission__gte=3
+    if JobUserLink.objects.filter(
+        job=job, user=user, permission__gte=3
     ).count() > 0: return True
-    if execution.collection: return can_user_share_collection(user, execution.collection)
-    if execution.sample: return can_user_share_sample(user, execution.sample)
+    if job.collection: return can_user_share_collection(user, job.collection)
+    if job.sample: return can_user_share_sample(user, job.sample)
     return False
 
 
-def can_user_edit_execution(user, execution):
-    """Checks whether a user is permitted to edit an execution."""
+def can_user_edit_job(user, job):
+    """Checks whether a user is permitted to edit an job."""
 
-    if ExecutionUserLink.objects.filter(
-        execution=execution, user=user, permission__gte=2
+    if JobUserLink.objects.filter(
+        job=job, user=user, permission__gte=2
     ).count() > 0: return True
-    if execution.collection: return can_user_edit_collection(user, execution.collection)
-    if execution.sample: return can_user_edit_sample(user, execution.sample)
+    if job.collection: return can_user_edit_collection(user, job.collection)
+    if job.sample: return can_user_edit_sample(user, job.sample)
     return False
 
 
-def can_user_view_execution(user, execution):
-    """Checks whether a user is permitted to view an execution."""
+def can_user_view_job(user, job):
+    """Checks whether a user is permitted to view an job."""
 
-    if execution.private == False: return True
-    if ExecutionUserLink.objects.filter(
-        execution=execution, user=user, permission__gte=1
+    if job.private == False: return True
+    if JobUserLink.objects.filter(
+        job=job, user=user, permission__gte=1
     ).count() > 0: return True
-    if execution.collection: return can_user_view_collection(user, execution.collection)
-    if execution.sample: return can_user_view_sample(user, execution.sample)
+    if job.collection: return can_user_view_collection(user, job.collection)
+    if job.sample: return can_user_view_sample(user, job.sample)
     return False
 
 
@@ -164,8 +164,8 @@ def readable_samples(queryset, user):
     return viewable.all().distinct()
 
 
-def readable_executions(queryset, user):
-    """Takes an Execution queryset and filters it by those a particular user is
+def readable_jobs(queryset, user):
+    """Takes an Job queryset and filters it by those a particular user is
     allowed to know exist and read."""
 
     viewable = queryset.filter(private=False)
@@ -216,13 +216,19 @@ def collection_owners(collection):
     return User.objects.filter(collectionuserlink__collection=collection, collectionuserlink__permission=4)
 
 
-def executions_owned_by_user(user):
-    """Returns the executions which a user owns directly."""
+def jobs_owned_by_user(user):
+    """Returns the jobs which a user owns directly."""
 
-    return Execution.objects.filter(executionuserlink__user=user, executionuserlink__permission=4)
+    return Job.objects.filter(jobuserlink__user=user, jobuserlink__permission=4)
 
 
-def execution_owners(execution):
-    """Returns an execution's direct owners."""
+def job_owners(job):
+    """Returns an job's direct owners."""
 
-    return User.objects.filter(executionuserlink__execution=execution, executionuserlink__permission=4)
+    return User.objects.filter(jobuserlink__job=job, jobuserlink__permission=4)
+
+
+def data_owned_by_user(user):
+    """Returns the data which a user owns."""
+
+    return Data.objects.filter(datauserlink__user=user, datauserlink__permission=4)

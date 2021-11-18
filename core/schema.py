@@ -1,19 +1,18 @@
 import graphene
 from graphql import GraphQLError
 from graphene.relay import ConnectionField
-from core.permissions import can_user_view_collection, can_user_view_sample, can_user_view_execution
+from core.permissions import can_user_view_collection, can_user_view_sample
 from core.mutations import *
 from samples.mutations import *
-from execution.mutations import *
 from samples.models import Collection, Sample
-from execution.models import Execution, Command
 
 class Query(graphene.ObjectType):
 
     access_token = graphene.String()
     me = graphene.Field("core.queries.UserType")
-
     user = graphene.Field("core.queries.UserType", username=graphene.String(required=True))
+
+    '''user = graphene.Field("core.queries.UserType", username=graphene.String(required=True))
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     groups = graphene.List("core.queries.GroupType")
@@ -34,7 +33,7 @@ class Query(graphene.ObjectType):
     command = graphene.Field("execution.queries.CommandType", id=graphene.ID())
     commands = graphene.List("execution.queries.CommandType")
 
-    quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
+    quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))'''
 
 
     def resolve_access_token(self, info, **kwargs):
@@ -58,7 +57,7 @@ class Query(graphene.ObjectType):
         except: raise GraphQLError('{"user": "Does not exist"}')
     
 
-    def resolve_users(self, info, **kwargs):
+    '''def resolve_users(self, info, **kwargs):
         return User.objects.all()
     
 
@@ -122,7 +121,7 @@ class Query(graphene.ObjectType):
 
     def resolve_quick_search(self, info, **kwargs):
         if len(kwargs["query"]) < 3: return None
-        return kwargs
+        return kwargs'''
 
 
 
@@ -137,6 +136,10 @@ class Mutation(graphene.ObjectType):
     reset_password = ResetPasswordMutation.Field()
     update_user_image = UpdateUserImageMutation.Field()
     delete_user = DeleteUserMutation.Field()
+
+    leave_group = LeaveGroupMutation.Field()
+
+    '''
 
     create_group = CreateGroupMutation.Field()
     update_group = UpdateGroupMutation.Field()
@@ -162,7 +165,7 @@ class Mutation(graphene.ObjectType):
     delete_execution = DeleteExecutionMutation.Field()
     update_execution_access = UpdateExecutionAccessMutation.Field()
 
-    run_command = RunCommandMutation.Field()
+    run_command = RunCommandMutation.Field()'''
 
 
 

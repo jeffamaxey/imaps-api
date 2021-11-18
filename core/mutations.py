@@ -12,7 +12,6 @@ from core.email import send_welcome_email, send_reset_email, send_reset_warning_
 from core.arguments import create_mutation_arguments
 from .permissions import groups_run_by_user, group_admins
 from .permissions import collections_owned_by_user, collection_owners
-from .permissions import executions_owned_by_user, execution_owners
 
 class SignupMutation(graphene.Mutation):
 
@@ -191,11 +190,11 @@ class DeleteUserMutation(graphene.Mutation):
                     raise GraphQLError(json.dumps({"user": [
                         "You are the only owner of collection: " + collection.name
                     ]}))
-            for execution in executions_owned_by_user(info.context.user):
+            '''for execution in executions_owned_by_user(info.context.user):
                 if execution_owners(execution).count() == 1:
                     raise GraphQLError(json.dumps({"user": [
                         "You are the only owner of execution: " + execution.name
-                    ]}))
+                    ]}))'''
             info.context.user.delete()
             return DeleteUserMutation(success=True)
         raise GraphQLError(json.dumps({"username": ["Invalid or missing token"]}))

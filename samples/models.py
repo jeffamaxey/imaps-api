@@ -2,6 +2,7 @@ import time
 from django_random_id_model import RandomIDModel
 from django.db import models
 from core.models import User, Group
+from django_nextflow.models import Execution, Pipeline, Data
 
 class Collection(models.Model):
     """A collection of samples that belong together in some sense, either as
@@ -43,7 +44,7 @@ class Sample(models.Model):
     
     name = models.CharField(max_length=250)
     created = models.IntegerField(default=time.time)
-    last_modified = models.IntegerField(default=time.time)
+    modified = models.IntegerField(default=time.time)
     private = models.BooleanField(default=True)
     source = models.CharField(max_length=100)
     organism = models.CharField(max_length=100)
@@ -51,6 +52,7 @@ class Sample(models.Model):
     qc_message = models.CharField(max_length=100)
     pi_name = models.CharField(max_length=100)
     annotator_name = models.CharField(max_length=100)
+    initiator = models.ForeignKey(Data, null=True, on_delete=models.SET_NULL, related_name="samples")
     collection = models.ForeignKey(Collection, null=True, on_delete=models.CASCADE, related_name="samples")
     users = models.ManyToManyField(User, through="samples.SampleUserLink", related_name="samples")
 
@@ -78,6 +80,35 @@ class Paper(RandomIDModel):
     url = models.URLField(max_length=200, blank=True, null=True)
     year = models.IntegerField()
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name="papers")
+
+
+
+class Uploadable(models.Model):
+
+    class Meta:
+        db_table = "uploadables"
+        ordering = ["name"]
+
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    filetype = models.CharField(max_length=20)
+    pipeline = models.ForeignKey(Pipeline, null=True, on_delete=models.CASCADE, related_name="uploadables")
+
+
+
+class Job(models.Model):
+
+    class Meta:
+        db_table = "jobs"
+        ordering = ["created"]
+
+    created = models.IntegerField(default=time.time)
+    modified = models.IntegerField(default=time.time)
+    started = models.IntegerField(null=True)
+    finished = models.IntegerField(null=True)
+    execution = models.OneToOneField(Execution, null=True, on_delete=models.SET_NULL, related_name="job")
+    sample = models.ForeignKey(Sample, null=True, on_delete=models.SET_NULL, related_name="jobs")
+    collection = models.ForeignKey(Collection, null=True, on_delete=models.SET_NULL, related_name="jobs")
 
 
 
@@ -120,5 +151,33 @@ class SampleUserLink(models.Model):
     PERMISSIONS = [[1, "access"], [2, "edit"], [3, "share"]]
 
     sample = models.ForeignKey(Sample, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    permission = models.IntegerField(choices=PERMISSIONS, default=1)
+
+
+
+class JobUserLink(models.Model):
+    """Describes the nature of the relationship between a user and job."""
+
+    class Meta:
+        db_table = "job_user_links"
+    
+    PERMISSIONS = [[1, "access"], [2, "edit"], [3, "share"]]
+
+    job = models.ForeignKey(Job, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    permission = models.IntegerField(choices=PERMISSIONS, default=1)
+
+
+
+class DataUserLink(models.Model):
+    """Describes the nature of the relationship between a user and data file."""
+
+    class Meta:
+        db_table = "data_user_links"
+    
+    PERMISSIONS = [[1, "access"], [2, "edit"], [3, "share"]]
+
+    data = models.ForeignKey(Data, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     permission = models.IntegerField(choices=PERMISSIONS, default=1)
