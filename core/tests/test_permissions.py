@@ -1,591 +1,745 @@
 from unittest import mock
 from unittest.mock import patch
 from django.test import TestCase
+from django_nextflow.models import Execution, ProcessExecution
 from mixer.backend.django import mixer
 from core.permissions import *
 from core.models import User, UserGroupLink
 from samples.models import Collection
 
-class PermissionTest(TestCase):
+class GroupsByUserTests(TestCase):
 
     def setUp(self):
         self.user = mixer.blend(User)
+        self.groups = [mixer.blend(Group) for _ in range(4)]
+        mixer.blend(UserGroupLink, user=self.user, group=self.groups[0], permission=1)
+        mixer.blend(UserGroupLink, user=self.user, group=self.groups[1], permission=2)
+        mixer.blend(UserGroupLink, user=self.user, group=self.groups[2], permission=3)
+
+
+    def test_can_get_groups_by_user_with_exact_match(self):
+        self.assertEqual(set(get_groups_by_user(self.user, 1)), {self.groups[0]})
+        self.assertEqual(set(get_groups_by_user(self.user, 2)), {self.groups[1]})
+        self.assertEqual(set(get_groups_by_user(self.user, 3)), {self.groups[2]})
+
+
+    def test_can_get_groups_by_user_with_non_exact_match(self):
+        self.assertEqual(set(get_groups_by_user(self.user, 1, exact=False)), set(self.groups[:3]))
+        self.assertEqual(set(get_groups_by_user(self.user, 2, exact=False)), set(self.groups[1:3]))
+
+
+
+class UsersByGroupTests(TestCase):
+
+    def setUp(self):
         self.group = mixer.blend(Group)
+        self.users = [mixer.blend(User) for _ in range(4)]
+        mixer.blend(UserGroupLink, group=self.group, user=self.users[0], permission=1)
+        mixer.blend(UserGroupLink, group=self.group, user=self.users[1], permission=2)
+        mixer.blend(UserGroupLink, group=self.group, user=self.users[2], permission=3)
+
+
+    def test_can_get_users_by_group_with_exact_match(self):
+        self.assertEqual(set(get_users_by_group(self.group, 1)), {self.users[0]})
+        self.assertEqual(set(get_users_by_group(self.group, 2)), {self.users[1]})
+        self.assertEqual(set(get_users_by_group(self.group, 3)), {self.users[2]})
+
+
+    def test_can_get_users_by_group_with_non_exact_match(self):
+        self.assertEqual(set(get_users_by_group(self.group, 1, exact=False)), set(self.users[:3]))
+        self.assertEqual(set(get_users_by_group(self.group, 2, exact=False)), set(self.users[1:3]))
+
+
+
+class CollectionsByUserTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+        self.collections = [mixer.blend(Collection) for _ in range(5)]
+        mixer.blend(CollectionUserLink, user=self.user, collection=self.collections[0], permission=1)
+        mixer.blend(CollectionUserLink, user=self.user, collection=self.collections[1], permission=2)
+        mixer.blend(CollectionUserLink, user=self.user, collection=self.collections[2], permission=3)
+        mixer.blend(CollectionUserLink, user=self.user, collection=self.collections[3], permission=4)
+
+    
+    def test_can_get_collections_by_user_with_exact_match(self):
+        self.assertEqual(set(get_collections_by_user(self.user, 1)), {self.collections[0]})
+        self.assertEqual(set(get_collections_by_user(self.user, 2)), {self.collections[1]})
+        self.assertEqual(set(get_collections_by_user(self.user, 3)), {self.collections[2]})
+        self.assertEqual(set(get_collections_by_user(self.user, 4)), {self.collections[3]})
+
+
+    def test_can_get_collections_by_user_with_non_exact_match(self):
+        self.assertEqual(set(get_collections_by_user(self.user, 1, exact=False)), set(self.collections[:4]))
+        self.assertEqual(set(get_collections_by_user(self.user, 2, exact=False)), set(self.collections[1:4]))
+        self.assertEqual(set(get_collections_by_user(self.user, 3, exact=False)), set(self.collections[2:4]))
+
+
+
+class UsersByCollectionTests(TestCase):
+
+    def setUp(self):
         self.collection = mixer.blend(Collection)
-        self.sample = mixer.blend(Sample, collection=None)
-        self.execution = mixer.blend(Execution, collection=None, sample=None)
-
-
-
-class CollectionOwnerRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(is_user_owner_of_collection(self.user, self.collection))
+        self.users = [mixer.blend(User) for _ in range(5)]
+        mixer.blend(CollectionUserLink, collection=self.collection, user=self.users[0], permission=1)
+        mixer.blend(CollectionUserLink, collection=self.collection, user=self.users[1], permission=2)
+        mixer.blend(CollectionUserLink, collection=self.collection, user=self.users[2], permission=3)
+        mixer.blend(CollectionUserLink, collection=self.collection, user=self.users[3], permission=4)
     
 
-    def test_check_fails_when_insufficient_link(self):
-        CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=3)
-        self.assertFalse(is_user_owner_of_collection(self.user, self.collection))
+    def test_can_get_users_by_collection_with_exact_match(self):
+        self.assertEqual(set(get_users_by_collection(self.collection, 1)), {self.users[0]})
+        self.assertEqual(set(get_users_by_collection(self.collection, 2)), {self.users[1]})
+        self.assertEqual(set(get_users_by_collection(self.collection, 3)), {self.users[2]})
+        self.assertEqual(set(get_users_by_collection(self.collection, 4)), {self.users[3]})
+
+
+    def test_can_get_users_by_collection_with_non_exact_match(self):
+        self.assertEqual(set(get_users_by_collection(self.collection, 1, exact=False)), set(self.users[:4]))
+        self.assertEqual(set(get_users_by_collection(self.collection, 2, exact=False)), set(self.users[1:4]))
+        self.assertEqual(set(get_users_by_collection(self.collection, 3, exact=False)), set(self.users[2:4]))
+
+
+    
+class CollectionsByGroupTests(TestCase):
+
+    def setUp(self):
+        self.group = mixer.blend(Group)
+        self.collections = [mixer.blend(Collection) for _ in range(4)]
+        mixer.blend(CollectionGroupLink, group=self.group, collection=self.collections[0], permission=1)
+        mixer.blend(CollectionGroupLink, group=self.group, collection=self.collections[1], permission=2)
+        mixer.blend(CollectionGroupLink, group=self.group, collection=self.collections[2], permission=3)
     
 
-    def test_check_passes_when_owner(self):
-        CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=4)
-        self.assertTrue(is_user_owner_of_collection(self.user, self.collection))
+    def test_can_get_collections_by_user_with_exact_match(self):
+        self.assertEqual(set(get_collections_by_group(self.group, 1)), {self.collections[0]})
+        self.assertEqual(set(get_collections_by_group(self.group, 2)), {self.collections[1]})
+        self.assertEqual(set(get_collections_by_group(self.group, 3)), {self.collections[2]})
+
+
+    def test_can_get_collections_by_user_with_non_exact_match(self):
+        self.assertEqual(set(get_collections_by_group(self.group, 1, exact=False)), set(self.collections[:3]))
+        self.assertEqual(set(get_collections_by_group(self.group, 2, exact=False)), set(self.collections[1:3]))
 
 
 
-class CollectionShareRightsCheckTests(PermissionTest):
+class GroupsByCollectionTests(TestCase):
 
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_share_collection(self.user, self.collection))
+    def setUp(self):
+        self.collection = mixer.blend(Collection)
+        self.groups = [mixer.blend(Group) for _ in range(4)]
+        mixer.blend(CollectionGroupLink, collection=self.collection, group=self.groups[0], permission=1)
+        mixer.blend(CollectionGroupLink, collection=self.collection, group=self.groups[1], permission=2)
+        mixer.blend(CollectionGroupLink, collection=self.collection, group=self.groups[2], permission=3)
     
 
-    @patch("core.permissions.groups_with_user_as_member")
-    def test_check_fails_when_insufficient_user_link(self, mock_groups):
-        mock_groups.return_value = []
-        CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=2)
-        self.assertFalse(can_user_share_collection(self.user, self.collection))
-        mock_groups.assert_called_with(self.user)
+    def test_can_get_groups_by_collection_with_exact_match(self):
+        self.assertEqual(set(get_groups_by_collection(self.collection, 1)), {self.groups[0]})
+        self.assertEqual(set(get_groups_by_collection(self.collection, 2)), {self.groups[1]})
+        self.assertEqual(set(get_groups_by_collection(self.collection, 3)), {self.groups[2]})
+
+
+    def test_can_get_groups_by_collection_with_non_exact_match(self):
+        self.assertEqual(set(get_groups_by_collection(self.collection, 1, exact=False)), set(self.groups[:3]))
+        self.assertEqual(set(get_groups_by_collection(self.collection, 2, exact=False)), set(self.groups[1:3]))
+
+
+
+class SamplesByUserTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+        self.samples = [mixer.blend(Sample) for _ in range(4)]
+        mixer.blend(SampleUserLink, user=self.user, sample=self.samples[0], permission=1)
+        mixer.blend(SampleUserLink, user=self.user, sample=self.samples[1], permission=2)
+        mixer.blend(SampleUserLink, user=self.user, sample=self.samples[2], permission=3)
     
 
-    def test_check_passes_with_user_share_link(self):
-        link = CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=3)
-        self.assertTrue(can_user_share_collection(self.user, self.collection))
-        link.permission = 4
-        link.save()
-        self.assertTrue(can_user_share_collection(self.user, self.collection))
+    def test_can_get_samples_by_user_with_exact_match(self):
+        self.assertEqual(set(get_samples_by_user(self.user, 1)), {self.samples[0]})
+        self.assertEqual(set(get_samples_by_user(self.user, 2)), {self.samples[1]})
+        self.assertEqual(set(get_samples_by_user(self.user, 3)), {self.samples[2]})
+
+
+    def test_can_get_samples_by_user_with_non_exact_match(self):
+        self.assertEqual(set(get_samples_by_user(self.user, 1, exact=False)), set(self.samples[:3]))
+        self.assertEqual(set(get_samples_by_user(self.user, 2, exact=False)), set(self.samples[1:3]))
+        self.assertEqual(set(get_samples_by_user(self.user, 3, exact=False)), set(self.samples[2:3]))
+
+
+
+class UsersBySampleTests(TestCase):
+
+    def setUp(self):
+        self.sample = mixer.blend(Sample)
+        self.users = [mixer.blend(User) for _ in range(4)]
+        mixer.blend(SampleUserLink, sample=self.sample, user=self.users[0], permission=1)
+        mixer.blend(SampleUserLink, sample=self.sample, user=self.users[1], permission=2)
+        mixer.blend(SampleUserLink, sample=self.sample, user=self.users[2], permission=3)
     
 
-    @patch("core.permissions.groups_with_user_as_member")
-    def test_check_fails_when_insufficient_group_link(self, mock_groups):
-        mock_groups.return_value = [self.group]
-        CollectionGroupLink.objects.create(group=self.group, collection=self.collection, permission=2)
-        self.assertFalse(can_user_share_collection(self.user, self.collection))
-        mock_groups.assert_called_with(self.user)
+    def test_can_get_users_by_sample_with_exact_match(self):
+        self.assertEqual(set(get_users_by_sample(self.sample, 1)), {self.users[0]})
+        self.assertEqual(set(get_users_by_sample(self.sample, 2)), {self.users[1]})
+        self.assertEqual(set(get_users_by_sample(self.sample, 3)), {self.users[2]})
+
+
+    def test_can_get_users_by_sample_with_non_exact_match(self):
+        self.assertEqual(set(get_users_by_sample(self.sample, 1, exact=False)), set(self.users[:3]))
+        self.assertEqual(set(get_users_by_sample(self.sample, 2, exact=False)), set(self.users[1:3]))
+
+
+
+class JobsByUserTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+        self.jobs = [mixer.blend(Job) for _ in range(5)]
+        mixer.blend(JobUserLink, user=self.user, job=self.jobs[0], permission=1)
+        mixer.blend(JobUserLink, user=self.user, job=self.jobs[1], permission=2)
+        mixer.blend(JobUserLink, user=self.user, job=self.jobs[2], permission=3)
+        mixer.blend(JobUserLink, user=self.user, job=self.jobs[3], permission=4)
     
 
-    @patch("core.permissions.groups_with_user_as_member")
-    def test_check_passes_with_group_share_link(self, mock_groups):
-        mock_groups.return_value = [self.group]
-        UserGroupLink.objects.create(user=self.user, group=self.group, permission=2)
-        CollectionGroupLink.objects.create(group=self.group, collection=self.collection, permission=3)
-        self.assertTrue(can_user_share_collection(self.user, self.collection))
+    def test_can_get_jobs_by_user_with_exact_match(self):
+        self.assertEqual(set(get_jobs_by_user(self.user, 1)), {self.jobs[0]})
+        self.assertEqual(set(get_jobs_by_user(self.user, 2)), {self.jobs[1]})
+        self.assertEqual(set(get_jobs_by_user(self.user, 3)), {self.jobs[2]})
+        self.assertEqual(set(get_jobs_by_user(self.user, 4)), {self.jobs[3]})
+
+
+    def test_can_get_jobs_by_user_with_non_exact_match(self):
+        self.assertEqual(set(get_jobs_by_user(self.user, 1, exact=False)), set(self.jobs[:4]))
+        self.assertEqual(set(get_jobs_by_user(self.user, 2, exact=False)), set(self.jobs[1:4]))
+        self.assertEqual(set(get_jobs_by_user(self.user, 3, exact=False)), set(self.jobs[2:4]))
 
 
 
-class CollectionEditRightsCheckTests(PermissionTest):
+class UsersByJobTest(TestCase):
 
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_edit_collection(self.user, self.collection))
+    def setUp(self):
+        self.job = mixer.blend(Job)
+        self.users = [mixer.blend(User) for _ in range(5)]
+        mixer.blend(JobUserLink, job=self.job, user=self.users[0], permission=1)
+        mixer.blend(JobUserLink, job=self.job, user=self.users[1], permission=2)
+        mixer.blend(JobUserLink, job=self.job, user=self.users[2], permission=3)
+        mixer.blend(JobUserLink, job=self.job, user=self.users[3], permission=4)
     
 
-    @patch("core.permissions.groups_with_user_as_member")
-    def test_check_fails_when_insufficient_user_link(self, mock_groups):
-        mock_groups.return_value = []
-        CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=1)
-        self.assertFalse(can_user_edit_collection(self.user, self.collection))
-        mock_groups.assert_called_with(self.user)
+    def test_can_get_users_by_job_with_exact_match(self):
+        self.assertEqual(set(get_users_by_job(self.job, 1)), {self.users[0]})
+        self.assertEqual(set(get_users_by_job(self.job, 2)), {self.users[1]})
+        self.assertEqual(set(get_users_by_job(self.job, 3)), {self.users[2]})
+        self.assertEqual(set(get_users_by_job(self.job, 4)), {self.users[3]})
+
+
+    def test_can_get_users_by_job_with_non_exact_match(self):
+        self.assertEqual(set(get_users_by_job(self.job, 1, exact=False)), set(self.users[:4]))
+        self.assertEqual(set(get_users_by_job(self.job, 2, exact=False)), set(self.users[1:4]))
+        self.assertEqual(set(get_users_by_job(self.job, 3, exact=False)), set(self.users[2:4]))
+
+
+
+class DataByUserTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+        self.data = [mixer.blend(Data) for _ in range(4)]
+        mixer.blend(DataUserLink, user=self.user, data=self.data[0], permission=1)
+        mixer.blend(DataUserLink, user=self.user, data=self.data[1], permission=2)
+        mixer.blend(DataUserLink, user=self.user, data=self.data[2], permission=3)
+        mixer.blend(DataUserLink, user=self.user, data=self.data[3], permission=4)
     
 
-    def test_check_passes_with_user_share_link(self):
-        link = CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=2)
-        self.assertTrue(can_user_edit_collection(self.user, self.collection))
-        link.permission = 3
-        link.save()
-        self.assertTrue(can_user_edit_collection(self.user, self.collection))
+    def test_can_get_data_by_user_with_exact_match(self):
+        self.assertEqual(set(get_data_by_user(self.user, 1)), {self.data[0]})
+        self.assertEqual(set(get_data_by_user(self.user, 2)), {self.data[1]})
+        self.assertEqual(set(get_data_by_user(self.user, 3)), {self.data[2]})
+        self.assertEqual(set(get_data_by_user(self.user, 4)), {self.data[3]})
+
+
+    def test_can_get_data_by_user_with_non_exact_match(self):
+        self.assertEqual(set(get_data_by_user(self.user, 1, exact=False)), set(self.data[:4]))
+        self.assertEqual(set(get_data_by_user(self.user, 2, exact=False)), set(self.data[1:4]))
+        self.assertEqual(set(get_data_by_user(self.user, 3, exact=False)), set(self.data[2:4]))
+
+
+
+class UsersByDataTest(TestCase):
+
+    def setUp(self):
+        self.data = mixer.blend(Data)
+        self.users = [mixer.blend(User) for _ in range(4)]
+        mixer.blend(DataUserLink, data=self.data, user=self.users[0], permission=1)
+        mixer.blend(DataUserLink, data=self.data, user=self.users[1], permission=2)
+        mixer.blend(DataUserLink, data=self.data, user=self.users[2], permission=3)
+        mixer.blend(DataUserLink, data=self.data, user=self.users[3], permission=4)
     
 
-    @patch("core.permissions.groups_with_user_as_member")
-    def test_check_fails_when_insufficient_group_link(self, mock_groups):
-        mock_groups.return_value = [self.group]
-        CollectionGroupLink.objects.create(group=self.group, collection=self.collection, permission=1)
-        self.assertFalse(can_user_edit_collection(self.user, self.collection))
-        mock_groups.assert_called_with(self.user)
+    def test_can_get_users_by_data_with_exact_match(self):
+        self.assertEqual(set(get_users_by_data(self.data, 1)), {self.users[0]})
+        self.assertEqual(set(get_users_by_data(self.data, 2)), {self.users[1]})
+        self.assertEqual(set(get_users_by_data(self.data, 3)), {self.users[2]})
+        self.assertEqual(set(get_users_by_data(self.data, 4)), {self.users[3]})
+
+
+    def test_can_get_users_by_data_with_non_exact_match(self):
+        self.assertEqual(set(get_users_by_data(self.data, 1, exact=False)), set(self.users[:4]))
+        self.assertEqual(set(get_users_by_data(self.data, 2, exact=False)), set(self.users[1:4]))
+        self.assertEqual(set(get_users_by_data(self.data, 3, exact=False)), set(self.users[2:4]))
+
+
+
+class UserPermissionsOnCollectionTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+        self.collection = mixer.blend(Collection)
+        self.patch1 = patch("core.permissions.get_groups_by_user")
+        self.mock_groups = self.patch1.start()
+        self.mock_groups.return_value = []
+
+
+    def tearDown(self):
+        self.patch1.stop()
+
+
+    def test_no_link(self):
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 1))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 2))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 3))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 4))
     
 
-    @patch("core.permissions.groups_with_user_as_member")
-    def test_check_passes_with_group_share_link(self, mock_groups):
-        mock_groups.return_value = [self.group]
-        CollectionGroupLink.objects.create(group=self.group, collection=self.collection, permission=2)
-        self.assertTrue(can_user_edit_collection(self.user, self.collection))
-
-
-
-class CollectionViewRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_view_collection(self.user, self.collection))
-    
-
-    def test_check_passes_with_user_share_link(self):
-        link = CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=1)
-        self.assertTrue(can_user_view_collection(self.user, self.collection))
-        link.permission = 2
-        link.save()
-        self.assertTrue(can_user_view_collection(self.user, self.collection))
-    
-
-    @patch("core.permissions.groups_with_user_as_member")
-    def test_check_passes_with_group_share_link(self, mock_groups):
-        mock_groups.return_value = [self.group]
-        CollectionGroupLink.objects.create(group=self.group, collection=self.collection, permission=1)
-        self.assertTrue(can_user_view_collection(self.user, self.collection))
-    
-
-    def test_check_passes_when_public(self):
+    def test_public_collections_always_readable(self):
         self.collection.private = False
         self.collection.save()
-        self.assertTrue(can_user_view_collection(None, self.collection))
-
-
-
-class SampleOwnerRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(is_user_owner_of_sample(self.user, self.sample))
+        self.assertTrue(does_user_have_permission_on_collection(self.user, self.collection, 1))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 2))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 3))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 4))
     
 
-    def test_check_fails_when_with_max_sample_link(self):
-        SampleUserLink.objects.create(user=self.user, sample=self.sample, permission=3)
-        self.assertFalse(is_user_owner_of_sample(self.user, self.sample))
+    def test_can_access_direct_link(self):
+        link = mixer.blend(CollectionUserLink, user=self.user, collection=self.collection, permission=1)
+        self.assertTrue(does_user_have_permission_on_collection(self.user, self.collection, 1))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 2))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 3))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 4))
+        link.permission = 3
+        link.save()
+        self.assertTrue(does_user_have_permission_on_collection(self.user, self.collection, 1))
+        self.assertTrue(does_user_have_permission_on_collection(self.user, self.collection, 2))
+        self.assertTrue(does_user_have_permission_on_collection(self.user, self.collection, 3))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 4))
     
 
-    def test_check_fails_when_with_no_collection_link(self):
-        self.sample.collection = self.collection
-        self.sample.save()
-        self.assertFalse(is_user_owner_of_sample(self.user, self.sample))
+    def test_can_access_group_link(self):
+        group1 = mixer.blend(Group)
+        group2 = mixer.blend(Group)
+        group3 = mixer.blend(Group)
+        self.mock_groups.return_value = [group1, group2, group3]
+        mixer.blend(CollectionGroupLink, group=group1, collection=self.collection, permission=1)
+        mixer.blend(CollectionGroupLink, group=group2, collection=self.collection, permission=2)
+        self.assertTrue(does_user_have_permission_on_collection(self.user, self.collection, 1))
+        self.assertTrue(does_user_have_permission_on_collection(self.user, self.collection, 2))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 3))
+        self.assertFalse(does_user_have_permission_on_collection(self.user, self.collection, 4))
+        self.mock_groups.assert_called_with(self.user, permission=2, exact=False)
+
+
+
+class UserPermissionsOnSampleTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+        self.sample = mixer.blend(Sample, collection=None)
+        self.patch1 = patch("core.permissions.does_user_have_permission_on_collection")
+        self.mock_perm = self.patch1.start()
+        self.mock_perm.return_value = False
+
+
+    def tearDown(self):
+        self.patch1.stop()
     
 
-    def test_check_fails_when_with_insufficient_collection_link(self):
-        self.sample.collection = self.collection
-        self.sample.save()
-        CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=3)
-        self.assertFalse(is_user_owner_of_sample(self.user, self.sample))
+    def test_no_link(self):
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 1))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 2))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 3))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 4))
     
 
-    def test_check_passes_when_with_sufficient_collection_link(self):
-        self.sample.collection = self.collection
-        self.sample.save()
-        CollectionUserLink.objects.create(user=self.user, collection=self.collection, permission=4)
-        self.assertTrue(is_user_owner_of_sample(self.user, self.sample))
-
-
-
-class SampleShareRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_share_sample(self.user, self.sample))
-    
-
-    def test_check_fails_when_insufficient_link(self):
-        SampleUserLink.objects.create(user=self.user, sample=self.sample, permission=2)
-        self.assertFalse(can_user_share_sample(self.user, self.sample))
-    
-
-    def test_check_passes_when_sufficient_link(self):
-        SampleUserLink.objects.create(user=self.user, sample=self.sample, permission=3)
-        self.assertTrue(can_user_share_sample(self.user, self.sample))
-    
-
-    @patch("core.permissions.can_user_share_collection")
-    def test_check_can_use_collection_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.sample.collection = self.collection
-        self.sample.save()
-        self.assertEqual(can_user_share_sample(self.user, self.sample), "result")
-        mock_can.assert_called_with(self.user, self.collection)
-
-
-
-class SampleEditRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_edit_sample(self.user, self.sample))
-    
-
-    def test_check_fails_when_insufficient_link(self):
-        SampleUserLink.objects.create(user=self.user, sample=self.sample, permission=1)
-        self.assertFalse(can_user_edit_sample(self.user, self.sample))
-    
-
-    def test_check_passes_when_sufficient_link(self):
-        SampleUserLink.objects.create(user=self.user, sample=self.sample, permission=2)
-        self.assertTrue(can_user_edit_sample(self.user, self.sample))
-        SampleUserLink.objects.create(user=self.user, sample=self.sample, permission=3)
-        self.assertTrue(can_user_edit_sample(self.user, self.sample))
-    
-
-    @patch("core.permissions.can_user_edit_collection")
-    def test_check_can_use_collection_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.sample.collection = self.collection
-        self.sample.save()
-        self.assertEqual(can_user_edit_sample(self.user, self.sample), "result")
-        mock_can.assert_called_with(self.user, self.collection)
-
-
-
-class SampleViewRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_view_sample(self.user, self.sample))
-    
-
-    def test_check_passes_when_sufficient_link(self):
-        SampleUserLink.objects.create(user=self.user, sample=self.sample, permission=1)
-        self.assertTrue(can_user_view_sample(self.user, self.sample))
-        SampleUserLink.objects.create(user=self.user, sample=self.sample, permission=3)
-        self.assertTrue(can_user_view_sample(self.user, self.sample))
-    
-
-    @patch("core.permissions.can_user_view_collection")
-    def test_check_can_use_collection_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.sample.collection = self.collection
-        self.sample.save()
-        self.assertEqual(can_user_view_sample(self.user, self.sample), "result")
-        mock_can.assert_called_with(self.user, self.collection)
-    
-
-    def test_check_passes_when_public(self):
+    def test_public_samples_always_readable(self):
         self.sample.private = False
         self.sample.save()
-        self.assertTrue(can_user_view_sample(None, self.sample))
-
-
-
-class ExecutionOwnerRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(is_user_owner_of_execution(self.user, self.execution))
+        self.assertTrue(does_user_have_permission_on_sample(self.user, self.sample, 1))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 2))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 3))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 4))
     
 
-    def test_check_fails_with_insufficient_execution_link(self):
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=3)
-        self.assertFalse(is_user_owner_of_execution(self.user, self.execution))
+    def test_can_access_direct_link(self):
+        link = mixer.blend(SampleUserLink, user=self.user, sample=self.sample, permission=1)
+        self.assertTrue(does_user_have_permission_on_sample(self.user, self.sample, 1))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 2))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 3))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 4))
+        link.permission = 3
+        link.save()
+        self.assertTrue(does_user_have_permission_on_sample(self.user, self.sample, 1))
+        self.assertTrue(does_user_have_permission_on_sample(self.user, self.sample, 2))
+        self.assertTrue(does_user_have_permission_on_sample(self.user, self.sample, 3))
+        self.assertFalse(does_user_have_permission_on_sample(self.user, self.sample, 4))
+
+
+    def test_can_get_permission_via_collection(self):
+        self.sample.collection = mixer.blend(Collection)
+        self.assertIs(
+            does_user_have_permission_on_sample(self.user, self.sample, 2),
+            self.mock_perm.return_value
+        )
+        self.mock_perm.assert_called_with(self.user, self.sample.collection, 2)
+
+
+
+class UserPermissionsOnJobTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+        self.job = mixer.blend(Job, collection=None, sample=None)
+        self.patch1 = patch("core.permissions.does_user_have_permission_on_collection")
+        self.mock_cperm = self.patch1.start()
+        self.mock_cperm.return_value = False
+        self.patch2 = patch("core.permissions.does_user_have_permission_on_sample")
+        self.mock_sperm = self.patch2.start()
+        self.mock_sperm.return_value = False
+
+
+    def tearDown(self):
+        self.patch1.stop()
+        self.patch2.stop()
     
 
-    def test_check_passes_with_sufficient_execution_link(self):
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=4)
-        self.assertTrue(is_user_owner_of_execution(self.user, self.execution))
+    def test_no_link(self):
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 1))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 2))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 3))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 4))
     
 
-    @patch("core.permissions.is_user_owner_of_collection")
-    def test_check_uses_collection_ownership(self, mock_is):
-        mock_is.return_value = "result"
-        self.execution.collection = self.collection
-        self.execution.sample = self.sample
-        self.execution.save()
-        self.assertEqual(is_user_owner_of_execution(self.user, self.execution), "result")
-        mock_is.assert_called_with(self.user, self.collection)
+    def test_public_jobs_always_readable(self):
+        self.job.private = False
+        self.job.save()
+        self.assertTrue(does_user_have_permission_on_job(self.user, self.job, 1))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 2))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 3))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 4))
     
 
-    @patch("core.permissions.is_user_owner_of_sample")
-    def test_check_uses_collection_ownership(self, mock_is):
-        mock_is.return_value = "result"
-        self.execution.sample = self.sample
-        self.execution.save()
-        self.assertEqual(is_user_owner_of_execution(self.user, self.execution), "result")
-        mock_is.assert_called_with(self.user, self.sample)
+    def test_can_access_direct_link(self):
+        link = mixer.blend(JobUserLink, user=self.user, job=self.job, permission=1)
+        self.assertTrue(does_user_have_permission_on_job(self.user, self.job, 1))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 2))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 3))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 4))
+        link.permission = 3
+        link.save()
+        self.assertTrue(does_user_have_permission_on_job(self.user, self.job, 1))
+        self.assertTrue(does_user_have_permission_on_job(self.user, self.job, 2))
+        self.assertTrue(does_user_have_permission_on_job(self.user, self.job, 3))
+        self.assertFalse(does_user_have_permission_on_job(self.user, self.job, 4))
 
 
-
-class ExecutionShareRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_share_execution(self.user, self.execution))
+    def test_can_get_permission_via_collection(self):
+        self.job.collection = mixer.blend(Collection)
+        self.job.save()
+        self.assertIs(
+            does_user_have_permission_on_job(self.user, self.job, 2),
+            self.mock_cperm.return_value
+        )
+        self.mock_cperm.assert_called_with(self.user, self.job.collection, 2)
     
 
-    def test_check_fails_when_insufficient_link(self):
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=2)
-        self.assertFalse(can_user_share_execution(self.user, self.execution))
+    def test_can_get_permission_via_sample(self):
+        self.job.sample = mixer.blend(Sample)
+        self.job.save()
+        self.assertIs(
+            does_user_have_permission_on_job(self.user, self.job, 2),
+            self.mock_sperm.return_value
+        )
+        self.mock_sperm.assert_called_with(self.user, self.job.sample, 2)
+
+
+
+class UserPermissionsOnDataTests(TestCase):
+
+    def setUp(self):
+        self.user = mixer.blend(User)
+        self.data = mixer.blend(Data, upstream_process_execution=None)
+        self.link = mixer.blend(DataLink, data=self.data, collection=None)
+        self.patch1 = patch("core.permissions.does_user_have_permission_on_collection")
+        self.mock_cperm = self.patch1.start()
+        self.mock_cperm.return_value = False
+        self.patch2 = patch("core.permissions.does_user_have_permission_on_sample")
+        self.mock_sperm = self.patch2.start()
+        self.mock_sperm.return_value = False
+        self.patch3 = patch("core.permissions.does_user_have_permission_on_job")
+        self.mock_jperm = self.patch3.start()
+        self.mock_jperm.return_value = False
+
+
+    def tearDown(self):
+        self.patch1.stop()
+        self.patch2.stop()
+        self.patch3.stop()
     
 
-    def test_check_passes_when_sufficient_link(self):
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=3)
-        self.assertTrue(can_user_share_execution(self.user, self.execution))
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=4)
-        self.assertTrue(can_user_share_execution(self.user, self.execution))
+    def test_no_link(self):
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 1))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 2))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 3))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 4))
     
 
-    @patch("core.permissions.can_user_share_collection")
-    def test_check_can_use_collection_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.execution.collection = self.collection
-        self.execution.save()
-        self.assertEqual(can_user_share_execution(self.user, self.execution), "result")
-        mock_can.assert_called_with(self.user, self.collection)
+    def test_public_data_always_readable(self):
+        self.link.private = False
+        self.link.save()
+        self.assertTrue(does_user_have_permission_on_data(self.user, self.data, 1))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 2))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 3))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 4))
     
 
-    @patch("core.permissions.can_user_share_sample")
-    def test_check_can_use_sample_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.execution.sample = self.sample
-        self.execution.save()
-        self.assertEqual(can_user_share_execution(self.user, self.execution), "result")
-        mock_can.assert_called_with(self.user, self.sample)
+    def test_can_access_direct_link(self):
+        link = mixer.blend(DataUserLink, user=self.user, data=self.data, permission=1)
+        self.assertTrue(does_user_have_permission_on_data(self.user, self.data, 1))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 2))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 3))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 4))
+        link.permission = 3
+        link.save()
+        self.assertTrue(does_user_have_permission_on_data(self.user, self.data, 1))
+        self.assertTrue(does_user_have_permission_on_data(self.user, self.data, 2))
+        self.assertTrue(does_user_have_permission_on_data(self.user, self.data, 3))
+        self.assertFalse(does_user_have_permission_on_data(self.user, self.data, 4))
 
 
-
-class ExecutionEditRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_edit_execution(self.user, self.execution))
+    def test_can_get_permission_via_collection(self):
+        self.link.collection = mixer.blend(Collection)
+        self.link.save()
+        self.assertIs(
+            does_user_have_permission_on_data(self.user, self.data, 2),
+            self.mock_cperm.return_value
+        )
+        self.mock_cperm.assert_called_with(self.user, self.link.collection, 2)
     
 
-    def test_check_fails_when_insufficient_link(self):
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=1)
-        self.assertFalse(can_user_edit_execution(self.user, self.execution))
-    
-
-    def test_check_passes_when_sufficient_link(self):
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=2)
-        self.assertTrue(can_user_edit_execution(self.user, self.execution))
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=4)
-        self.assertTrue(can_user_edit_execution(self.user, self.execution))
-    
-
-    @patch("core.permissions.can_user_edit_collection")
-    def test_check_can_use_collection_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.execution.collection = self.collection
-        self.execution.save()
-        self.assertEqual(can_user_edit_execution(self.user, self.execution), "result")
-        mock_can.assert_called_with(self.user, self.collection)
-    
-
-    @patch("core.permissions.can_user_edit_sample")
-    def test_check_can_use_sample_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.execution.sample = self.sample
-        self.execution.save()
-        self.assertEqual(can_user_edit_execution(self.user, self.execution), "result")
-        mock_can.assert_called_with(self.user, self.sample)
-
-
-
-class ExecutionViewRightsCheckTests(PermissionTest):
-
-    def test_check_fails_when_no_link(self):
-        self.assertFalse(can_user_view_execution(self.user, self.execution))
-    
-
-    def test_check_passes_when_sufficient_link(self):
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=1)
-        self.assertTrue(can_user_view_execution(self.user, self.execution))
-        ExecutionUserLink.objects.create(user=self.user, execution=self.execution, permission=4)
-        self.assertTrue(can_user_view_execution(self.user, self.execution))
-    
-
-    @patch("core.permissions.can_user_view_collection")
-    def test_check_can_use_collection_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.execution.collection = self.collection
-        self.execution.save()
-        self.assertEqual(can_user_view_execution(self.user, self.execution), "result")
-        mock_can.assert_called_with(self.user, self.collection)
-    
-
-    @patch("core.permissions.can_user_view_sample")
-    def test_check_can_use_sample_check(self, mock_can):
-        mock_can.return_value = "result"
-        self.execution.sample = self.sample
-        self.execution.save()
-        self.assertEqual(can_user_view_execution(self.user, self.execution), "result")
-        mock_can.assert_called_with(self.user, self.sample)
-    
-
-    def test_check_passes_when_public(self):
-        self.execution.private = False
-        self.execution.save()
-        self.assertTrue(can_user_view_execution(None, self.execution))
+    def test_can_get_permission_via_job(self):
+        job = mixer.blend(Job)
+        execution = mixer.blend(Execution, job=job)
+        process_execution = mixer.blend(ProcessExecution, execution=execution)
+        self.data.upstream_process_execution = process_execution
+        self.data.save()
+        self.assertIs(
+            does_user_have_permission_on_data(self.user, self.data, 2),
+            self.mock_jperm.return_value
+        )
+        self.mock_jperm.assert_called_with(self.user, job, 2)
 
 
 
 class ReadableCollectionsTests(TestCase):
 
-    def test_can_filter_collections(self):
-        user = mixer.blend(User)
+    def test_can_get_public(self):
+        c1 = mixer.blend(Collection, private=False)
+        c2 = mixer.blend(Collection, private=False)
         mixer.blend(Collection)
-        public = mixer.blend(Collection, private=False)
-        owned = mixer.blend(Collection)
-        CollectionUserLink.objects.create(collection=owned, user=user, permission=4)
-        readable = mixer.blend(Collection)
-        CollectionUserLink.objects.create(collection=readable, user=user, permission=1)
-        group_readable = mixer.blend(Collection)
-        group = mixer.blend(Group)
-        UserGroupLink.objects.create(user=user, group=group, permission=2)
-        CollectionGroupLink.objects.create(collection=group_readable, group=group, permission=1)
-        collections = Collection.objects.all()
-        self.assertEqual(collections.count(), 5)
-        with self.assertNumQueries(1):
-            filtered = readable_collections(Collection.objects.all(), user)
-        self.assertEqual(filtered.count(), 4)
-        for col in [public, owned, readable, group_readable]:
-            self.assertIn(col, filtered)
+        self.assertEqual(set(readable_collections(Collection.objects.all())), {c1, c2})
     
 
-    def test_can_filter_samples(self):
+    def test_can_get_via_links(self):
         user = mixer.blend(User)
+        c1 = mixer.blend(Collection, private=False) # public
+        c2 = mixer.blend(Collection) # user has link
+        mixer.blend(CollectionUserLink, user=user, collection=c2)
+        c3 = mixer.blend(Collection) # group has link
+        group = mixer.blend(Group)
+        mixer.blend(UserGroupLink, user=user, group=group)
+        mixer.blend(CollectionGroupLink, collection=c3, group=group)
+        c4 = mixer.blend(Collection) # link to other user
+        mixer.blend(CollectionUserLink, collection=c4)
+        c5 = mixer.blend(Collection) # link to other group
+        mixer.blend(CollectionGroupLink, collection=c5)
+        self.assertEqual(
+            set(readable_collections(Collection.objects.all(), user)), {c1, c2, c3}
+        )
+
+
+
+class ReadableSamplesTests(TestCase):
+
+    def test_can_get_public(self):
+        s1 = mixer.blend(Sample, private=False)
+        s2 = mixer.blend(Sample, private=False)
         mixer.blend(Sample)
-        public = mixer.blend(Sample, private=False)
-        readable = mixer.blend(Sample)
-        SampleUserLink.objects.create(sample=readable, user=user, permission=1)
-        collection_readable = mixer.blend(Sample)
-        CollectionUserLink.objects.create(collection=collection_readable.collection, user=user, permission=1)
-        group_readable = mixer.blend(Sample)
-        group = mixer.blend(Group)
-        UserGroupLink.objects.create(user=user, group=group, permission=2)
-        CollectionGroupLink.objects.create(collection=group_readable.collection, group=group, permission=1)
-        samples = Sample.objects.all()
-        self.assertEqual(samples.count(), 5)
-        with self.assertNumQueries(1):
-            filtered = readable_samples(Sample.objects.all(), user)
-        self.assertEqual(filtered.count(), 4)
-        for col in [public, readable, collection_readable, group_readable]:
-            self.assertIn(col, filtered)
+        self.assertEqual(set(readable_samples(Sample.objects.all())), {s1, s2})
     
 
-    def test_can_filter_executions(self):
+    def test_can_get_via_links(self):
         user = mixer.blend(User)
-        mixer.blend(Execution)
-        public = mixer.blend(Execution, private=False)
-        readable = mixer.blend(Execution)
-        ExecutionUserLink.objects.create(execution=readable, user=user, permission=1)
-        collection_readable = mixer.blend(Execution, collection=mixer.blend(Collection))
-        CollectionUserLink.objects.create(collection=collection_readable.collection, user=user, permission=1)
-        sample_readable = mixer.blend(Execution, sample=mixer.blend(Sample))
-        SampleUserLink.objects.create(sample=sample_readable.sample, user=user, permission=1)
-        sample_collection_readable = mixer.blend(Execution, sample=mixer.blend(Sample))
-        CollectionUserLink.objects.create(collection=sample_collection_readable.sample.collection, user=user, permission=1)
-        group_readable1 = mixer.blend(Execution, collection=mixer.blend(Collection))
+        s1 = mixer.blend(Sample, private=False) # public
+        s2 = mixer.blend(Sample) # user has link
+        mixer.blend(SampleUserLink, user=user, sample=s2)
+        s3 = mixer.blend(Sample, collection=mixer.blend(Collection)) # user has link to collection
+        mixer.blend(CollectionUserLink, user=user, collection=s3.collection)
+        s4 = mixer.blend(Sample) # group has link to collection
         group = mixer.blend(Group)
-        UserGroupLink.objects.create(user=user, group=group, permission=2)
-        CollectionGroupLink.objects.create(collection=group_readable1.collection, group=group, permission=1)
-        group_readable2 = mixer.blend(Execution, sample=mixer.blend(Sample))
-        group = mixer.blend(Group)
-        UserGroupLink.objects.create(user=user, group=group, permission=2)
-        CollectionGroupLink.objects.create(collection=group_readable2.sample.collection, group=group, permission=1)
-        executions = Execution.objects.all()
-        self.assertEqual(executions.count(), 8)
-        with self.assertNumQueries(1):
-            filtered = readable_executions(Execution.objects.all(), user)
-        self.assertEqual(filtered.count(), 7)
-        for col in [public, readable, collection_readable, sample_readable, sample_collection_readable, group_readable1, group_readable2]:
-            self.assertIn(col, filtered)
+        mixer.blend(UserGroupLink, user=user, group=group)
+        mixer.blend(CollectionGroupLink, collection=s4.collection, group=group)
+        s5 = mixer.blend(Sample) # link to other user
+        mixer.blend(SampleUserLink, sample=s5)
+        self.assertEqual(
+            set(readable_samples(Sample.objects.all(), user)), {s1, s2, s3, s4}
+        )
 
 
 
-class GroupsRunByUserTests(TestCase):
+class ReadableJobsTests(TestCase):
 
-    def test_can_get_groups_run_by_user(self):
-        user = mixer.blend(User)
-        group1 = mixer.blend(Group)
-        group2 = mixer.blend(Group)
-        group3 = mixer.blend(Group)
-        UserGroupLink.objects.create(user=user, group=group1, permission=3)
-        UserGroupLink.objects.create(user=user, group=group2, permission=2)
-        UserGroupLink.objects.create(user=mixer.blend(User), group=group3, permission=3)
-        self.assertEqual(list(groups_run_by_user(user)), [group1])
+    def test_can_get_public(self):
+        j1 = mixer.blend(Job, private=False)
+        j2 = mixer.blend(Job, private=False)
+        mixer.blend(Job)
+        self.assertEqual(set(readable_jobs(Job.objects.all())), {j1, j2})
     
 
-
-class GroupsWithUserAsMember(TestCase):
-
-    def test_can_get_groups_with_user_as_member(self):
+    def test_can_get_via_links(self):
         user = mixer.blend(User)
-        group1 = mixer.blend(Group)
-        group2 = mixer.blend(Group)
-        group3 = mixer.blend(Group)
-        group4 = mixer.blend(Group)
-        UserGroupLink.objects.create(user=user, group=group1, permission=3)
-        UserGroupLink.objects.create(user=user, group=group2, permission=2)
-        UserGroupLink.objects.create(user=user, group=group3, permission=1)
-        UserGroupLink.objects.create(user=mixer.blend(User), group=group4, permission=2)
-        self.assertEqual(list(groups_with_user_as_member(user)), [group1, group2])
-
-
-
-class GroupAdminsTests(TestCase):
-
-    def test_can_get_group_admins(self):
+        j1 = mixer.blend(Job, private=False) # public
+        j2 = mixer.blend(Job) # user has link
+        mixer.blend(JobUserLink, user=user, job=j2)
+        j3 = mixer.blend(Job, sample=mixer.blend(Sample)) # user has link to sample
+        mixer.blend(SampleUserLink, user=user, sample=j3.sample)
+        j4 = mixer.blend(Job, collection=mixer.blend(Collection)) # user has link to collection
+        mixer.blend(CollectionUserLink, user=user, collection=j4.collection)
+        j5 = mixer.blend(Job, sample=mixer.blend(Sample, collection=mixer.blend(Collection))) # user has link to sample collection
+        mixer.blend(CollectionUserLink, user=user, collection=j5.sample.collection)
+        j6 = mixer.blend(Job) # group has link to collection
         group = mixer.blend(Group)
-        user1 = mixer.blend(User)
-        user2 = mixer.blend(User)
-        user3 = mixer.blend(User)
-        UserGroupLink.objects.create(user=user1, group=group, permission=3)
-        UserGroupLink.objects.create(user=user2, group=group, permission=2)
-        UserGroupLink.objects.create(user=user3, group=mixer.blend(Group), permission=3)
-        self.assertEqual(list(group_admins(group)), [user1])
-
-
-
-class GroupMembersTests(TestCase):
-
-    def test_can_get_group_members(self):
+        mixer.blend(UserGroupLink, user=user, group=group)
+        mixer.blend(CollectionGroupLink, collection=j6.collection, group=group)
+        j7 = mixer.blend(Job, sample=mixer.blend(Sample, collection=mixer.blend(Collection))) # group has link to sample collection
         group = mixer.blend(Group)
-        user1 = mixer.blend(User)
-        user2 = mixer.blend(User)
-        user3 = mixer.blend(User)
-        user4 = mixer.blend(User)
-        UserGroupLink.objects.create(user=user1, group=group, permission=3)
-        UserGroupLink.objects.create(user=user2, group=group, permission=2)
-        UserGroupLink.objects.create(user=user3, group=group, permission=1)
-        UserGroupLink.objects.create(user=user4, group=mixer.blend(Group), permission=2)
-        self.assertEqual(list(group_members(group)), [user1, user2])
+        mixer.blend(UserGroupLink, user=user, group=group)
+        mixer.blend(CollectionGroupLink, collection=j7.sample.collection, group=group)
+        j8 = mixer.blend(Job) # link to other user
+        mixer.blend(JobUserLink, job=j8)
+        self.assertEqual(
+            set(readable_jobs(Job.objects.all(), user)), {j1, j2, j3, j4, j5, j6, j7}
+        )
 
 
 
-class CollectionsOwnedByUserTests(TestCase):
+class ReadableDataTests(TestCase):
+    
+    def test_can_get_public(self):
+        d1 = mixer.blend(Data)
+        mixer.blend(DataLink, data=d1, private=False)
+        d2 = mixer.blend(Data)
+        mixer.blend(DataLink, data=d2, private=False)
+        mixer.blend(Data)
+        self.assertEqual(set(readable_data(Data.objects.all())), {d1, d2})
+    
 
-    def test_can_get_collections_owned_by_user(self):
+    def test_can_get_via_links(self):
         user = mixer.blend(User)
-        collection1 = mixer.blend(Collection)
-        collection2 = mixer.blend(Collection)
-        collection3 = mixer.blend(Collection)
-        CollectionUserLink.objects.create(user=user, collection=collection1, permission=4)
-        CollectionUserLink.objects.create(user=user, collection=collection2, permission=3)
-        CollectionUserLink.objects.create(user=mixer.blend(User), collection=collection3, permission=4)
-        self.assertEqual(list(collections_owned_by_user(user)), [collection1])
 
+        d1 = mixer.blend(Data, filename="d1") # public
+        mixer.blend(DataLink, data=d1, private=False)
+        
+        d2 = mixer.blend(Data, filename="d2") # user has link
+        mixer.blend(DataUserLink, user=user, data=d2)
 
-
-class CollectionOwnersTests(TestCase):
-
-    def test_can_get_collection_owners(self):
-        collection = mixer.blend(Collection)
-        user1 = mixer.blend(User)
-        user2 = mixer.blend(User)
-        user3 = mixer.blend(User)
-        CollectionUserLink.objects.create(user=user1, collection=collection, permission=4)
-        CollectionUserLink.objects.create(user=user2, collection=collection, permission=3)
-        CollectionUserLink.objects.create(user=user3, collection=mixer.blend(Collection), permission=4)
-        self.assertEqual(list(collection_owners(collection)), [user1])
-
-
-
-class ExecutionsOwnedByUserTests(TestCase):
-
-    def test_can_get_executions_owned_by_user(self):
-        user = mixer.blend(User)
-        execution1 = mixer.blend(Execution)
-        execution2 = mixer.blend(Execution)
-        execution3 = mixer.blend(Execution)
-        ExecutionUserLink.objects.create(user=user, execution=execution1, permission=4)
-        ExecutionUserLink.objects.create(user=user, execution=execution2, permission=3)
-        ExecutionUserLink.objects.create(user=mixer.blend(User), execution=execution3, permission=4)
-        self.assertEqual(list(executions_owned_by_user(user)), [execution1])
-
-
-
-class ExecutionOwnersTests(TestCase):
-
-    def test_can_get_execution_owners(self):
-        execution = mixer.blend(Execution)
-        user1 = mixer.blend(User)
-        user2 = mixer.blend(User)
-        user3 = mixer.blend(User)
-        ExecutionUserLink.objects.create(user=user1, execution=execution, permission=4)
-        ExecutionUserLink.objects.create(user=user2, execution=execution, permission=3)
-        ExecutionUserLink.objects.create(user=user3, execution=mixer.blend(Execution), permission=4)
-        self.assertEqual(list(execution_owners(execution)), [user1])
+        # user has link to job
+        execution = mixer.blend(Execution, identifier="xxx")
+        job = mixer.blend(Job, execution=execution)
+        d3 = mixer.blend(
+            Data, filename="d3", upstream_process_execution=mixer.blend(
+                ProcessExecution, execution=execution, name="prex"
+            )
+        )
+        mixer.blend(JobUserLink, user=user, job=job)
+        
+        # user has link to job's sample
+        execution = mixer.blend(Execution, identifier="xxx")
+        job = mixer.blend(Job, execution=execution)
+        d4 = mixer.blend(
+            Data, filename="d4", upstream_process_execution=mixer.blend(
+                ProcessExecution, execution=execution, name="prex"
+            )
+        )
+        mixer.blend(SampleUserLink, user=user, sample=job.sample)
+        
+        # user has link to collection
+        d5 = mixer.blend(Data, filename="d5") 
+        mixer.blend(DataLink, data=d5)
+        mixer.blend(CollectionUserLink, user=user, collection=d5.link.collection)
+        
+        # user has link to job's collection
+        execution = mixer.blend(Execution, identifier="xxx")
+        job = mixer.blend(Job, execution=execution)
+        d6 = mixer.blend(
+            Data, filename="d6", upstream_process_execution=mixer.blend(
+                ProcessExecution, execution=execution, name="prex"
+            )
+        )
+        mixer.blend(CollectionUserLink, user=user, collection=job.collection)
+        
+        # user has link to job's sample's collection
+        execution = mixer.blend(Execution, identifier="xxx")
+        job = mixer.blend(Job, execution=execution)
+        d7 = mixer.blend(
+            Data, filename="d7", upstream_process_execution=mixer.blend(
+                ProcessExecution, execution=execution, name="prex"
+            )
+        )
+        mixer.blend(CollectionUserLink, user=user, collection=d7.upstream_process_execution.execution.job.sample.collection)
+        
+        # group has link to collection
+        d8 = mixer.blend(Data, filename="d8") 
+        mixer.blend(DataLink, data=d8)
+        group = mixer.blend(Group)
+        mixer.blend(UserGroupLink, user=user, group=group)
+        mixer.blend(CollectionGroupLink, group=group, collection=d8.link.collection)
+        
+        # group has link to job's collection
+        execution = mixer.blend(Execution, identifier="xxx")
+        job = mixer.blend(Job, execution=execution, collection=mixer.blend(Collection))
+        d9 = mixer.blend(
+            Data, filename="d9", upstream_process_execution=mixer.blend(
+                ProcessExecution, execution=execution, name="prex"
+            )
+        )
+        group = mixer.blend(Group)
+        mixer.blend(UserGroupLink, user=user, group=group)
+        mixer.blend(CollectionGroupLink, group=group, collection=job.collection)
+        
+        # group has link to job's sample's collection
+        execution = mixer.blend(Execution, identifier="xxx")
+        job = mixer.blend(Job, execution=execution)
+        d10 = mixer.blend(
+            Data, filename="d10", upstream_process_execution=mixer.blend(
+                ProcessExecution, execution=execution, name="prex"
+            )
+        )
+        group = mixer.blend(Group)
+        mixer.blend(UserGroupLink, user=user, group=group)
+        mixer.blend(CollectionGroupLink, group=group, collection=job.sample.collection)
+        
+        d11 = mixer.blend(Data, filename="d11") # link to other user
+        mixer.blend(DataUserLink, data=d11)
+        
+        self.assertEqual(
+            set(readable_data(Data.objects.all(), user)), {d1, d2, d3, d4, d5, d6, d7, d8, d9, d10}
+        )

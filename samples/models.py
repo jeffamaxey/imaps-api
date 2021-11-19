@@ -83,19 +83,6 @@ class Paper(RandomIDModel):
 
 
 
-class Uploadable(models.Model):
-
-    class Meta:
-        db_table = "uploadables"
-        ordering = ["name"]
-
-    name = models.CharField(max_length=100)
-    description = models.TextField()
-    filetype = models.CharField(max_length=20)
-    pipeline = models.ForeignKey(Pipeline, null=True, on_delete=models.CASCADE, related_name="uploadables")
-
-
-
 class Job(models.Model):
 
     class Meta:
@@ -106,9 +93,11 @@ class Job(models.Model):
     modified = models.IntegerField(default=time.time)
     started = models.IntegerField(null=True)
     finished = models.IntegerField(null=True)
+    private = models.BooleanField(default=True)
     execution = models.OneToOneField(Execution, null=True, on_delete=models.SET_NULL, related_name="job")
     sample = models.ForeignKey(Sample, null=True, on_delete=models.SET_NULL, related_name="jobs")
     collection = models.ForeignKey(Collection, null=True, on_delete=models.SET_NULL, related_name="jobs")
+    users = models.ManyToManyField(User, through="samples.JobUserLink", related_name="jobs")
 
 
 
@@ -167,6 +156,17 @@ class JobUserLink(models.Model):
     job = models.ForeignKey(Job, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     permission = models.IntegerField(choices=PERMISSIONS, default=1)
+
+
+
+class DataLink(models.Model):
+
+    class Meta:
+        db_table = "data_links"
+
+    data = models.OneToOneField(Data, on_delete=models.CASCADE, related_name="link")
+    private = models.BooleanField(default=True)
+    collection = models.ForeignKey(Collection, null=True, on_delete=models.SET_NULL)
 
 
 
