@@ -2,7 +2,7 @@ from execution.models import Execution
 import os
 from django.contrib.auth.hashers import check_password
 from core.models import User, Group, UserGroupLink
-from samples.models import Collection, CollectionUserLink
+from analysis.models import Collection, CollectionUserLink
 from execution.models import Execution, ExecutionUserLink
 from .base import FunctionalTest
 

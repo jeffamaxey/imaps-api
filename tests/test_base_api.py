@@ -1,7 +1,7 @@
 import requests
 import json
 from core.models import *
-from samples.models import Collection, Sample
+from analysis.models import Collection, Sample
 from execution.models import Execution
 from .base import FunctionalTest
 

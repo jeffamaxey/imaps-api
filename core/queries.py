@@ -6,8 +6,8 @@ from .permissions import collections_owned_by_user, data_owned_by_user
 from .permissions import group_admins, group_members
 from .permissions import readable_collections, readable_samples
 from .permissions import groups_run_by_user, groups_with_user_as_member
-from samples.models import Collection, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink
-from samples.queries import CollectionType, SampleType
+from analysis.models import Collection, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink
+from analysis.queries import CollectionType, SampleType
 
 class UserType(DjangoObjectType):
     
@@ -20,9 +20,9 @@ class UserType(DjangoObjectType):
     memberships = graphene.List("core.queries.GroupType")
     invitations = graphene.List("core.queries.GroupType")
 
-    public_collections = graphene.List("samples.queries.CollectionType")
+    public_collections = graphene.List("analysis.queries.CollectionType")
 
-    public_uploads = graphene.List("samples.queries.DataType")
+    public_uploads = graphene.List("analysis.queries.DataType")
 
     def resolve_email(self, info, **kwargs):
         return self.email if info.context.user == self else ""
@@ -72,8 +72,8 @@ class GroupType(DjangoObjectType):
     collection_permission = graphene.Int(id=graphene.ID(required=True))
     sample_permission = graphene.Int(id=graphene.ID(required=True))
     execution_permission = graphene.Int(id=graphene.ID(required=True))
-    public_collections = graphene.List("samples.queries.CollectionType")
-    owned_collections = graphene.List("samples.queries.CollectionType")
+    public_collections = graphene.List("analysis.queries.CollectionType")
+    owned_collections = graphene.List("analysis.queries.CollectionType")
     uploads = graphene.List("execution.queries.ExecutionType")
 
     def resolve_email(self, info, **kwargs):
@@ -130,7 +130,7 @@ class GroupType(DjangoObjectType):
     admins = graphene.List("core.queries.UserType")
     members = graphene.List("core.queries.UserType")
     invitees = graphene.List("core.queries.UserType")
-    public_collections = graphene.List("samples.queries.CollectionType")
+    public_collections = graphene.List("analysis.queries.CollectionType")
     collection_permission = graphene.Int(id=graphene.ID(required=True))
 
     def resolve_user_count(self, info, **kwargs):

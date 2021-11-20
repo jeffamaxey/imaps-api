@@ -1,5 +1,5 @@
 from core.models import User, Group, UserGroupLink
-from samples.models import Collection, Sample, Paper, CollectionUserLink, CollectionGroupLink
+from analysis.models import Collection, Sample, Paper, CollectionUserLink, CollectionGroupLink
 from execution.models import Execution, Command
 from .base import FunctionalTest
 

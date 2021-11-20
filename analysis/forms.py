@@ -1,6 +1,6 @@
 from django.db import transaction
 from django.forms import ModelForm
-from samples.models import Collection, Paper, Sample
+from analysis.models import Collection, Paper, Sample
 
 class CollectionForm(ModelForm):
     """Creates or edits a collection."""

@@ -3,8 +3,8 @@ from graphql import GraphQLError
 from graphene.relay import ConnectionField
 from core.permissions import can_user_view_collection, can_user_view_sample
 from core.mutations import *
-from samples.mutations import *
-from samples.models import Collection, Sample
+from analysis.mutations import *
+from analysis.models import Collection, Sample
 
 class Query(graphene.ObjectType):
 
@@ -17,10 +17,10 @@ class Query(graphene.ObjectType):
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     groups = graphene.List("core.queries.GroupType")
 
-    public_collections = ConnectionField("samples.queries.CollectionConnection")
+    public_collections = ConnectionField("analysis.queries.CollectionConnection")
     user_collections = graphene.List("core.queries.CollectionType")
 
-    collection = graphene.Field("samples.queries.CollectionType", id=graphene.ID())
+    collection = graphene.Field("analysis.queries.CollectionType", id=graphene.ID())
     sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
     execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
     executions = graphene.List(

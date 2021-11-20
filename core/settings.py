@@ -34,7 +34,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "core",
     "django_nextflow",
-    "samples",
+    "analysis",
     "peka",
     "django_cleanup.apps.CleanupConfig",
 ]

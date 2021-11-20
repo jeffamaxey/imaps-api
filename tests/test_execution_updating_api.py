@@ -1,5 +1,5 @@
 from core.models import User
-from samples.models import Collection, Sample
+from analysis.models import Collection, Sample
 from execution.models import Execution, Command, ExecutionUserLink
 from .base import FunctionalTest
 

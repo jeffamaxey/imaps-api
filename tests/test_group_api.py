@@ -1,6 +1,6 @@
 from django.test.testcases import TestCase
 from core.models import User, Group, UserGroupLink
-from samples.models import Collection
+from analysis.models import Collection
 from .base import FunctionalTest
 
 class GroupQueryTests(FunctionalTest):

@@ -4,8 +4,8 @@ import json
 from graphql import GraphQLError
 from core.models import User, Group
 from core.arguments import create_mutation_arguments
-from samples.models import Collection, CollectionUserLink, CollectionGroupLink, Sample, SampleUserLink
-from samples.forms import CollectionForm, PaperForm, SampleForm
+from analysis.models import Collection, CollectionUserLink, CollectionGroupLink, Sample, SampleUserLink
+from analysis.forms import CollectionForm, PaperForm, SampleForm
 
 class CreateCollectionMutation(graphene.Mutation):
 

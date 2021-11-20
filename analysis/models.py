@@ -20,8 +20,8 @@ class Collection(models.Model):
     last_modified = models.IntegerField(default=time.time)
     description = models.TextField(default="", blank=True)
     private = models.BooleanField(default=True)
-    users = models.ManyToManyField(User, through="samples.CollectionUserLink", related_name="collections")
-    groups = models.ManyToManyField(Group, through="samples.CollectionGroupLink", related_name="collections")
+    users = models.ManyToManyField(User, through="analysis.CollectionUserLink", related_name="collections")
+    groups = models.ManyToManyField(Group, through="analysis.CollectionGroupLink", related_name="collections")
 
     def __str__(self):
         return self.name
@@ -54,7 +54,7 @@ class Sample(models.Model):
     annotator_name = models.CharField(max_length=100)
     initiator = models.ForeignKey(Data, null=True, on_delete=models.SET_NULL, related_name="samples")
     collection = models.ForeignKey(Collection, null=True, on_delete=models.CASCADE, related_name="samples")
-    users = models.ManyToManyField(User, through="samples.SampleUserLink", related_name="samples")
+    users = models.ManyToManyField(User, through="analysis.SampleUserLink", related_name="samples")
 
     def __str__(self):
         return self.name
@@ -97,7 +97,7 @@ class Job(models.Model):
     execution = models.OneToOneField(Execution, null=True, on_delete=models.SET_NULL, related_name="job")
     sample = models.ForeignKey(Sample, null=True, on_delete=models.SET_NULL, related_name="jobs")
     collection = models.ForeignKey(Collection, null=True, on_delete=models.SET_NULL, related_name="jobs")
-    users = models.ManyToManyField(User, through="samples.JobUserLink", related_name="jobs")
+    users = models.ManyToManyField(User, through="analysis.JobUserLink", related_name="jobs")
 
 
 

@@ -5,7 +5,7 @@ from django_nextflow.models import Execution, ProcessExecution
 from mixer.backend.django import mixer
 from core.permissions import *
 from core.models import User, UserGroupLink
-from samples.models import Collection
+from analysis.models import Collection
 
 class GroupsByUserTests(TestCase):
 

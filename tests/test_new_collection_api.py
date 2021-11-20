@@ -1,5 +1,5 @@
 from .base import FunctionalTest
-from samples.models import Collection
+from analysis.models import Collection
 
 class CollectionCreationTests(FunctionalTest):
 

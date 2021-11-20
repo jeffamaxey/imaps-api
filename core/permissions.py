@@ -11,7 +11,7 @@ an object, after looking at all possible links they might have to it.
 3. Functions for filtering a queryset by those a user can know about."""
 
 from core.models import User, Group
-from samples.models import Collection, CollectionGroupLink, CollectionUserLink, Sample, SampleUserLink, Job, JobUserLink, Data, DataUserLink, DataLink
+from analysis.models import Collection, CollectionGroupLink, CollectionUserLink, Sample, SampleUserLink, Job, JobUserLink, Data, DataUserLink, DataLink
 from django_nextflow.models import Data
 
 def get_groups_by_user(user, permission, exact=True):

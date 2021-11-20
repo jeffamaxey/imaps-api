@@ -5,7 +5,7 @@ from django.contrib.auth.hashers import check_password
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from core.models import User, Group
-from samples.models import Collection
+from analysis.models import Collection
 
 class SignupForm(ModelForm):
     """Creates a user object."""
