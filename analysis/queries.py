@@ -1,10 +1,11 @@
 import graphene
 from graphene.relay.connection import Connection
 from graphene_django import DjangoObjectType
+from graphql import execution
 from core.permissions import  does_user_have_permission_on_collection, does_user_have_permission_on_sample, get_users_by_collection
 
-from .models import Collection, Sample, Paper
-from django_nextflow.models import Data, Execution, Pipeline
+from .models import Collection, Job, Sample, Paper
+from django_nextflow.models import Data, Execution, Pipeline, ProcessExecution
 
 class CollectionType(DjangoObjectType):
     
@@ -36,7 +37,7 @@ class CollectionType(DjangoObjectType):
         return get_users_by_collection(self, 4)
     
     def resolve_all_executions(self, info, **kwargs):
-        return self.all_executions.all()
+        return Job.objects.filter(collection=self)
     
     def resolve_all_data(self, info, **kwargs):
         return self.all_data.all()
@@ -96,6 +97,9 @@ class SampleType(DjangoObjectType):
     def resolve_can_edit(self, info, **kwargs):
         return does_user_have_permission_on_sample(info.context.user, self, 2)
     
+    def resolve_executions(self, info, **kwargs):
+        return Job.objects.filter(sample=self)
+    
     def resolve_all_data(self, info, **kwargs):
         return self.all_data.all()
 
@@ -104,9 +108,53 @@ class SampleType(DjangoObjectType):
 class ExecutionType(DjangoObjectType):
 
     class Meta:
-        model  = Execution
+        model  = Job
     
     id = graphene.ID()
+    is_owner = graphene.Boolean()
+    can_share = graphene.Boolean()
+    can_edit = graphene.Boolean()
+    status = graphene.String()
+    stdout = graphene.String()
+    stderr = graphene.String()
+    pipeline = graphene.Field("analysis.queries.PipelineType")
+    process_executions = graphene.List("analysis.queries.ProcessExecutionType")
+    upstream_data = graphene.List("analysis.queries.DataType")
+
+    def resolve_status(self, info, **kwargs):
+        return self.execution.status
+    
+
+    def resolve_stdout(self, info, **kwargs):
+        return self.execution.stdout
+    
+
+    def resolve_stderr(self, info, **kwargs):
+        return self.execution.stderr
+
+
+    def resolve_pipeline(self, info, **kwargs):
+        return self.execution.pipeline
+    
+
+    def resolve_process_executions(self, info, **kwargs):
+        return self.execution.process_executions.all()
+    
+
+    def resolve_upstream_data(self, info, **kwargs):
+        return self.execution.upstream_data.all()
+
+
+class ProcessExecutionType(DjangoObjectType):
+
+    class Meta:
+        model  = ProcessExecution
+    
+    id = graphene.ID()
+    execution = graphene.Field("analysis.queries.ExecutionType")
+
+    def resolve_execution(self, info, **kwargs):
+        return self.execution.job
 
 
 
@@ -116,6 +164,10 @@ class DataType(DjangoObjectType):
         model  = Data
     
     id = graphene.ID()
+    downstream_executions = graphene.List("analysis.queries.ExecutionType")
+
+    def resolve_downstream_executions(self, info, **kwargs):
+        return Job.objects.filter(execution__upstream_data=self)
 
 
 

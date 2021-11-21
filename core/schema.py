@@ -80,7 +80,7 @@ class Query(graphene.ObjectType):
 
     def resolve_user_collections(self, info, **kwargs):
         if not info.context.user: return []
-        collections = get_collections_by_user(info.context.user, 1)
+        collections = get_collections_by_user(info.context.user, 1, exact=False)
         for group in info.context.user.groups.all():
             collections |= get_collections_by_group(group, 1)
         return collections.distinct()
@@ -102,24 +102,16 @@ class Query(graphene.ObjectType):
 
     def resolve_execution(self, info, **kwargs):
         job = Job.objects.filter(id=kwargs["id"]).first()
-        if job and does_user_have_permission_on_job(info.context.user, job):
+        if job and does_user_have_permission_on_job(info.context.user, job, 1):
             return job
         raise GraphQLError('{"execution": "Does not exist"}')
     
 
-    def resolve_data(self, info, **kwargs):
+    def resolve_data_file(self, info, **kwargs):
         data = Data.objects.filter(id=kwargs["id"]).first()
         if data and does_user_have_permission_on_data(info.context.user, data, 1):
             return data
         raise GraphQLError('{"data": "Does not exist"}')
-    
-
-    def resolve_executions(self, info, **kwargs):
-        data = readable_data(Data.objects.all(), info.context.user)
-        data = data.filter(command__output_type__contains=kwargs["data_type"])
-        data = data.filter(name__icontains=kwargs["name"])
-        if kwargs.get("first"): data = data[:kwargs["first"]]
-        return data
     
 
     def resolve_pipeline(self, info, **kwargs):

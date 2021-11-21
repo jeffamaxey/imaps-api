@@ -40,7 +40,7 @@ class UserType(DjangoObjectType):
         return get_groups_by_user(self, 1)
     
     def resolve_collections(self, info, **kwargs):
-        return readable_collections(get_collections_by_user(info.context.user, 4))
+        return readable_collections(get_collections_by_user(self, 4), info.context.user)
     
     def resolve_collection_permission(self, info, **kwargs):
         collection = Collection.objects.filter(id=kwargs["id"]).first()
