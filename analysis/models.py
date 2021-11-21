@@ -32,6 +32,11 @@ class Collection(models.Model):
         if self._state.adding is False and update_last_modified:
             self.last_modified = int(time.time())
         super(Collection, self).save(*args, **kwargs)
+    
+
+    @property
+    def all_executions(self):
+        return Execution.objects.filter(job__collection=self)
 
 
 

@@ -17,9 +17,9 @@ class CollectionForm(ModelForm):
                     execution.private = self.instance.private
                     execution.save()
                 sample.save()
-            for execution in self.instance.executions.all():
+            '''for execution in self.instance.executions.all():
                 execution.private = self.instance.private
-                execution.save()
+                execution.save()'''
         return super().save(self, *args, **kwargs)
 
 

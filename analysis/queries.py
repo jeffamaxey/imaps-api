@@ -1,10 +1,10 @@
 import graphene
 from graphene.relay.connection import Connection
 from graphene_django import DjangoObjectType
-from core.permissions import can_user_edit_collection, can_user_share_collection, collection_owners, is_user_owner_of_collection
-from core.permissions import can_user_edit_sample, can_user_share_sample, collection_owners, is_user_owner_of_sample
+from core.permissions import  does_user_have_permission_on_collection, does_user_have_permission_on_sample, get_users_by_collection
+
 from .models import Collection, Sample, Paper
-from django_nextflow.models import Data
+from django_nextflow.models import Data, Execution, Pipeline
 
 class CollectionType(DjangoObjectType):
     
@@ -14,7 +14,11 @@ class CollectionType(DjangoObjectType):
     id = graphene.ID()
     sample_count = graphene.Int()
     execution_count = graphene.Int()
+    data_count = graphene.Int()
     owners = graphene.List("core.queries.UserType")
+    all_executions = graphene.List("analysis.queries.ExecutionType")
+    data = graphene.List("analysis.queries.DataType")
+    all_data = graphene.List("analysis.queries.DataType")
     is_owner = graphene.Boolean()
     can_share = graphene.Boolean()
     can_edit = graphene.Boolean()
@@ -23,19 +27,28 @@ class CollectionType(DjangoObjectType):
         return self.samples.count()
 
     def resolve_execution_count(self, info, **kwargs):
-        return 0
+        return self.all_executions.count()
+    
+    def resolve_data_count(self, info, **kwargs):
+        return self.all_data.count()
 
     def resolve_owners(self, info, **kwargs):
-        return collection_owners(self)
+        return get_users_by_collection(self, 4)
+    
+    def resolve_all_executions(self, info, **kwargs):
+        return self.all_executions.all()
+    
+    def resolve_all_data(self, info, **kwargs):
+        return self.all_data.all()
     
     def resolve_is_owner(self, info, **kwargs):
-        return is_user_owner_of_collection(info.context.user, self)
+        return does_user_have_permission_on_collection(info.context.user, self, 4)
     
     def resolve_can_share(self, info, **kwargs):
-        return can_user_share_collection(info.context.user, self)
+        return does_user_have_permission_on_collection(info.context.user, self, 3)
     
     def resolve_can_edit(self, info, **kwargs):
-        return can_user_edit_collection(info.context.user, self)
+        return does_user_have_permission_on_collection(info.context.user, self, 2)
 
 
 
@@ -70,15 +83,30 @@ class SampleType(DjangoObjectType):
     is_owner = graphene.Boolean()
     can_share = graphene.Boolean()
     can_edit = graphene.Boolean()
+    executions = graphene.List("analysis.queries.ExecutionType")
+    data = graphene.List("analysis.queries.DataType")
+    all_data = graphene.List("analysis.queries.DataType")
 
     def resolve_is_owner(self, info, **kwargs):
-        return is_user_owner_of_sample(info.context.user, self)
+        return does_user_have_permission_on_sample(info.context.user, self, 4)
     
     def resolve_can_share(self, info, **kwargs):
-        return can_user_share_sample(info.context.user, self)
+        return does_user_have_permission_on_sample(info.context.user, self, 3)
     
     def resolve_can_edit(self, info, **kwargs):
-        return can_user_edit_sample(info.context.user, self)
+        return does_user_have_permission_on_sample(info.context.user, self, 2)
+    
+    def resolve_all_data(self, info, **kwargs):
+        return self.all_data.all()
+
+
+
+class ExecutionType(DjangoObjectType):
+
+    class Meta:
+        model  = Execution
+    
+    id = graphene.ID()
 
 
 
@@ -88,3 +116,13 @@ class DataType(DjangoObjectType):
         model  = Data
     
     id = graphene.ID()
+
+
+
+class PipelineType(DjangoObjectType):
+
+    class Meta:
+        model  = Pipeline
+    
+    id = graphene.ID()
+    input_schema = graphene.JSONString()

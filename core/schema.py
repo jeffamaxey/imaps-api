@@ -1,18 +1,18 @@
+from django_nextflow.models import Data
 import graphene
 from graphql import GraphQLError
 from graphene.relay import ConnectionField
-from core.permissions import can_user_view_collection, can_user_view_sample
+from core.permissions import does_user_have_permission_on_collection, does_user_have_permission_on_data, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_collections_by_group, get_collections_by_user, readable_data, readable_jobs
 from core.mutations import *
 from analysis.mutations import *
-from analysis.models import Collection, Sample
+from analysis.models import Collection, Sample, Job
+from django_nextflow.models import Pipeline
 
 class Query(graphene.ObjectType):
 
     access_token = graphene.String()
     me = graphene.Field("core.queries.UserType")
     user = graphene.Field("core.queries.UserType", username=graphene.String(required=True))
-
-    '''user = graphene.Field("core.queries.UserType", username=graphene.String(required=True))
     users = graphene.List("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType", slug=graphene.String(required=True))
     groups = graphene.List("core.queries.GroupType")
@@ -21,18 +21,21 @@ class Query(graphene.ObjectType):
     user_collections = graphene.List("core.queries.CollectionType")
 
     collection = graphene.Field("analysis.queries.CollectionType", id=graphene.ID())
-    sample = graphene.Field("core.queries.SampleType", id=graphene.ID())
-    execution = graphene.Field("core.queries.ExecutionType", id=graphene.ID())
-    executions = graphene.List(
-        "execution.queries.ExecutionType",
+    sample = graphene.Field("analysis.queries.SampleType", id=graphene.ID())
+    execution = graphene.Field("analysis.queries.ExecutionType", id=graphene.ID())
+    data_file = graphene.Field("analysis.queries.DataType", id=graphene.ID())
+    data = graphene.List(
+        "analysis.queries.DataType",
         first=graphene.Int(),
-        data_type=graphene.String(),
+        filetype=graphene.String(),
         name=graphene.String(),
     )
 
-    command = graphene.Field("execution.queries.CommandType", id=graphene.ID())
-    commands = graphene.List("execution.queries.CommandType")
+    pipeline = graphene.Field("analysis.queries.PipelineType", id=graphene.ID())
+    pipelines = graphene.List("analysis.queries.PipelineType")
 
+
+    '''
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))'''
 
 
@@ -57,7 +60,7 @@ class Query(graphene.ObjectType):
         except: raise GraphQLError('{"user": "Does not exist"}')
     
 
-    '''def resolve_users(self, info, **kwargs):
+    def resolve_users(self, info, **kwargs):
         return User.objects.all()
     
 
@@ -77,48 +80,60 @@ class Query(graphene.ObjectType):
 
     def resolve_user_collections(self, info, **kwargs):
         if not info.context.user: return []
-        collections = Collection.objects.filter(collectionuserlink__user=info.context.user)
+        collections = get_collections_by_user(info.context.user, 1)
         for group in info.context.user.groups.all():
-            collections |= Collection.objects.filter(groups=group)
+            collections |= get_collections_by_group(group, 1)
         return collections.distinct()
     
 
     def resolve_collection(self, info, **kwargs):
         collection = Collection.objects.filter(id=kwargs["id"]).first()
-        if collection and can_user_view_collection(info.context.user, collection): return collection
+        if collection and does_user_have_permission_on_collection(info.context.user, collection, 1):
+            return collection
         raise GraphQLError('{"collection": "Does not exist"}')
     
 
     def resolve_sample(self, info, **kwargs):
         sample = Sample.objects.filter(id=kwargs["id"]).first()
-        if sample and can_user_view_sample(info.context.user, sample): return sample
+        if sample and does_user_have_permission_on_sample(info.context.user, sample,1 ):
+            return sample
         raise GraphQLError('{"sample": "Does not exist"}')
     
 
     def resolve_execution(self, info, **kwargs):
-        execution = Execution.objects.filter(id=kwargs["id"]).first()
-        if execution and can_user_view_execution(info.context.user, execution): return execution
+        job = Job.objects.filter(id=kwargs["id"]).first()
+        if job and does_user_have_permission_on_job(info.context.user, job):
+            return job
         raise GraphQLError('{"execution": "Does not exist"}')
     
 
-    def resolve_executions(self, info, **kwargs):
-        executions = readable_executions(Execution.objects.all(), info.context.user)
-        executions = executions.filter(command__output_type__contains=kwargs["data_type"])
-        executions = executions.filter(name__icontains=kwargs["name"])
-        if kwargs.get("first"): executions = executions[:kwargs["first"]]
-        return executions
+    def resolve_data(self, info, **kwargs):
+        data = Data.objects.filter(id=kwargs["id"]).first()
+        if data and does_user_have_permission_on_data(info.context.user, data, 1):
+            return data
+        raise GraphQLError('{"data": "Does not exist"}')
     
 
-    def resolve_command(self, info, **kwargs):
-        command = Command.objects.filter(id=kwargs["id"]).first()
-        if command: return command
+    def resolve_executions(self, info, **kwargs):
+        data = readable_data(Data.objects.all(), info.context.user)
+        data = data.filter(command__output_type__contains=kwargs["data_type"])
+        data = data.filter(name__icontains=kwargs["name"])
+        if kwargs.get("first"): data = data[:kwargs["first"]]
+        return data
+    
+
+    def resolve_pipeline(self, info, **kwargs):
+        pipeline = Pipeline.objects.filter(id=kwargs["id"]).first()
+        if pipeline: return pipeline
         raise GraphQLError('{"command": "Does not exist"}')
     
 
-    def resolve_commands(self, info, **kwargs):
-        return Command.objects.exclude(nextflow="").exclude(nextflow=None).exclude(category="internal-import")
+    def resolve_pipelines(self, info, **kwargs):
+        return Pipeline.objects.exclude(path="")
     
 
+    '''
+    
     def resolve_quick_search(self, info, **kwargs):
         if len(kwargs["query"]) < 3: return None
         return kwargs'''
@@ -137,7 +152,10 @@ class Mutation(graphene.ObjectType):
     update_user_image = UpdateUserImageMutation.Field()
     delete_user = DeleteUserMutation.Field()
 
+    create_group = CreateGroupMutation.Field()
     leave_group = LeaveGroupMutation.Field()
+
+    create_collection = CreateCollectionMutation.Field()
 
     '''
 
