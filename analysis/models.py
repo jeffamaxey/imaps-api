@@ -37,6 +37,17 @@ class Collection(models.Model):
     @property
     def all_executions(self):
         return Execution.objects.filter(job__collection=self)
+    
+
+    @property
+    def all_data(self):
+        return (Data.objects.filter(
+            upstream_process_execution__execution__job__sample__collection=self
+        ) | Data.objects.filter(
+            upstream_process_execution__execution__job__collection=self
+        ) | Data.objects.filter(
+            link__collection=self
+        )).distinct()
 
 
 
@@ -71,6 +82,11 @@ class Sample(models.Model):
         if self._state.adding is False and update_last_modified:
             self.last_modified = int(time.time())
         super(Sample, self).save(*args, **kwargs)
+    
+
+    @property
+    def all_data(self):
+        return Data.objects.filter(upstream_process_execution__execution__job__sample=self)
 
 
 

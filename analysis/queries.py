@@ -164,6 +164,7 @@ class DataType(DjangoObjectType):
         model  = Data
     
     id = graphene.ID()
+    size = graphene.Float()
     downstream_executions = graphene.List("analysis.queries.ExecutionType")
 
     def resolve_downstream_executions(self, info, **kwargs):
