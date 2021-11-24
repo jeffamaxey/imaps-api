@@ -1,12 +1,13 @@
+from django_nextflow.models import Data
 import graphene
 from graphene_django.types import DjangoObjectType
 from .models import User, Group
-from .permissions import does_user_have_permission_on_collection, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_collections_by_group, get_groups_by_user, get_users_by_group, readable_data
+from .permissions import does_user_have_permission_on_collection, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_collections_by_group, get_groups_by_user, get_users_by_group, readable_data, readable_jobs
 from .permissions import get_collections_by_user
 from .permissions import  get_data_by_user
 from .permissions import readable_collections, readable_samples
 from analysis.models import Collection, Job, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink, JobUserLink
-from analysis.queries import CollectionType, SampleType
+from analysis.queries import CollectionType, SampleType, ExecutionType, DataType
 
 class UserType(DjangoObjectType):
     
@@ -101,6 +102,57 @@ class GroupType(DjangoObjectType):
             return 0
         link = CollectionGroupLink.objects.filter(group=self, collection=collection).first()
         return link.permission if link else 0
+
+
+
+class SearchType(graphene.ObjectType):
+
+    collections = graphene.List(CollectionType)
+    samples = graphene.List(SampleType)
+    executions = graphene.List(ExecutionType)
+    data = graphene.List(DataType)
+    groups = graphene.List(GroupType)
+    users = graphene.List(UserType)
+
+    def resolve_collections(self, info, **kwargs):
+        return readable_collections(
+            Collection.objects.filter(name__icontains=self["query"])
+          | Collection.objects.filter(description__icontains=self["query"]),
+          info.context.user
+        ).distinct()[:25]
+    
+
+    def resolve_samples(self, info, **kwargs):
+        return readable_samples(
+            Sample.objects.filter(name__icontains=self["query"])
+          | Sample.objects.filter(organism__icontains=self["query"]),
+          info.context.user
+        ).distinct()[:25]
+    
+
+    def resolve_executions(self, info, **kwargs):
+        return readable_jobs(
+            Job.objects.filter(execution__pipeline__name__icontains=self["query"]),
+            info.context.user
+        )[:25]
+    
+
+    def resolve_data(self, info, **kwargs):
+        return readable_data(
+            Data.objects.filter(filename__icontains=self["query"]),
+            info.context.user
+        )[:25]
+    
+
+    def resolve_groups(self, info, **kwargs):
+        return (
+            Group.objects.filter(name__icontains=self["query"])
+          | Group.objects.filter(description__icontains=self["query"])
+        ).distinct()[:25]
+    
+
+    def resolve_users(self, info, **kwargs):
+        return User.objects.filter(name__icontains=self["query"])[:25]
 
 
 '''class UserType(DjangoObjectType):

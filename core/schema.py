@@ -34,6 +34,8 @@ class Query(graphene.ObjectType):
     pipeline = graphene.Field("analysis.queries.PipelineType", id=graphene.ID())
     pipelines = graphene.List("analysis.queries.PipelineType")
 
+    quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
+
 
     '''
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))'''
@@ -124,11 +126,9 @@ class Query(graphene.ObjectType):
         return Pipeline.objects.exclude(path="")
     
 
-    '''
-    
     def resolve_quick_search(self, info, **kwargs):
         if len(kwargs["query"]) < 3: return None
-        return kwargs'''
+        return kwargs
 
 
 
