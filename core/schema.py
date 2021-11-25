@@ -149,6 +149,8 @@ class Mutation(graphene.ObjectType):
 
     create_collection = CreateCollectionMutation.Field()
 
+    upload_data = UploadDataMutation.Field()
+
     '''
 
     create_group = CreateGroupMutation.Field()

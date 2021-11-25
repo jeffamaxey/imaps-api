@@ -11,6 +11,7 @@ uploads/*
 .coverage
 peka/create_*.py
 peka/data
+nfuploads/*
 
 sync/*
 Commands.md

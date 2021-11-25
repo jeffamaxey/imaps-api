@@ -13,7 +13,10 @@ env = environ.Env(
     MEDIA_ROOT=(str, "uploads"),
     DATA_ROOT=(str, "data"),
     PEKA_ROOT=(str, "peka/data"),
-    NF_ROOT=(str, "."),
+    NEXTFLOW_UPLOADS_ROOT=(str, "uploads"),
+    NEXTFLOW_DATA_ROOT=(str, "data"),
+    NEXTFLOW_PIPELINE_ROOT=(str, "pipelines"),
+    NEXTFLOW_PUBLISH_DIR=(str, "results"),
     MAILGUN_API_KEY=(str, "MAILGUN_KEY"),
     EMAIL_HOST_PASSWORD=(str, "EMAIL_HOST_PASSWORD"),
     SERVE_FILES=(bool, False),
@@ -81,7 +84,10 @@ MEDIA_ROOT = env("MEDIA_ROOT")
 DATA_URL = "/data/"
 DATA_ROOT = env("DATA_ROOT")
 PEKA_ROOT = env("PEKA_ROOT")
-NF_ROOT = env("NF_ROOT")
+NEXTFLOW_UPLOADS_ROOT = env("NEXTFLOW_UPLOADS_ROOT")
+NEXTFLOW_DATA_ROOT = env("NEXTFLOW_DATA_ROOT")
+NEXTFLOW_PIPELINE_ROOT = env("NEXTFLOW_PIPELINE_ROOT")
+NEXTFLOW_PUBLISH_DIR = env("NEXTFLOW_PUBLISH_DIR")
 
 CELERY_BROKER_URL = env("BROKER_URL")
 

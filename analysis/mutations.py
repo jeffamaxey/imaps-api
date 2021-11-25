@@ -1,10 +1,12 @@
+from django_nextflow.models import Data
 from core.permissions import readable_collections, readable_samples
 import graphene
 import json
 from graphql import GraphQLError
+from graphene_file_upload.scalars import Upload
 from core.models import User, Group
 from core.arguments import create_mutation_arguments
-from analysis.models import Collection, CollectionUserLink, CollectionGroupLink, Sample, SampleUserLink
+from analysis.models import Collection, CollectionUserLink, CollectionGroupLink, DataLink, DataUserLink, Sample, SampleUserLink
 from analysis.forms import CollectionForm, PaperForm, SampleForm
 
 class CreateCollectionMutation(graphene.Mutation):
@@ -218,3 +220,19 @@ class UpdateSampleAccessMutation(graphene.Mutation):
             link.permission = kwargs["permission"]
             link.save()
         return UpdateSampleAccessMutation(user=user, sample=sample)
+
+
+
+class UploadDataMutation(graphene.Mutation):
+
+    class Arguments:
+        file = Upload(required=True)
+
+    data = graphene.Field("analysis.queries.DataType")
+
+    def mutate(self, info, **kwargs):
+        print(kwargs)
+        data = Data.create_from_upload(kwargs["file"])
+        DataLink.objects.create(data=data)
+        DataUserLink.objects.create(data=data, user=info.context.user, permission=4)
+        return UploadDataMutation(data=data) 
