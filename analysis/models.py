@@ -114,6 +114,7 @@ class Job(models.Model):
     modified = models.IntegerField(default=time.time)
     started = models.IntegerField(null=True)
     finished = models.IntegerField(null=True)
+    pipeline = models.ForeignKey(Pipeline, null=True, on_delete=models.SET_NULL, related_name="jobs")
     private = models.BooleanField(default=True)
     execution = models.OneToOneField(Execution, null=True, on_delete=models.SET_NULL, related_name="job")
     sample = models.ForeignKey(Sample, null=True, on_delete=models.SET_NULL, related_name="jobs")

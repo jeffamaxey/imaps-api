@@ -122,27 +122,32 @@ class ExecutionType(DjangoObjectType):
     upstream_data = graphene.List("analysis.queries.DataType")
 
     def resolve_status(self, info, **kwargs):
-        return self.execution.status
+        print(self)
+        if self.execution: return self.execution.status
     
 
     def resolve_stdout(self, info, **kwargs):
-        return self.execution.stdout
+        if self.execution: return self.execution.stdout
     
 
     def resolve_stderr(self, info, **kwargs):
-        return self.execution.stderr
+        if self.execution: return self.execution.stderr
 
 
     def resolve_pipeline(self, info, **kwargs):
-        return self.execution.pipeline
+        return self.pipeline
     
 
     def resolve_process_executions(self, info, **kwargs):
-        return self.execution.process_executions.all()
+        if self.execution:
+            return self.execution.process_executions.all()
+        else: return []
     
 
     def resolve_upstream_data(self, info, **kwargs):
-        return self.execution.upstream_data.all()
+        if self.execution:
+            return self.execution.upstream_data.all()
+        else: return []
 
 
 class ProcessExecutionType(DjangoObjectType):

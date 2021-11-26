@@ -116,6 +116,16 @@ class Query(graphene.ObjectType):
         raise GraphQLError('{"data": "Does not exist"}')
     
 
+    def resolve_data(self, info, **kwargs):
+        print(kwargs)
+        return readable_data(
+            Data.objects.filter(
+                filename__icontains=kwargs["name"],
+                filetype=kwargs["filetype"]
+            ), info.context.user
+        )[:kwargs["first"]]
+    
+
     def resolve_pipeline(self, info, **kwargs):
         pipeline = Pipeline.objects.filter(id=kwargs["id"]).first()
         if pipeline: return pipeline
@@ -150,6 +160,7 @@ class Mutation(graphene.ObjectType):
     create_collection = CreateCollectionMutation.Field()
 
     upload_data = UploadDataMutation.Field()
+    run_pipeline = RunPipelineMutation.Field()
 
     '''
 
@@ -176,8 +187,8 @@ class Mutation(graphene.ObjectType):
     update_execution = UpdateExecutionMutation.Field()
     delete_execution = DeleteExecutionMutation.Field()
     update_execution_access = UpdateExecutionAccessMutation.Field()
+    '''
 
-    run_command = RunCommandMutation.Field()'''
 
 
 

@@ -1,4 +1,4 @@
-from django_nextflow.models import Data
+from django_nextflow.models import Data, Pipeline
 from core.permissions import readable_collections, readable_samples
 import graphene
 import json
@@ -6,8 +6,9 @@ from graphql import GraphQLError
 from graphene_file_upload.scalars import Upload
 from core.models import User, Group
 from core.arguments import create_mutation_arguments
-from analysis.models import Collection, CollectionUserLink, CollectionGroupLink, DataLink, DataUserLink, Sample, SampleUserLink
+from analysis.models import Collection, CollectionUserLink, CollectionGroupLink, DataLink, DataUserLink, Job, JobUserLink, Sample, SampleUserLink
 from analysis.forms import CollectionForm, PaperForm, SampleForm
+from analysis.celery import run_pipeline
 
 class CreateCollectionMutation(graphene.Mutation):
 
@@ -235,4 +236,22 @@ class UploadDataMutation(graphene.Mutation):
         data = Data.create_from_upload(kwargs["file"])
         DataLink.objects.create(data=data)
         DataUserLink.objects.create(data=data, user=info.context.user, permission=4)
-        return UploadDataMutation(data=data) 
+        return UploadDataMutation(data=data)
+
+
+
+class RunPipelineMutation(graphene.Mutation):
+
+    class Arguments:
+        pipeline = graphene.ID(required=True)
+        inputs = graphene.String()
+        dataInputs = graphene.String()
+
+    execution = graphene.Field("analysis.queries.ExecutionType")
+
+    def mutate(self, info, **kwargs):
+        pipeline = Pipeline.objects.filter(id=kwargs["pipeline"]).first()
+        job = Job.objects.create(pipeline=pipeline)
+        JobUserLink.objects.create(job=job, user=info.context.user, permission=4)
+        run_pipeline.apply_async((kwargs, job.id), task_id=str(job.id))
+        return RunPipelineMutation(execution=job)
