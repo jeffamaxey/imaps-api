@@ -14,11 +14,11 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 app.autodiscover_tasks()
 
 @app.task(name="run_pipeline")
-def run_pipeline(kwargs, job_id):
+def run_pipeline(kwargs, job_id, user_id):
     """."""
 
     from django_nextflow.models import Pipeline, Data
-    from analysis.models import DataLink, Job
+    from analysis.models import DataLink, Job, Sample, SampleUserLink
 
     job = Job.objects.filter(id=job_id).first()
     job.started = time.time()
@@ -31,6 +31,18 @@ def run_pipeline(kwargs, job_id):
         )
         for data in Data.objects.filter(upstream_process_execution__execution=execution):
             DataLink.objects.create(data=data)
+
+        for process_name, filetypes in settings.SAMPLE_PROCESS_DATA:
+            for data in Data.objects.filter(
+                upstream_process_execution__execution=execution,
+                upstream_process_execution__name=process_name,
+                filetype__in=filetypes
+            ):
+                sample = Sample.objects.create(
+                    name=data.filename,
+                    initiator=data
+                )
+                SampleUserLink.objects.create(sample=sample, user_id=user_id, permission=3)
         job.execution = execution
     finally:
         job.finished = time.time()
