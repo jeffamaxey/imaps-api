@@ -12,6 +12,7 @@ an object, after looking at all possible links they might have to it.
 
 from core.models import User, Group
 from analysis.models import Collection, CollectionGroupLink, CollectionUserLink, Sample, SampleUserLink, Job, JobUserLink, Data, DataUserLink, DataLink
+from django.db.models import Q
 from django_nextflow.models import Data
 
 def get_groups_by_user(user, permission, exact=True):
@@ -221,57 +222,65 @@ def readable_collections(queryset, user=None):
     """Takes a Collection queryset and filters it by those a particular user is
     allowed to know exist and read."""
 
-    viewable = queryset.filter(private=False)
     if user:
-        viewable |= queryset.filter(users=user)
-        for group in user.groups.all():
-            viewable |= queryset.filter(groups=group)
-    return viewable.all().distinct()
+        return queryset.filter(
+            Q(private=False) |\
+            Q(users=user) |\
+            Q(groups__users=user)
+        )
+    else:
+        return queryset.filter(private=False)
 
 
 def readable_samples(queryset, user=None):
     """Takes a Sample queryset and filters it by those a particular user is
     allowed to know exist and read."""
 
-    viewable = queryset.filter(private=False)
     if user:
-        viewable |= queryset.filter(users=user)
-        viewable |= queryset.filter(collection__users=user)
-        for group in user.groups.all():
-            viewable |= queryset.filter(collection__groups=group)
-    return viewable.all().distinct()
+        return queryset.filter(
+            Q(private=False) |\
+            Q(users=user) |\
+            Q(collection__users=user) |\
+            Q(collection__groups__users=user)
+        )
+    else:
+        return queryset.filter(private=False)
 
 
 def readable_jobs(queryset, user=None):
     """Takes a Job queryset and filters it by those a particular user is
     allowed to know exist and read."""
 
-    viewable = queryset.filter(private=False)
     if user:
-        viewable |= queryset.filter(users=user)
-        viewable |= queryset.filter(sample__users=user)
-        viewable |= queryset.filter(collection__users=user)
-        viewable |= queryset.filter(sample__collection__users=user)
-        for group in user.groups.all():
-            viewable |= queryset.filter(collection__groups=group)
-            viewable |= queryset.filter(sample__collection__groups=group)
-    return viewable.all().distinct()
+        return queryset.filter(
+            Q(private=False) |\
+            Q(users=user) |\
+            Q(sample__users=user) |\
+            Q(collection__users=user) |\
+            Q(sample__collection__users=user) |\
+            Q(collection__groups__users=user) |\
+            Q(sample__collection__groups__users=user)
+        )
+    else:
+        return queryset.filter(private=False)
 
 
 def readable_data(queryset, user=None):
     """Takes a Data queryset and filters it by those a particular user is
     allowed to know exist and read."""
 
-    viewable = queryset.filter(link__private=False)
     if user:
-        viewable |= queryset.filter(datauserlink__user=user)
-        viewable |= queryset.filter(upstream_process_execution__execution__job__users=user)
-        viewable |= queryset.filter(upstream_process_execution__execution__job__sample__users=user)
-        viewable |= queryset.filter(upstream_process_execution__execution__job__sample__collection__users=user)
-        viewable |= queryset.filter(upstream_process_execution__execution__job__collection__users=user)
-        viewable |= queryset.filter(link__collection__users=user)
-        for group in user.groups.all():
-            viewable |= queryset.filter(link__collection__groups=group)
-            viewable |= queryset.filter(upstream_process_execution__execution__job__collection__groups=group)
-            viewable |= queryset.filter(upstream_process_execution__execution__job__sample__collection__groups=group)
-    return viewable.all().distinct()
+        return queryset.filter(
+            Q(link__private=False) |\
+            Q(datauserlink__user=user) |\
+            Q(upstream_process_execution__execution__job__users=user) |\
+            Q(upstream_process_execution__execution__job__sample__users=user) |\
+            Q(upstream_process_execution__execution__job__sample__collection__users=user) |\
+            Q(upstream_process_execution__execution__job__collection__users=user) |\
+            Q(link__collection__users=user) |\
+            Q(link__collection__groups__users=user) |\
+            Q(upstream_process_execution__execution__job__collection__groups__users=user) |\
+            Q(upstream_process_execution__execution__job__sample__collection__groups__users=user)
+        )
+    else:
+        return queryset.filter(link__private=False)
