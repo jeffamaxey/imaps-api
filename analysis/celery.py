@@ -1,5 +1,6 @@
 
 import os
+import time
 import pandas as pd
 import json
 import shutil
@@ -19,13 +20,18 @@ def run_pipeline(kwargs, job_id):
     from django_nextflow.models import Pipeline, Data
     from analysis.models import DataLink, Job
 
-    pipeline = Pipeline.objects.filter(id=kwargs["pipeline"]).first()
-    execution = pipeline.run(
-        params=json.loads(kwargs["inputs"]),
-        data_params=json.loads(kwargs["dataInputs"]),
-    )
-    for data in Data.objects.filter(upstream_process_execution__execution=execution):
-        DataLink.objects.create(data=data)
     job = Job.objects.filter(id=job_id).first()
-    job.execution = execution
+    job.started = time.time()
     job.save()
+    pipeline = Pipeline.objects.filter(id=kwargs["pipeline"]).first()
+    try:
+        execution = pipeline.run(
+            params=json.loads(kwargs["inputs"]),
+            data_params=json.loads(kwargs["dataInputs"]),
+        )
+        for data in Data.objects.filter(upstream_process_execution__execution=execution):
+            DataLink.objects.create(data=data)
+        job.execution = execution
+    finally:
+        job.finished = time.time()
+        job.save()

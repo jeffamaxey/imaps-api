@@ -228,6 +228,7 @@ class UploadDataMutation(graphene.Mutation):
 
     class Arguments:
         file = Upload(required=True)
+        make_sample = graphene.Boolean()
 
     data = graphene.Field("analysis.queries.DataType")
 
@@ -236,6 +237,12 @@ class UploadDataMutation(graphene.Mutation):
         data = Data.create_from_upload(kwargs["file"])
         DataLink.objects.create(data=data)
         DataUserLink.objects.create(data=data, user=info.context.user, permission=4)
+        if kwargs.get("make_sample"):
+            sample = Sample.objects.create(
+                name=data.filename,
+                initiator=data
+            )
+            SampleUserLink.objects.create(sample=sample, user=info.context.user, permission=3)
         return UploadDataMutation(data=data)
 
 
