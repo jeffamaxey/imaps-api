@@ -29,6 +29,14 @@ def run_pipeline(kwargs, job_id, user_id):
             params=json.loads(kwargs["inputs"]),
             data_params=json.loads(kwargs["dataInputs"]),
         )
+        upstream_samples = [
+            data.upstream_process_execution.execution.job.sample for data in
+            execution.upstream_data.exclude(upstream_process_execution=None)
+        ]
+        sample_ids = set([s.id for s in upstream_samples if s])
+        if len(sample_ids) == 1:
+            job.sample_id = sample_ids[0]
+            job.save()
         for data in Data.objects.filter(upstream_process_execution__execution=execution):
             DataLink.objects.create(data=data)
 
