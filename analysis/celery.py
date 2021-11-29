@@ -28,7 +28,9 @@ def run_pipeline(kwargs, job_id, user_id):
         execution = pipeline.run(
             params=json.loads(kwargs["inputs"]),
             data_params=json.loads(kwargs["dataInputs"]),
+            profile=["iMaps"]
         )
+        
         assign_job_parents(job, execution)
         
         for data in Data.objects.filter(upstream_process_execution__execution=execution):

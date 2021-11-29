@@ -120,7 +120,7 @@ class Query(graphene.ObjectType):
         print(kwargs)
         return readable_data(
             Data.objects.filter(
-                filename__icontains=kwargs["name"],
+                filename__contains=kwargs["name"],
                 filetype=kwargs["filetype"]
             ), info.context.user
         )[:kwargs["first"]]
