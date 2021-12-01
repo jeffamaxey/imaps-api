@@ -2,7 +2,7 @@ import graphene
 from graphene.relay.connection import Connection
 from graphene_django import DjangoObjectType
 from graphql import execution
-from core.permissions import  does_user_have_permission_on_collection, does_user_have_permission_on_sample, get_users_by_collection
+from core.permissions import  does_user_have_permission_on_collection, does_user_have_permission_on_sample, get_users_by_collection, get_users_by_data, get_users_by_job
 
 from .models import Collection, Job, Sample, Paper
 from django_nextflow.models import Data, Execution, Pipeline, ProcessExecution
@@ -117,9 +117,12 @@ class ExecutionType(DjangoObjectType):
     status = graphene.String()
     stdout = graphene.String()
     stderr = graphene.String()
+    params = graphene.String()
+    data_params = graphene.String()
     pipeline = graphene.Field("analysis.queries.PipelineType")
     process_executions = graphene.List("analysis.queries.ProcessExecutionType")
     upstream_data = graphene.List("analysis.queries.DataType")
+    owners = graphene.List("core.queries.UserType")
 
     def resolve_status(self, info, **kwargs):
         print(self)
@@ -136,6 +139,10 @@ class ExecutionType(DjangoObjectType):
 
     def resolve_pipeline(self, info, **kwargs):
         return self.pipeline
+
+
+    def resolve_params(self, info, **kwargs):
+        return str(self.params)
     
 
     def resolve_process_executions(self, info, **kwargs):
@@ -148,6 +155,10 @@ class ExecutionType(DjangoObjectType):
         if self.execution:
             return self.execution.upstream_data.all()
         else: return []
+    
+
+    def resolve_owners(self, info, **kwargs):
+        return get_users_by_job(self, 4)
 
 
 class ProcessExecutionType(DjangoObjectType):
@@ -171,9 +182,13 @@ class DataType(DjangoObjectType):
     id = graphene.ID()
     size = graphene.Float()
     downstream_executions = graphene.List("analysis.queries.ExecutionType")
+    owners = graphene.List("core.queries.UserType")
 
     def resolve_downstream_executions(self, info, **kwargs):
         return Job.objects.filter(execution__upstream_data=self)
+    
+    def resolve_owners(self, info, **kwargs):
+        return get_users_by_data(self, 4)
 
 
 

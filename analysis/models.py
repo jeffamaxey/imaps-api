@@ -116,6 +116,8 @@ class Job(models.Model):
     finished = models.IntegerField(null=True)
     pipeline = models.ForeignKey(Pipeline, null=True, on_delete=models.SET_NULL, related_name="jobs")
     private = models.BooleanField(default=True)
+    params = models.TextField(default="{}")
+    data_params = models.TextField(default="{}")
     execution = models.OneToOneField(Execution, null=True, on_delete=models.SET_NULL, related_name="job")
     sample = models.ForeignKey(Sample, null=True, on_delete=models.SET_NULL, related_name="jobs")
     collection = models.ForeignKey(Collection, null=True, on_delete=models.SET_NULL, related_name="jobs")

@@ -257,7 +257,11 @@ class RunPipelineMutation(graphene.Mutation):
 
     def mutate(self, info, **kwargs):
         pipeline = Pipeline.objects.filter(id=kwargs["pipeline"]).first()
-        job = Job.objects.create(pipeline=pipeline)
+        job = Job.objects.create(
+            pipeline=pipeline,
+            params=kwargs["inputs"],
+            data_params=kwargs["dataInputs"],
+        )
         JobUserLink.objects.create(job=job, user=info.context.user, permission=4)
         run_pipeline.apply_async((kwargs, job.id, info.context.user.id), task_id=str(job.id))
         return RunPipelineMutation(execution=job)
