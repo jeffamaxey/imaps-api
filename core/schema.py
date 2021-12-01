@@ -37,10 +37,6 @@ class Query(graphene.ObjectType):
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
 
 
-    '''
-    quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))'''
-
-
     def resolve_access_token(self, info, **kwargs):
         token = info.context.COOKIES.get("imaps_refresh_token")
         if not token:
@@ -121,7 +117,7 @@ class Query(graphene.ObjectType):
         return readable_data(
             Data.objects.filter(
                 filename__contains=kwargs["name"],
-                filetype=kwargs["filetype"]
+                filetype__regex=kwargs["filetype"]
             ), info.context.user
         )[:kwargs["first"]]
     
