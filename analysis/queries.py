@@ -2,7 +2,7 @@ import graphene
 from graphene.relay.connection import Connection
 from graphene_django import DjangoObjectType
 from graphql import execution
-from core.permissions import  does_user_have_permission_on_collection, does_user_have_permission_on_sample, get_users_by_collection, get_users_by_data, get_users_by_job
+from core.permissions import  does_user_have_permission_on_collection, does_user_have_permission_on_data, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_users_by_collection, get_users_by_data, get_users_by_job
 
 from .models import Collection, Job, Sample, Paper
 from django_nextflow.models import Data, Execution, Pipeline, ProcessExecution
@@ -125,6 +125,12 @@ class ExecutionType(DjangoObjectType):
     upstream_data = graphene.List("analysis.queries.DataType")
     owners = graphene.List("core.queries.UserType")
 
+    def resolve_can_share(self, info, **kwargs):
+        return does_user_have_permission_on_job(info.context.user, self, 3)
+    
+    def resolve_can_edit(self, info, **kwargs):
+        return does_user_have_permission_on_job(info.context.user, self, 2)
+
     def resolve_status(self, info, **kwargs):
         if self.execution: return self.execution.status
     
@@ -184,13 +190,33 @@ class DataType(DjangoObjectType):
         model  = Data
     
     id = graphene.ID()
+    is_owner = graphene.Boolean()
+    can_share = graphene.Boolean()
+    can_edit = graphene.Boolean()
+    private = graphene.Boolean()
     size = graphene.Float()
     downstream_executions = graphene.List("analysis.queries.ExecutionType")
+    users = graphene.List("core.queries.UserType")
     owners = graphene.List("core.queries.UserType")
+
+    def resolve_is_owner(self, info, **kwargs):
+        return does_user_have_permission_on_data(info.context.user, self, 4)
+    
+    def resolve_can_share(self, info, **kwargs):
+        return does_user_have_permission_on_data(info.context.user, self, 3)
+    
+    def resolve_can_edit(self, info, **kwargs):
+        return does_user_have_permission_on_data(info.context.user, self, 2)
+    
+    def resolve_private(self, info, **kwargs):
+        return self.link.private
 
     def resolve_downstream_executions(self, info, **kwargs):
         return Job.objects.filter(execution__upstream_data=self)
     
+    def resolve_users(self, info, **kwargs):
+        return get_users_by_data(self, 1, exact=False)
+
     def resolve_owners(self, info, **kwargs):
         return get_users_by_data(self, 4)
 

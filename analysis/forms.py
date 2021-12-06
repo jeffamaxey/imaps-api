@@ -1,6 +1,6 @@
 from django.db import transaction
-from django.forms import ModelForm
-from analysis.models import Collection, Paper, Sample
+from django.forms import ModelForm, BooleanField
+from analysis.models import Collection, Paper, Sample, Data
 
 class CollectionForm(ModelForm):
     """Creates or edits a collection."""
@@ -51,4 +51,24 @@ class SampleForm(ModelForm):
             for execution in self.instance.executions.all():
                 execution.private = self.instance.private
                 execution.save()
+        return super().save(self, *args, **kwargs)
+
+
+
+class DataForm(ModelForm):
+
+    class Meta:
+        model = Data
+        fields = ["private"]
+    
+    private = BooleanField(required=True)
+    
+
+    '''def clean_private(self):
+        #if self.instance.collection: return self.instance.collection.private
+        print(self.data)
+        return self.data.get("private", self.instance.link.private)'''
+    
+
+    def save(self, *args, **kwargs):
         return super().save(self, *args, **kwargs)

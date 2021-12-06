@@ -2,11 +2,11 @@ from django_nextflow.models import Data
 import graphene
 from graphene_django.types import DjangoObjectType
 from .models import User, Group
-from .permissions import does_user_have_permission_on_collection, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_collections_by_group, get_groups_by_user, get_users_by_group, readable_data, readable_jobs
+from .permissions import does_user_have_permission_on_collection, does_user_have_permission_on_data, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_collections_by_group, get_groups_by_user, get_users_by_group, readable_data, readable_jobs
 from .permissions import get_collections_by_user
 from .permissions import  get_data_by_user
 from .permissions import readable_collections, readable_samples
-from analysis.models import Collection, Job, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink, JobUserLink
+from analysis.models import Collection, DataUserLink, Job, Sample, CollectionUserLink, CollectionGroupLink, SampleUserLink, JobUserLink
 from analysis.queries import CollectionType, SampleType, ExecutionType, DataType
 
 class UserType(DjangoObjectType):
@@ -24,6 +24,7 @@ class UserType(DjangoObjectType):
     collection_permission = graphene.Int(id=graphene.ID(required=True))
     sample_permission = graphene.Int(id=graphene.ID(required=True))
     execution_permission = graphene.Int(id=graphene.ID(required=True))
+    data_permission = graphene.Int(id=graphene.ID(required=True))
 
     def resolve_email(self, info, **kwargs):
         return self.email if info.context.user == self else ""
@@ -59,9 +60,17 @@ class UserType(DjangoObjectType):
     
     def resolve_execution_permission(self, info, **kwargs):
         job = Job.objects.filter(id=kwargs["id"]).first()
-        if not does_user_have_permission_on_job(info.context.user, job):
+        if not does_user_have_permission_on_job(info.context.user, job, 1):
             return 0
         link = JobUserLink.objects.filter(user=self, job=job).first()
+        return link.permission if link else 0
+    
+
+    def resolve_data_permission(self, info, **kwargs):
+        data = Data.objects.filter(id=kwargs["id"]).first()
+        if not does_user_have_permission_on_data(info.context.user, data, 1):
+            return 0
+        link = DataUserLink.objects.filter(user=self, data=data).first()
         return link.permission if link else 0
 
     

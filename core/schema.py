@@ -113,7 +113,6 @@ class Query(graphene.ObjectType):
     
 
     def resolve_data(self, info, **kwargs):
-        print(kwargs)
         return readable_data(
             Data.objects.filter(
                 filename__contains=kwargs["name"],
@@ -155,8 +154,14 @@ class Mutation(graphene.ObjectType):
 
     create_collection = CreateCollectionMutation.Field()
 
-    upload_data = UploadDataMutation.Field()
     run_pipeline = RunPipelineMutation.Field()
+    update_execution = UpdateExecutionMutation.Field()
+    update_execution_access = UpdateExecutionAccessMutation.Field()
+    
+    upload_data = UploadDataMutation.Field()
+    update_data = UpdateDataMutation.Field()
+    update_data_access = UpdateDataAccessMutation.Field()
+
 
     '''
 

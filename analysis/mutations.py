@@ -1,5 +1,5 @@
-from django_nextflow.models import Data, Pipeline
-from core.permissions import readable_collections, readable_samples
+from django_nextflow.models import Data, Execution, Pipeline
+from core.permissions import does_user_have_permission_on_data, does_user_have_permission_on_job, readable_collections, readable_data, readable_jobs, readable_samples
 import graphene
 import json
 from graphql import GraphQLError
@@ -7,7 +7,7 @@ from graphene_file_upload.scalars import Upload
 from core.models import User, Group
 from core.arguments import create_mutation_arguments
 from analysis.models import Collection, CollectionUserLink, CollectionGroupLink, DataLink, DataUserLink, Job, JobUserLink, Sample, SampleUserLink
-from analysis.forms import CollectionForm, PaperForm, SampleForm
+from analysis.forms import CollectionForm, DataForm, PaperForm, SampleForm
 from analysis.celery import run_pipeline
 
 class CreateCollectionMutation(graphene.Mutation):
@@ -224,6 +224,55 @@ class UpdateSampleAccessMutation(graphene.Mutation):
 
 
 
+class UpdateExecutionMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        private = graphene.Boolean(required=True)
+    
+    execution = graphene.Field("analysis.queries.ExecutionType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        job = readable_jobs(Job.objects.filter(id=kwargs["id"]), info.context.user).first()
+        if not job: raise GraphQLError('{"execution": ["Does not exist"]}')
+        if not does_user_have_permission_on_job(info.context.user, job, 2):
+            raise GraphQLError('{"data": ["You don\'t have permission to edit this execution"]}')
+        job.private = kwargs["private"]
+        job.save()
+        return UpdateExecutionMutation(execution=job)
+
+
+class UpdateExecutionAccessMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        user = graphene.ID()
+        permission = graphene.Int(required=True)
+    
+    execution = graphene.Field("analysis.queries.ExecutionType")
+    user = graphene.Field("core.queries.UserType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        job = readable_jobs(Job.objects.filter(id=kwargs["id"]), info.context.user).first()
+        if not job: raise GraphQLError('{"execution": ["Does not exist"]}')
+        if not does_user_have_permission_on_job(info.context.user, job, 3):
+            raise GraphQLError('{"execution": ["You do not have share permissions"]}')
+        user = User.objects.filter(id=kwargs.get("user")).first()
+        if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if not 0 <= kwargs["permission"] <= 4:
+            raise GraphQLError('{"permission": ["Not a valid permission"]}')
+        link = JobUserLink.objects.get_or_create(job=job, user=user)[0]
+        if kwargs["permission"] == 0:
+            link.delete()
+        else:
+            link.permission = kwargs["permission"]
+            link.save()
+        return UpdateExecutionAccessMutation(user=user, execution=job)
+
+
+
 class UploadDataMutation(graphene.Mutation):
 
     class Arguments:
@@ -243,6 +292,57 @@ class UploadDataMutation(graphene.Mutation):
             )
             SampleUserLink.objects.create(sample=sample, user=info.context.user, permission=3)
         return UploadDataMutation(data=data)
+
+
+
+class UpdateDataMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        private = graphene.Boolean(required=True)
+    
+    data = graphene.Field("analysis.queries.DataType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        data = readable_data(Data.objects.filter(id=kwargs["id"]), info.context.user).first()
+        if not data: raise GraphQLError('{"data": ["Does not exist"]}')
+        if not does_user_have_permission_on_data(info.context.user, data, 2):
+            raise GraphQLError('{"data": ["You don\'t have permission to edit this data"]}')
+        data.link.private = kwargs["private"]
+        data.link.save()
+        return UpdateDataMutation(data=data)
+
+
+
+class UpdateDataAccessMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        user = graphene.ID()
+        permission = graphene.Int(required=True)
+    
+    data = graphene.Field("analysis.queries.DataType")
+    user = graphene.Field("core.queries.UserType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        data = readable_data(Data.objects.filter(id=kwargs["id"]), info.context.user).first()
+        if not data: raise GraphQLError('{"sample": ["Does not exist"]}')
+
+        if not does_user_have_permission_on_data(info.context.user, data, 3):
+            raise GraphQLError('{"data": ["You do not have share permissions"]}')
+        user = User.objects.filter(id=kwargs.get("user")).first()
+        if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if not 0 <= kwargs["permission"] <= 4:
+            raise GraphQLError('{"permission": ["Not a valid permission"]}')
+        link = DataUserLink.objects.get_or_create(data=data, user=user)[0]
+        if kwargs["permission"] == 0:
+            link.delete()
+        else:
+            link.permission = kwargs["permission"]
+            link.save()
+        return UpdateDataAccessMutation(user=user, data=data)
 
 
 
