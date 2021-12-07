@@ -7,15 +7,15 @@ class CollectionForm(ModelForm):
 
     class Meta:
         model = Collection
-        exclude = ["id", "users", "groups", "created", "last_modified"]
+        exclude = ["id", "users", "groups", "created", "modified"]
     
     def save(self, *args, **kwargs):
         with transaction.atomic():
             for sample in self.instance.samples.all():
                 sample.private = self.instance.private
-                for execution in sample.executions.all():
-                    execution.private = self.instance.private
-                    execution.save()
+                for job in sample.jobs.all():
+                    job.private = self.instance.private
+                    job.save()
                 sample.save()
             '''for execution in self.instance.executions.all():
                 execution.private = self.instance.private
@@ -38,7 +38,7 @@ class SampleForm(ModelForm):
 
     class Meta:
         model = Sample
-        exclude = ["id", "created", "last_modified", "qc_message", "qc_pass", "users", "collection"]
+        exclude = ["id", "created", "modified", "qc_message", "qc_pass", "users", "collection", "initiator"]
     
 
     def clean_private(self):
@@ -48,9 +48,9 @@ class SampleForm(ModelForm):
 
     def save(self, *args, **kwargs):
         with transaction.atomic():
-            for execution in self.instance.executions.all():
-                execution.private = self.instance.private
-                execution.save()
+            for job in self.instance.jobs.all():
+                job.private = self.instance.private
+                job.save()
         return super().save(self, *args, **kwargs)
 
 

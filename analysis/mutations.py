@@ -1,5 +1,5 @@
 from django_nextflow.models import Data, Execution, Pipeline
-from core.permissions import does_user_have_permission_on_data, does_user_have_permission_on_job, readable_collections, readable_data, readable_jobs, readable_samples
+from core.permissions import does_user_have_permission_on_collection, does_user_have_permission_on_data, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_users_by_collection, readable_collections, readable_data, readable_jobs, readable_samples
 import graphene
 import json
 from graphql import GraphQLError
@@ -49,7 +49,7 @@ class UpdateCollectionMutation(graphene.Mutation):
             Collection.objects.filter(id=kwargs["id"]), info.context.user
         ).first()
         if not collection: raise GraphQLError('{"collection": ["Does not exist"]}')
-        if not can_user_edit_collection(info.context.user, collection):
+        if not does_user_have_permission_on_collection(info.context.user, collection, 2):
             raise GraphQLError('{"collection": ["You don\'t have permission to edit this collection"]}')
         form = CollectionForm(kwargs, instance=collection)
         if form.is_valid():
@@ -77,13 +77,13 @@ class DeleteCollectionMutation(graphene.Mutation):
         if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
         collection = readable_collections(Collection.objects.filter(id=kwargs["id"]), info.context.user).first()
         if not collection: raise GraphQLError('{"collection": ["Does not exist"]}')
-        if not is_user_owner_of_collection(info.context.user, collection):
+        if not does_user_have_permission_on_collection(info.context.user, collection, 4):
             raise GraphQLError('{"collection": ["Not an owner"]}')
-        executions = (
+        '''executions = (
             Execution.objects.filter(collection=collection) |
             Execution.objects.filter(sample__collection=collection)
         )
-        executions.delete()
+        executions.delete()'''
         collection.samples.all().delete()
         collection.delete()
         return DeleteCollectionMutation(success=True)
@@ -98,7 +98,7 @@ class UpdateCollectionAccessMutation(graphene.Mutation):
         group = graphene.ID()
         permission = graphene.Int(required=True)
     
-    collection = graphene.Field("core.queries.CollectionType")
+    collection = graphene.Field("analysis.queries.CollectionType")
     user = graphene.Field("core.queries.UserType")
     group = graphene.Field("core.queries.GroupType")
 
@@ -108,7 +108,7 @@ class UpdateCollectionAccessMutation(graphene.Mutation):
 
         collection = readable_collections(Collection.objects.filter(id=kwargs["id"]), info.context.user).first()
         if not collection: raise GraphQLError('{"collection": ["Does not exist"]}')
-        if not can_user_share_collection(info.context.user, collection):
+        if not does_user_have_permission_on_collection(info.context.user, collection, 3):
             raise GraphQLError('{"collection": ["You do not have share permissions"]}')
         user = User.objects.filter(id=kwargs.get("user")).first()
         if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
@@ -120,11 +120,11 @@ class UpdateCollectionAccessMutation(graphene.Mutation):
             link = CollectionUserLink.objects.get_or_create(
                 collection=collection, user=user
             )[0]
-            if kwargs["permission"] == 4 and not is_user_owner_of_collection(info.context.user, collection):
+            if kwargs["permission"] == 4 and not does_user_have_permission_on_collection(info.context.user, collection, 4):
                 raise GraphQLError('{"collection": ["Only an owner can make owners"]}')
-            if link.permission == 4 and not is_user_owner_of_collection(info.context.user, collection):
+            if link.permission == 4 and not does_user_have_permission_on_collection(info.context.user, collection, 4):
                 raise GraphQLError('{"collection": ["Only an owner can remove owners"]}')
-            if collection_owners(collection).count() == 1 and link.permission == 4 and kwargs["permission"] != 4:
+            if get_users_by_collection(collection, 4).count() == 1 and link.permission == 4 and kwargs["permission"] != 4:
                 raise GraphQLError('{"collection": ["There must be at least one owner"]}')
         elif group:
             if not 0 <= kwargs["permission"] <= 3:
@@ -157,9 +157,9 @@ class UpdateSampleMutation(graphene.Mutation):
         if not sample: raise GraphQLError('{"sample": ["Does not exist"]}')
         collection = readable_collections(Collection.objects.filter(id=kwargs.get("collection")), info.context.user).first()
         if not collection and sample.collection: raise GraphQLError('{"collection": ["Does not exist"]}')
-        if collection and not is_user_owner_of_collection(info.context.user, collection):
+        if collection and not does_user_have_permission_on_collection(info.context.user, collection, 4):
             raise GraphQLError('{"sample": ["The new collection is not owned by you"]}')
-        if not can_user_edit_sample(info.context.user, sample):
+        if not does_user_have_permission_on_sample(info.context.user, sample, 2):
             raise GraphQLError('{"sample": ["You don\'t have permission to edit this sample"]}')
         if not collection: kwargs["collection"] = None
         form = SampleForm(kwargs, instance=sample)
@@ -169,6 +169,37 @@ class UpdateSampleMutation(graphene.Mutation):
             form.instance.save()
             return UpdateSampleMutation(sample=form.instance)
         raise GraphQLError(json.dumps(form.errors))
+
+
+
+class UpdateSampleAccessMutation(graphene.Mutation):
+
+    class Arguments:
+        id = graphene.ID(required=True)
+        user = graphene.ID()
+        permission = graphene.Int(required=True)
+    
+    sample = graphene.Field("analysis.queries.SampleType")
+    user = graphene.Field("core.queries.UserType")
+
+    def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+        sample = readable_samples(Sample.objects.filter(id=kwargs["id"]), info.context.user).first()
+        if not sample: raise GraphQLError('{"sample": ["Does not exist"]}')
+
+        if not does_user_have_permission_on_sample(info.context.user, sample, 3):
+            raise GraphQLError('{"sample": ["You do not have share permissions"]}')
+        user = User.objects.filter(id=kwargs.get("user")).first()
+        if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
+        if not 0 <= kwargs["permission"] <= 3:
+            raise GraphQLError('{"permission": ["Not a valid permission"]}')
+        link = SampleUserLink.objects.get_or_create(sample=sample, user=user)[0]
+        if kwargs["permission"] == 0:
+            link.delete()
+        else:
+            link.permission = kwargs["permission"]
+            link.save()
+        return UpdateSampleAccessMutation(user=user, sample=sample)
 
 
 
@@ -184,43 +215,12 @@ class DeleteSampleMutation(graphene.Mutation):
             raise GraphQLError(json.dumps({"error": "Not authorized"}))
         sample = readable_samples(Sample.objects.filter(id=kwargs["id"]), info.context.user).first()
         if not sample: raise GraphQLError('{"sample": ["Does not exist"]}')
-        if not is_user_owner_of_sample(info.context.user, sample):
+        if not does_user_have_permission_on_sample(info.context.user, sample, 4):
             raise GraphQLError('{"sample": ["Not an owner"]}')
-        executions = Execution.objects.filter(sample=sample)
+        executions = Job.objects.filter(sample=sample)
         executions.delete()
         sample.delete()
         return DeleteSampleMutation(success=True)
-
-
-
-class UpdateSampleAccessMutation(graphene.Mutation):
-
-    class Arguments:
-        id = graphene.ID(required=True)
-        user = graphene.ID()
-        permission = graphene.Int(required=True)
-    
-    sample = graphene.Field("samples.queries.SampleType")
-    user = graphene.Field("core.queries.UserType")
-
-    def mutate(self, info, **kwargs):
-        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
-        sample = readable_samples(Sample.objects.filter(id=kwargs["id"]), info.context.user).first()
-        if not sample: raise GraphQLError('{"sample": ["Does not exist"]}')
-
-        if not can_user_share_sample(info.context.user, sample):
-            raise GraphQLError('{"sample": ["You do not have share permissions"]}')
-        user = User.objects.filter(id=kwargs.get("user")).first()
-        if kwargs.get("user") and not user: raise GraphQLError('{"user": ["Does not exist"]}')
-        if not 0 <= kwargs["permission"] <= 3:
-            raise GraphQLError('{"permission": ["Not a valid permission"]}')
-        link = SampleUserLink.objects.get_or_create(sample=sample, user=user)[0]
-        if kwargs["permission"] == 0:
-            link.delete()
-        else:
-            link.permission = kwargs["permission"]
-            link.save()
-        return UpdateSampleAccessMutation(user=user, sample=sample)
 
 
 

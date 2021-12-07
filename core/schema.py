@@ -153,6 +153,13 @@ class Mutation(graphene.ObjectType):
     leave_group = LeaveGroupMutation.Field()
 
     create_collection = CreateCollectionMutation.Field()
+    update_collection = UpdateCollectionMutation.Field()
+    update_collection_access = UpdateCollectionAccessMutation.Field()
+    delete_collection = DeleteCollectionMutation.Field()
+
+    update_sample = UpdateSampleMutation.Field()
+    update_sample_access = UpdateSampleAccessMutation.Field()
+    delete_sample = DeleteSampleMutation.Field()
 
     run_pipeline = RunPipelineMutation.Field()
     update_execution = UpdateExecutionMutation.Field()
