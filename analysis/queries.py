@@ -118,6 +118,7 @@ class ExecutionType(DjangoObjectType):
     stdout = graphene.String()
     stderr = graphene.String()
     log = graphene.String()
+    command = graphene.String()
     params = graphene.String()
     data_params = graphene.String()
     pipeline = graphene.Field("analysis.queries.PipelineType")
@@ -145,6 +146,9 @@ class ExecutionType(DjangoObjectType):
 
     def resolve_log(self, info, **kwargs):
         if self.execution: return self.execution.get_log_text()
+    
+    def resolve_command(self, info, **kwargs):
+        if self.execution: return self.execution.command
 
 
     def resolve_pipeline(self, info, **kwargs):
