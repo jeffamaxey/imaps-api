@@ -93,6 +93,10 @@ SAMPLE_PROCESS_DATA = [
     ["ULTRAPLEX", ["fastq.gz", "fastq", "fq.gz", "fq"]]
 ]
 
+PROCESS_FUNCTIONS = {
+    "ULTRAPLEX": ["analysis.celery.annotate_samples_from_ultraplex"]
+}
+
 CELERY_BROKER_URL = env("BROKER_URL")
 
 EMAIL_HOST = "smtp.eu.mailgun.org"

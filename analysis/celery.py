@@ -4,6 +4,7 @@ import time
 import pandas as pd
 import json
 import shutil
+import importlib
 from celery import Celery
 from django.conf import settings
 
@@ -47,6 +48,13 @@ def run_pipeline(kwargs, job_id, user_id):
                     initiator=data
                 )
                 SampleUserLink.objects.create(sample=sample, user_id=user_id, permission=3)
+            
+        for process_execution in execution.process_executions.all():
+            if process_execution.process_name in settings.PROCESS_FUNCTIONS:
+                for funcname in settings.PROCESS_FUNCTIONS[process_execution.process_name]:
+                    module = ".".join(funcname.split(".")[:-1])
+                    func = getattr(importlib.import_module(module), funcname.split(".")[-1])
+                    func(process_execution)
         job.execution = execution
     finally:
         job.finished = time.time()
@@ -76,3 +84,36 @@ def assign_job_parents(job, execution):
         if len(collection_ids) == 1:
             job.collection_id = collection_ids[0]
             job.save()
+
+
+def annotate_samples_from_ultraplex(process_execution):
+    # Try to get the original spreadsheet
+    df = None
+    species = {
+        "Hs": "Homo sapiens",
+        "Mm": "Mus musculus",
+        "Sc": "Saccharomyces cerevisiae",
+        "Dr": "Danio rerio",
+        "Rn": "Rattus norvegicus",
+        "Dm": "Drosophila melanogaster",
+        "Ec": "Escherichia coli",
+        "Sa": "Staphyloccocus aureus",
+    }
+    barcodes_csv = process_execution.upstream_data.filter(filetype="csv").first()
+    if barcodes_csv and barcodes_csv.upstream_process_execution:
+        samples_csv = barcodes_csv.upstream_process_execution.upstream_data.filter(filetype="csv").first()
+        if samples_csv:
+            df = pd.read_csv(samples_csv.full_path)
+    if df is None: return  
+    for data in process_execution.downstream_data.all():
+        if data.samples.count():
+            sample = data.samples.first()
+            sample_name = data.filename[:-(len(data.filetype) + 1)]
+            for row in df.iloc:
+                if len(row["SampleName"]) > 3 and row["SampleName"] in sample_name:
+                    sample.pi_name = row["PI"]
+                    sample.annotator_name = row["Scientist"]
+                    sample.organism = species.get(row["Species"], row["Species"])
+                    sample.source = row["CellOrTissue"]
+                    sample.save()
+                    break
