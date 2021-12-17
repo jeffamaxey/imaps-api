@@ -118,7 +118,7 @@ class Query(graphene.ObjectType):
                 filename__contains=kwargs["name"],
                 filetype__regex=kwargs["filetype"]
             ), info.context.user
-        )[:kwargs["first"]]
+        ).distinct()[:kwargs["first"]]
     
 
     def resolve_pipeline(self, info, **kwargs):

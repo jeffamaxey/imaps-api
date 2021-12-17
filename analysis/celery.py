@@ -72,24 +72,25 @@ def assign_job_parents(job, execution):
                 data.upstream_process_execution.execution.job.sample
             ) 
         upstream_samples.append(data.samples.first())
-
-
     sample_ids = set([s.id for s in upstream_samples if s])
     if len(sample_ids) == 1:
         job.sample_id = list(sample_ids)[0]
         job.save()
     else:
-        upstream_collections = [
-            data.upstream_process_execution.execution.job.collection for data in
-            execution.upstream_data.exclude(upstream_process_execution=None)
-        ] + [
-            data.upstream_process_execution.execution.job.sample.collection for data in
-            execution.upstream_data.exclude(upstream_process_execution=None) if
-            data.upstream_process_execution.execution.job.sample
-        ]
+        upstream_collections = []
+        for data in execution.upstream_data.all():
+            if data.upstream_process_execution:
+                upstream_collections.append(
+                    data.upstream_process_execution.execution.job.collection
+                ) 
+                if data.upstream_process_execution.execution.job.sample:
+                    upstream_collections.append(
+                        data.upstream_process_execution.execution.job.sample.collection
+                    ) 
+            upstream_collections.append(data.link.collection)
         collection_ids = set([c.id for c in upstream_collections if c])
         if len(collection_ids) == 1:
-            job.collection_id = collection_ids[0]
+            job.collection_id = list(collection_ids)[0]
             job.save()
 
 
