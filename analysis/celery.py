@@ -1,11 +1,13 @@
 
 import os
+import re
 import time
 import pandas as pd
 import json
 import shutil
 import importlib
 from celery import Celery
+from zipfile import ZipFile
 from django.conf import settings
 
 
@@ -117,3 +119,28 @@ def annotate_samples_from_ultraplex(process_execution):
                     sample.source = row["CellOrTissue"]
                     sample.save()
                     break
+
+
+def annotate_samples_from_fastqc(process_execution):
+    # Is there a sample associated?
+    data_input = process_execution.upstream_data.first()
+    if not data_input or not data_input.samples.count(): return
+    sample = data_input.samples.first()
+
+    zip = process_execution.downstream_data.filter(filetype="zip").first()
+    if zip:
+        contents = ZipFile(zip.full_path)
+        for name in contents.namelist():
+            if name.endswith("summary.txt"):
+                sample.qc_pass = contents.read(name).startswith(b"PASS")
+            if name.endswith("fastqc_data.txt"):
+                data = contents.read(name).decode()
+                message = []
+                for query in [
+                    "Total Sequences", "Sequences flagged as poor quality",
+                    "Sequence length"
+                ]:
+                    match = re.search(f"{query}[ \\t](.+)", data)
+                    if match: message.append(match[0].replace("\t", " "))
+                sample.qc_message = "; ".join(message)
+    sample.save()

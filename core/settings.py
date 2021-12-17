@@ -94,7 +94,8 @@ SAMPLE_PROCESS_DATA = [
 ]
 
 PROCESS_FUNCTIONS = {
-    "ULTRAPLEX": ["analysis.celery.annotate_samples_from_ultraplex"]
+    "ULTRAPLEX": ["analysis.celery.annotate_samples_from_ultraplex"],
+    "FASTQC": ["analysis.celery.annotate_samples_from_fastqc"],
 }
 
 CELERY_BROKER_URL = env("BROKER_URL")
