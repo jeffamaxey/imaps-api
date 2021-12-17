@@ -90,7 +90,7 @@ NEXTFLOW_PIPELINE_ROOT = env("NEXTFLOW_PIPELINE_ROOT")
 NEXTFLOW_PUBLISH_DIR = env("NEXTFLOW_PUBLISH_DIR")
 
 SAMPLE_PROCESS_DATA = [
-    ["ULTRAPLEX", ["fastq.gz"]]
+    ["ULTRAPLEX", ["fastq.gz", "fastq", "fq.gz", "fq"]]
 ]
 
 CELERY_BROKER_URL = env("BROKER_URL")

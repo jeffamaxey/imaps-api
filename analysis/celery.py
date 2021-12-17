@@ -39,7 +39,7 @@ def run_pipeline(kwargs, job_id, user_id):
         for process_name, filetypes in settings.SAMPLE_PROCESS_DATA:
             for data in Data.objects.filter(
                 upstream_process_execution__execution=execution,
-                upstream_process_execution__name=process_name,
+                upstream_process_execution__process_name=process_name,
                 filetype__in=filetypes
             ):
                 sample = Sample.objects.create(
