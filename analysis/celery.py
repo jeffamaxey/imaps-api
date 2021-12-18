@@ -1,7 +1,9 @@
 
+import collections
 import os
 import re
 import time
+from typing import Collection
 import pandas as pd
 import json
 import shutil
@@ -96,6 +98,8 @@ def assign_job_parents(job, execution):
 
 def annotate_samples_from_ultraplex(process_execution):
     # Try to get the original spreadsheet
+    from core.models import User
+    from analysis.models import Collection, CollectionUserLink
     df = None
     species = {
         "Hs": "Homo sapiens",
@@ -119,10 +123,17 @@ def annotate_samples_from_ultraplex(process_execution):
             sample_name = data.filename[:-(len(data.filetype) + 1)]
             for row in df.iloc:
                 if len(row["SampleName"]) > 3 and row["SampleName"] in sample_name:
+                    collection = Collection.objects.filter(name=row["CollectionName"]).first()
+                    if not collection:
+                        collection = Collection.objects.create(name=row["CollectionName"])
+                        user = User.objects.filter(name=row["Scientist"]).first()
+                        if user:
+                            CollectionUserLink.objects.create(collection=collection, user=user, permission=4)
                     sample.pi_name = row["PI"]
                     sample.annotator_name = row["Scientist"]
                     sample.organism = species.get(row["Species"], row["Species"])
                     sample.source = row["CellOrTissue"]
+                    sample.collection = collection
                     sample.save()
                     break
 
