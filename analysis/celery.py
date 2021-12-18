@@ -46,7 +46,7 @@ def run_pipeline(kwargs, job_id, user_id):
                 upstream_process_execution__execution=execution,
                 upstream_process_execution__process_name=process_name,
                 filetype__in=filetypes
-            ):
+            ).exclude(filename__endswith="no_match.fastq.gz"):
                 sample = Sample.objects.create(
                     name=data.filename,
                     initiator=data
