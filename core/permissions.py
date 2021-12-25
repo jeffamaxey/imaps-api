@@ -227,7 +227,7 @@ def readable_collections(queryset, user=None):
             Q(private=False) |\
             Q(users=user) |\
             Q(groups__users=user)
-        )
+        ).distinct()
     else:
         return queryset.filter(private=False)
 
@@ -242,7 +242,7 @@ def readable_samples(queryset, user=None):
             Q(users=user) |\
             Q(collection__users=user) |\
             Q(collection__groups__users=user)
-        )
+        ).distinct()
     else:
         return queryset.filter(private=False)
 
@@ -260,7 +260,7 @@ def readable_jobs(queryset, user=None):
             Q(sample__collection__users=user) |\
             Q(collection__groups__users=user) |\
             Q(sample__collection__groups__users=user)
-        )
+        ).distinct()
     else:
         return queryset.filter(private=False)
 
@@ -281,6 +281,6 @@ def readable_data(queryset, user=None):
             Q(link__collection__groups__users=user) |\
             Q(upstream_process_execution__execution__job__collection__groups__users=user) |\
             Q(upstream_process_execution__execution__job__sample__collection__groups__users=user)
-        )
+        ).distinct()
     else:
         return queryset.filter(link__private=False)

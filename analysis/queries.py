@@ -105,6 +105,18 @@ class SampleType(DjangoObjectType):
 
 
 
+class SampleConnection(Connection):
+
+    class Meta:
+        node = SampleType
+    
+    count = graphene.Int()
+
+    def resolve_count(self, info, **kwargs):
+        return len(self.iterable)
+
+
+
 class ExecutionType(DjangoObjectType):
 
     class Meta:
@@ -175,6 +187,18 @@ class ExecutionType(DjangoObjectType):
         return get_users_by_job(self, 4)
 
 
+
+class ExecutionConnection(Connection):
+
+    class Meta:
+        node = ExecutionType
+    
+    count = graphene.Int()
+
+    def resolve_count(self, info, **kwargs):
+        return len(self.iterable)
+
+
 class ProcessExecutionType(DjangoObjectType):
 
     class Meta:
@@ -223,6 +247,18 @@ class DataType(DjangoObjectType):
 
     def resolve_owners(self, info, **kwargs):
         return get_users_by_data(self, 4)
+
+
+
+class DataConnection(Connection):
+
+    class Meta:
+        node = DataType
+    
+    count = graphene.Int()
+
+    def resolve_count(self, info, **kwargs):
+        return len(self.iterable)
 
 
 

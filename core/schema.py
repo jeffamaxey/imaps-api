@@ -35,6 +35,28 @@ class Query(graphene.ObjectType):
     pipelines = graphene.List("analysis.queries.PipelineType")
 
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
+    search_collections = ConnectionField(
+        "analysis.queries.CollectionConnection",
+        name=graphene.String(),
+        created=graphene.String(),
+    )
+    search_samples = ConnectionField(
+        "analysis.queries.SampleConnection",
+        name=graphene.String(),
+        created=graphene.String(),
+        species=graphene.String(),
+    )
+    search_executions = ConnectionField(
+        "analysis.queries.ExecutionConnection",
+        name=graphene.String(),
+        created=graphene.String(),
+    )
+    search_data = ConnectionField(
+        "analysis.queries.DataConnection",
+        name=graphene.String(),
+        created=graphene.String(),
+        filetype=graphene.String(),
+    )
 
 
     def resolve_access_token(self, info, **kwargs):
@@ -134,6 +156,62 @@ class Query(graphene.ObjectType):
     def resolve_quick_search(self, info, **kwargs):
         if len(kwargs["query"]) < 3: return None
         return kwargs
+    
+
+    def resolve_search_collections(self, info, **kwargs):
+        collections = readable_collections(Collection.objects.all(), info.context.user)
+        if "name" in kwargs:
+            collections = collections.filter(name__icontains=kwargs["name"])
+        if "created" in kwargs:
+            timestamp = time.time() - {
+                "day": 86400, "week": 604800, "month": 2592000,
+                "6month": 15768000, "year": 31557600
+            }.get(kwargs["created"], 0)
+            collections = collections.filter(created__gte=timestamp)
+        return collections
+    
+
+    def resolve_search_samples(self, info, **kwargs):
+        samples = readable_samples(Sample.objects.all(), info.context.user)
+        if "name" in kwargs:
+            samples = samples.filter(name__icontains=kwargs["name"])
+        if "created" in kwargs:
+            timestamp = time.time() - {
+                "day": 86400, "week": 604800, "month": 2592000,
+                "6month": 15768000, "year": 31557600
+            }.get(kwargs["created"], 0)
+            samples = samples.filter(created__gte=timestamp)
+        if "species" in kwargs:
+            samples = samples.filter(organism__icontains=kwargs["species"])
+        return samples
+    
+
+    def resolve_search_executions(self, info, **kwargs):
+        jobs = readable_jobs(Job.objects.all(), info.context.user)
+        if "name" in kwargs:
+            jobs = jobs.filter(execution__pipeline__name__icontains=kwargs["name"])
+        if "created" in kwargs:
+            timestamp = time.time() - {
+                "day": 86400, "week": 604800, "month": 2592000,
+                "6month": 15768000, "year": 31557600
+            }.get(kwargs["created"], 0)
+            jobs = jobs.filter(created__gte=timestamp)
+        return jobs
+    
+
+    def resolve_search_data(self, info, **kwargs):
+        data = readable_data(Data.objects.all(), info.context.user)
+        if "name" in kwargs:
+            data = data.filter(filename__icontains=kwargs["name"])
+        if "created" in kwargs:
+            timestamp = time.time() - {
+                "day": 86400, "week": 604800, "month": 2592000,
+                "6month": 15768000, "year": 31557600
+            }.get(kwargs["created"], 0)
+            data = data.filter(created__gte=timestamp)
+        if "filetype" in kwargs:
+            data = data.filter(filetype__icontains=kwargs["filetype"])
+        return data
 
 
 
