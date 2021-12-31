@@ -1,5 +1,6 @@
 from django_nextflow.models import Data
 import graphene
+from django.db.models import Q
 from graphql import GraphQLError
 from graphene.relay import ConnectionField
 from core.permissions import does_user_have_permission_on_collection, does_user_have_permission_on_data, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_collections_by_group, get_collections_by_user, readable_data, readable_jobs
@@ -39,22 +40,26 @@ class Query(graphene.ObjectType):
         "analysis.queries.CollectionConnection",
         name=graphene.String(),
         created=graphene.String(),
+        owner=graphene.String(),
     )
     search_samples = ConnectionField(
         "analysis.queries.SampleConnection",
         name=graphene.String(),
         created=graphene.String(),
+        owner=graphene.String(),
         species=graphene.String(),
     )
     search_executions = ConnectionField(
         "analysis.queries.ExecutionConnection",
         name=graphene.String(),
         created=graphene.String(),
+        owner=graphene.String(),
     )
     search_data = ConnectionField(
         "analysis.queries.DataConnection",
         name=graphene.String(),
         created=graphene.String(),
+        owner=graphene.String(),
         filetype=graphene.String(),
     )
 
@@ -168,6 +173,11 @@ class Query(graphene.ObjectType):
                 "6month": 15768000, "year": 31557600
             }.get(kwargs["created"], 0)
             collections = collections.filter(created__gte=timestamp)
+        if "owner" in kwargs:
+            collections = collections.filter(
+                users__name__icontains=kwargs["owner"],
+                collectionuserlink__permission=4
+            )
         return collections
     
 
@@ -183,6 +193,11 @@ class Query(graphene.ObjectType):
             samples = samples.filter(created__gte=timestamp)
         if "species" in kwargs:
             samples = samples.filter(organism__icontains=kwargs["species"])
+        if "owner" in kwargs:
+            samples = samples.filter(
+                collection__users__name__icontains=kwargs["owner"],
+                collection__collectionuserlink__permission=4
+            )
         return samples
     
 
@@ -196,6 +211,14 @@ class Query(graphene.ObjectType):
                 "6month": 15768000, "year": 31557600
             }.get(kwargs["created"], 0)
             jobs = jobs.filter(created__gte=timestamp)
+        if "owner" in kwargs:
+            jobs = jobs.filter(
+                Q(users__name__icontains=kwargs["owner"], jobuserlink__permission=4) |\
+                Q(collection__users__name__icontains=kwargs["owner"], collection__collectionuserlink__permission=4) |\
+                Q(sample__collection__users__name__icontains=kwargs["owner"], sample__collection__collectionuserlink__permission=4)
+            )
+
+            
         return jobs
     
 
@@ -209,6 +232,13 @@ class Query(graphene.ObjectType):
                 "6month": 15768000, "year": 31557600
             }.get(kwargs["created"], 0)
             data = data.filter(created__gte=timestamp)
+        if "owner" in kwargs:
+            data = data.filter(
+                Q(datauserlink__user__name__icontains=kwargs["owner"], datauserlink__permission=4) |\
+                Q(upstream_process_execution__execution__job__users__name__icontains=kwargs["owner"], upstream_process_execution__execution__job__jobuserlink__permission=4) |\
+                Q(upstream_process_execution__execution__job__collection__users__name__icontains=kwargs["owner"], upstream_process_execution__execution__job__collection__collectionuserlink__permission=4) |\
+                Q(upstream_process_execution__execution__job__sample__collection__users__name__icontains=kwargs["owner"], upstream_process_execution__execution__job__sample__collection__collectionuserlink__permission=4)
+            )
         if "filetype" in kwargs:
             data = data.filter(filetype__icontains=kwargs["filetype"])
         return data
