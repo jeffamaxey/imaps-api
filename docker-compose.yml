@@ -1,124 +1,108 @@
 version: "3"
 services:
-    postgres:
-        hostname: postgres
-        container_name: imaps_postgres
-        image: postgres:13.4-buster
-        env_file:
-            - secrets.env
-        volumes:
-            - postgres_data:/var/lib/postgresql/data
-    pgbackups:
-        hostname: backups
-        container_name: imaps_backups
-        image: prodrigestivill/postgres-backup-local
-        restart: always
-        user: postgres:postgres
-        volumes:
-            - postgres_backups:/backups
-        depends_on:
-            - postgres
-        env_file:
-            - secrets.env
-        environment:
-            - POSTGRES_HOST=postgres
-            - POSTGRES_DB=postgres
-            - POSTGRES_USER=postgres
-            - SCHEDULE=@daily
-            - BACKUP_KEEP_DAYS=7
-            - BACKUP_KEEP_WEEKS=4
-            - BACKUP_KEEP_MONTHS=6
-            - HEALTHCHECK_PORT=8080
-    core:
-        hostname: core
-        container_name: imaps_core
-        image: goodwright/imapsapi
-        env_file:
-            - secrets.env
-        expose:
-            - 80
-        environment:
-            - DEBUG=no
-            - DB_ENGINE=django.db.backends.postgresql_psycopg2
-            - DB_NAME=postgres
-            - DB_USER=postgres
-            - DB_HOST=postgres
-            - BROKER_URL=amqp://guest@broker:5672//
-            - MEDIA_ROOT=/home/app/uploads
-            - DATA_ROOT=/home/app/data
-            - PEKA_ROOT=/home/app/peka/data
-            - NF_ROOT=/home/app/nextflow
-            - VIRTUAL_HOST=api.imaps.goodwright.com
-            - LETSENCRYPT_HOST=api.imaps.goodwright.com
-        depends_on:
-            - postgres
-        volumes:
-            - uploads:/home/app/uploads
-            - /storage/goodwright/data:/home/app/data
-            - /storage/goodwright/peka/data:/home/app/peka/data
-            - /home/goodwright/imaps-nf:/home/app/nextflow
-        build:
-            context: .
-        command: bash -c "python manage.py migrate && gunicorn --bind :80 core.wsgi:application --log-level debug"
-    uploads:
-        hostname: uploads
-        container_name: imaps_uploads
-        image: goodwright/imaps_uploads
-        environment:
-            - VIRTUAL_HOST=files.imaps.goodwright.com
-            - LETSENCRYPT_HOST=files.imaps.goodwright.com
-        expose:
-            - 80
-        volumes:
-            - uploads:/home/app/uploads
-        build:
-            context: nginx
-            dockerfile: Dockerfile.uploads
-    data:
-        hostname: data
-        container_name: imaps_data
-        image: goodwright/imaps_data
-        environment:
-            - VIRTUAL_HOST=data.imaps.goodwright.com
-            - LETSENCRYPT_HOST=data.imaps.goodwright.com
-        expose:
-            - 80
-        volumes:
-            - /storage/goodwright/data:/storage/goodwright/data
-        build:
-            context: nginx
-            dockerfile: Dockerfile.data
-    broker:
-        hostname: broker
-        container_name: imaps_broker
-        image: rabbitmq:latest
-    worker:
-        hostname: worker
-        container_name: imaps_worker
-        image: goodwright/imapsworker
-        env_file:
-            - secrets.env
-        environment:
-            - DEBUG=no
-            - DB_ENGINE=django.db.backends.postgresql_psycopg2
-            - DB_NAME=postgres
-            - DB_USER=postgres
-            - DB_HOST=postgres
-            - NF_ROOT=/home/app/nextflow
-            - CELERY_BROKER_URL=amqp://guest@broker:5672//
-            - DATA_ROOT=/storage/goodwright/data
-        build:
-            context: .
-        depends_on:
-            - core
-            - broker
-            - postgres
-        volumes:
-            - /storage/goodwright/data:/storage/goodwright/data
-            - /var/run/docker.sock:/var/run/docker.sock
-            - /home/goodwright/imaps-nf:/home/app/nextflow
-        command: ["celery", "-A", "execution.celery", "worker", "-l", "INFO"]
+  postgres:
+    hostname: postgres
+    container_name: imaps_postgres
+    image: postgres:13.4-buster
+    env_file:
+      - secrets.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  pgbackups:
+    hostname: backups
+    container_name: imaps_backups
+    image: prodrigestivill/postgres-backup-local
+    restart: always
+    user: postgres:postgres
+    volumes:
+      - postgres_backups:/backups
+    depends_on:
+      - postgres
+    env_file:
+      - secrets.env
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=7
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=6
+      - HEALTHCHECK_PORT=8080
+  broker:
+    hostname: broker
+    container_name: imaps_broker
+    image: rabbitmq:latest
+  worker:
+    hostname: worker
+    container_name: imaps_worker
+    env_file:
+      - secrets.env
+    user: "goodwright"
+    environment:
+      - DEBUG=no
+      - DB_ENGINE=django.db.backends.postgresql_psycopg2
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_HOST=postgres
+      - CELERY_BROKER_URL=amqp://guest@broker:5672//
+      - NEXTFLOW_PIPELINE_ROOT=/home/app/nextflow
+    build:
+      context: .
+    depends_on:
+      - broker
+      - postgres
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["celery", "-A", "analysis.celery", "worker", "-l", "INFO"]
+  api:
+    hostname: api
+    container_name: imaps_api
+    env_file:
+      - secrets.env
+    user: "goodwright"
+    expose:
+      - 8000
+    environment:
+      - DEBUG=no
+      - DB_ENGINE=django.db.backends.postgresql_psycopg2
+      - DB_NAME=postgres
+      - DB_USER=postgres
+      - DB_HOST=postgres
+      - BROKER_URL=amqp://guest@broker:5672//
+      - MEDIA_ROOT=/home/app/media
+      - NEXTFLOW_PIPELINE_ROOT=/home/app/nextflow
+      - PEKA_ROOT=/home/app/peka/data
+    depends_on:
+      - postgres
+      - broker
+    volumes:
+      - media:/home/app/media
+    build:
+        context: .
+    command: bash -c "python manage.py migrate && gunicorn --bind :8000 core.wsgi:application --log-level debug"
+  media:
+    hostname: media
+    container_name: imaps_media
+    expose:
+      - 80
+    volumes:
+      - media:/home/app/media
+    build:
+      context: nginx
+      dockerfile: Dockerfile.media
+  data:
+    hostname: data
+    container_name: imaps_data
+    expose:
+      - 80
+    build:
+      context: nginx
+      dockerfile: Dockerfile.data
 volumes:
-    postgres_data:
-    postgres_backups:
-    uploads:
+  postgres_data:
+  postgres_backups:
+  media:
+
+  
+      

@@ -17,7 +17,7 @@ class Collection(models.Model):
 
     name = models.CharField(max_length=150, unique=True)
     created = models.IntegerField(default=time.time)
-    last_modified = models.IntegerField(default=time.time)
+    modified = models.IntegerField(default=time.time)
     description = models.TextField(default="", blank=True)
     private = models.BooleanField(default=True)
     users = models.ManyToManyField(User, through="analysis.CollectionUserLink", related_name="collections")

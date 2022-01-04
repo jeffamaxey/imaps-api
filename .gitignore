@@ -12,7 +12,11 @@ uploads/*
 peka/create_*.py
 peka/data
 nfuploads/*
+development.yml
+production.yml
 
+files.json
+db.json
 sync/*
 Commands.md
 Docs2.md
