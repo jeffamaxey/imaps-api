@@ -17,19 +17,19 @@ RUN chmod +x nextflow
 RUN mv nextflow /usr/local/bin
 RUN chown goodwright /usr/local/bin/nextflow
 
+RUN pip install gunicorn
+RUN pip install psycopg2-binary
+COPY ./requirements.txt ./requirements.txt
+RUN pip install -r requirements.txt
+
 COPY ./core ./core
 COPY ./analysis ./analysis
 COPY ./peka ./peka
 COPY ./manage.py ./manage.py
-COPY ./requirements.txt ./requirements.txt
 
 RUN chown goodwright core
 RUN chown goodwright analysis
 RUN chown goodwright peka
 RUN chown goodwright manage.py
-
-RUN pip install gunicorn
-RUN pip install psycopg2-binary
-RUN pip install -r requirements.txt
 
 CMD ["gunicorn", "--bind", ":80", "core.wsgi:application", "--log-level", "debug"]

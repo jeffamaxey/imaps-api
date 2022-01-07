@@ -81,7 +81,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 SERVE_FILES = env("SERVE_FILES")
 MEDIA_URL = "/uploads/"
 MEDIA_ROOT = env("MEDIA_ROOT")
-DATA_URL = "/data/"
 DATA_ROOT = env("DATA_ROOT")
 PEKA_ROOT = env("PEKA_ROOT")
 NEXTFLOW_UPLOADS_ROOT = env("NEXTFLOW_UPLOADS_ROOT")

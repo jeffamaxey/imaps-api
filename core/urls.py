@@ -2,9 +2,10 @@ import json
 from graphql.error import GraphQLLocatedError, GraphQLError
 from graphene_file_upload.django import FileUploadGraphQLView
 from graphene_django.views import GraphQLView
-from django.conf.urls.static import static
 import django.conf
 from django.urls import path, include
+from django.conf.urls.static import static
+from core.data import return_data
 
 class ReadableErrorGraphQLView(FileUploadGraphQLView):
     """A custom GraphQLView which stops Python error messages being sent to
@@ -22,13 +23,11 @@ class ReadableErrorGraphQLView(FileUploadGraphQLView):
 urlpatterns = [
     path("graphql", ReadableErrorGraphQLView.as_view()),
     path("peka/", include("peka.urls")),
+    path("data/<int:id>/<str:name>", return_data)
 ]
 
 if django.conf.settings.SERVE_FILES:
     urlpatterns += static(
         django.conf.settings.MEDIA_URL,
         document_root=django.conf.settings.MEDIA_ROOT
-    ) + static(
-        django.conf.settings.DATA_URL,
-        document_root=django.conf.settings.DATA_ROOT
     )

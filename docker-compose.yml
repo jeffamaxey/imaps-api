@@ -38,7 +38,6 @@ services:
     container_name: imaps_worker
     env_file:
       - secrets.env
-    user: "goodwright"
     environment:
       - DEBUG=no
       - DB_ENGINE=django.db.backends.postgresql_psycopg2
@@ -81,24 +80,19 @@ services:
     build:
         context: .
     command: bash -c "python manage.py migrate && gunicorn --bind :8000 core.wsgi:application --log-level debug"
-  media:
-    hostname: media
-    container_name: imaps_media
+  files:
+    hostname: files
+    container_name: imaps_files
+    depends_on:
+      - api
     expose:
       - 80
     volumes:
       - media:/home/app/media
     build:
       context: nginx
-      dockerfile: Dockerfile.media
-  data:
-    hostname: data
-    container_name: imaps_data
-    expose:
-      - 80
-    build:
-      context: nginx
-      dockerfile: Dockerfile.data
+      dockerfile: Dockerfile.nginx
+
 volumes:
   postgres_data:
   postgres_backups:
