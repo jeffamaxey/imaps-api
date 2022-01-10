@@ -278,11 +278,16 @@ class UploadDataMutation(graphene.Mutation):
     class Arguments:
         file = Upload(required=True)
         make_sample = graphene.Boolean()
+        is_directory = graphene.Boolean()
 
     data = graphene.Field("analysis.queries.DataType")
 
     def mutate(self, info, **kwargs):
-        data = Data.create_from_upload(kwargs["file"])
+        if kwargs.get("is_directory") and not kwargs["file"].name.endswith(".zip"):
+            raise GraphQLError('{"file": ["If file is a directory, it must be a .zip file"]}')
+        data = Data.create_from_upload(
+            kwargs["file"], is_directory=kwargs.get("is_directory", False)
+        )
         DataLink.objects.create(data=data)
         DataUserLink.objects.create(data=data, user=info.context.user, permission=4)
         if kwargs.get("make_sample"):
