@@ -89,7 +89,8 @@ NEXTFLOW_PIPELINE_ROOT = env("NEXTFLOW_PIPELINE_ROOT")
 NEXTFLOW_PUBLISH_DIR = env("NEXTFLOW_PUBLISH_DIR")
 
 SAMPLE_PROCESS_DATA = [
-    ["ULTRAPLEX", ["fastq.gz", "fastq", "fq.gz", "fq"]]
+    ["ULTRAPLEX", ["fastq.gz", "fastq", "fq.gz", "fq"]],
+    ["DEMULTIPLEX:ULTRAPLEX", ["fastq.gz", "fastq", "fq.gz", "fq"]],
 ]
 
 PROCESS_FUNCTIONS = {

@@ -269,3 +269,7 @@ class PipelineType(DjangoObjectType):
     
     id = graphene.ID()
     input_schema = graphene.JSONString()
+    is_subworkflow = graphene.Boolean()
+
+    def resolve_is_subworkflow(self, info, **kwargs):
+        return "subworkflows" in self.path
