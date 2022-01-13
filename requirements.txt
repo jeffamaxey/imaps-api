@@ -11,4 +11,4 @@ pandas
 celery
 sqlalchemy
 django_celery_results
-django_nextflow==0.3.2
+django_nextflow==0.4

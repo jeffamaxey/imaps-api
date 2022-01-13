@@ -79,7 +79,7 @@ services:
       - media:/home/app/media
     build:
         context: .
-    command: bash -c "python manage.py migrate && gunicorn --bind :8000 core.wsgi:application --log-level debug"
+    command: bash -c "python manage.py migrate && gunicorn --bind :8000 core.wsgi:application --log-level debug --timeout 600"
   files:
     hostname: files
     container_name: imaps_files
