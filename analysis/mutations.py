@@ -278,6 +278,8 @@ class UploadDataMutation(graphene.Mutation):
     class Arguments:
         file = Upload(required=True)
         make_sample = graphene.Boolean()
+        is_multiplexed = graphene.Boolean()
+        is_annotation = graphene.Boolean()
         is_directory = graphene.Boolean()
 
     data = graphene.Field("analysis.queries.DataType")
@@ -288,7 +290,11 @@ class UploadDataMutation(graphene.Mutation):
         data = Data.create_from_upload(
             kwargs["file"], is_directory=kwargs.get("is_directory", False)
         )
-        DataLink.objects.create(data=data)
+        DataLink.objects.create(
+            data=data,
+            is_multiplexed=kwargs.get("is_multiplexed", False),
+            is_annotation=kwargs.get("is_annotation", False),
+        )
         DataUserLink.objects.create(data=data, user=info.context.user, permission=4)
         if kwargs.get("make_sample"):
             sample = Sample.objects.create(
