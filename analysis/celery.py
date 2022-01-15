@@ -67,13 +67,15 @@ def assign_job_parents(job, execution):
     no sample), and likewise for collections. This function looks at the inputs
     to a job and assigns these parents."""
 
+    from analysis.models import Sample
+
     upstream_samples = []
     for data in execution.upstream_data.all():
         if data.upstream_process_execution:
             upstream_samples.append(
                 data.upstream_process_execution.execution.job.sample
-            ) 
-        upstream_samples.append(data.samples.first())
+            )
+        upstream_samples.append(Sample.objects.filter(initiator=data).first())
     sample_ids = set([s.id for s in upstream_samples if s])
     if len(sample_ids) == 1:
         job.sample_id = list(sample_ids)[0]
@@ -122,7 +124,7 @@ def create_samples(execution, user_id):
                 name=data.filename,
                 initiator=data
             )
-            SampleUserLink.objects.create(sample=sample, user=user_id, permission=3)
+            SampleUserLink.objects.create(sample=sample, user_id=user_id, permission=3)
 
 
 def annotate_samples_from_ultraplex(process_execution):

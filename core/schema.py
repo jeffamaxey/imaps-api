@@ -30,6 +30,9 @@ class Query(graphene.ObjectType):
         first=graphene.Int(),
         filetype=graphene.String(),
         name=graphene.String(),
+        is_annotation=graphene.Boolean(),
+        is_demultiplexed=graphene.Boolean(),
+        is_multiplexed=graphene.Boolean(),
     )
 
     pipeline = graphene.Field("analysis.queries.PipelineType", id=graphene.ID())
@@ -140,12 +143,17 @@ class Query(graphene.ObjectType):
     
 
     def resolve_data(self, info, **kwargs):
-        return readable_data(
-            Data.objects.filter(
-                filename__contains=kwargs["name"],
-                filetype__regex=kwargs["filetype"]
-            ), info.context.user
-        ).distinct()[:kwargs["first"]]
+        data = Data.objects.filter(
+            filename__contains=kwargs["name"],
+            filetype__regex=kwargs["filetype"]
+        )
+        if kwargs.get("is_demultiplexed"):
+            data = data.exclude(sample=None)
+        if kwargs.get("is_multiplexed"):
+            data = data.filter(link__is_multiplexed=True)
+        if kwargs.get("is_annotation"):
+            data = data.filter(link__is_annotation=True)
+        return readable_data(data, info.context.user).distinct()[:kwargs["first"]]
     
 
     def resolve_pipeline(self, info, **kwargs):
