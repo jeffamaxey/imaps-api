@@ -62,12 +62,15 @@ class Sample(models.Model):
     created = models.IntegerField(default=time.time)
     modified = models.IntegerField(default=time.time)
     private = models.BooleanField(default=True)
-    source = models.CharField(max_length=100)
-    organism = models.CharField(max_length=100)
+
     qc_pass = models.BooleanField(null=True)
     qc_message = models.CharField(max_length=100)
+    
+    source = models.CharField(max_length=100)
+    organism = models.CharField(max_length=100)
     pi_name = models.CharField(max_length=100)
     annotator_name = models.CharField(max_length=100)
+    
     initiator = models.OneToOneField(Data, null=True, on_delete=models.SET_NULL, related_name="sample")
     collection = models.ForeignKey(Collection, null=True, on_delete=models.CASCADE, related_name="samples")
     users = models.ManyToManyField(User, through="analysis.SampleUserLink", related_name="samples")

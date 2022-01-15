@@ -98,6 +98,9 @@ PROCESS_FUNCTIONS = {
     "FASTQC": ["analysis.celery.annotate_samples_from_fastqc"],
 }
 
+READS_GENERATING_PROCESSES = ["ULTRAPLEX", "DEMULTIPLEX:ULTRAPLEX"]
+READS_EXTENSIONS = ["fastq.gz", "fastq", "fq.gz", "fq"]
+
 CELERY_BROKER_URL = env("BROKER_URL")
 
 EMAIL_HOST = "smtp.eu.mailgun.org"

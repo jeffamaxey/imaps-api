@@ -20,10 +20,20 @@ app.autodiscover_tasks()
 
 @app.task(name="run_pipeline")
 def run_pipeline(kwargs, job_id, user_id):
-    """."""
+    """Runs a pipeline in celery. An iMaps Job object should already have been
+    created, and this will create the accompanying django_nextflow Execution
+    object.
+    
+    Takes the original mutation kwargs, the job_id, and the user_id of the user
+    who submitted the mutation.
+    
+    Once execution is complete, links to existing samples and collections will
+    be created, DataLink objects for every Data object will be created, any
+    Samples that need to be created will be created, and any Sample metadata
+    that needs to be created will be updated."""
 
-    from django_nextflow.models import Pipeline, Data
-    from analysis.models import DataLink, Job, Sample, SampleUserLink
+    from django_nextflow.models import Pipeline
+    from analysis.models import Job
 
     job = Job.objects.filter(id=job_id).first()
     job.started = time.time()
@@ -35,24 +45,10 @@ def run_pipeline(kwargs, job_id, user_id):
             data_params=json.loads(kwargs["dataInputs"]),
             profile=["iMaps"]
         )
-        
         assign_job_parents(job, execution)
+        create_data_links(execution)
+        create_samples(execution, user_id)
         
-        for data in Data.objects.filter(upstream_process_execution__execution=execution):
-            DataLink.objects.create(data=data)
-
-        for process_name, filetypes in settings.SAMPLE_PROCESS_DATA:
-            for data in Data.objects.filter(
-                upstream_process_execution__execution=execution,
-                upstream_process_execution__process_name=process_name,
-                filetype__in=filetypes
-            ).exclude(filename__endswith="no_match.fastq.gz"):
-                sample = Sample.objects.create(
-                    name=data.filename,
-                    initiator=data
-                )
-                SampleUserLink.objects.create(sample=sample, user_id=user_id, permission=3)
-            
         for process_execution in execution.process_executions.all():
             if process_execution.process_name in settings.PROCESS_FUNCTIONS:
                 for funcname in settings.PROCESS_FUNCTIONS[process_execution.process_name]:
@@ -67,6 +63,10 @@ def run_pipeline(kwargs, job_id, user_id):
 
 
 def assign_job_parents(job, execution):
+    """Jobs belong to a sample if all their inputs are from a single sample (or
+    no sample), and likewise for collections. This function looks at the inputs
+    to a job and assigns these parents."""
+
     upstream_samples = []
     for data in execution.upstream_data.all():
         if data.upstream_process_execution:
@@ -94,6 +94,35 @@ def assign_job_parents(job, execution):
         if len(collection_ids) == 1:
             job.collection_id = list(collection_ids)[0]
             job.save()
+
+
+def create_data_links(execution):
+    """An execution will create various new Data objects, but they also need
+    iMaps DataLink objects accompanying them. This function creates those."""
+
+    from django_nextflow.models import Data
+    from analysis.models import DataLink
+    for data in Data.objects.filter(upstream_process_execution__execution=execution):
+        DataLink.objects.create(data=data)
+
+
+def create_samples(execution, user_id):
+    """If an execution involved demultiplexing, samples need to be created for
+    the reads files produced."""
+
+    from django_nextflow.models import Data
+    from analysis.models import Sample, SampleUserLink
+    for process_name in settings.READS_GENERATING_PROCESSES:
+        for data in Data.objects.filter(
+            upstream_process_execution__execution=execution,
+            upstream_process_execution__process_name=process_name,
+            filetype__in=settings.READS_EXTENSIONS
+        ).exclude(filename__endswith="no_match.fastq.gz"):
+            sample = Sample.objects.create(
+                name=data.filename,
+                initiator=data
+            )
+            SampleUserLink.objects.create(sample=sample, user=user_id, permission=3)
 
 
 def annotate_samples_from_ultraplex(process_execution):
