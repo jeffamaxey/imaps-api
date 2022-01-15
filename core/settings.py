@@ -76,7 +76,7 @@ SESSION_LENGTH_DAYS = 365
 
 GRAPHENE = {"SCHEMA": "core.schema.schema"}
 
-DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SERVE_FILES = env("SERVE_FILES")
 MEDIA_URL = "/uploads/"

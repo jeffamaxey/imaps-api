@@ -68,7 +68,7 @@ class Sample(models.Model):
     qc_message = models.CharField(max_length=100)
     pi_name = models.CharField(max_length=100)
     annotator_name = models.CharField(max_length=100)
-    initiator = models.ForeignKey(Data, null=True, on_delete=models.SET_NULL, related_name="samples")
+    initiator = models.OneToOneField(Data, null=True, on_delete=models.SET_NULL, related_name="sample")
     collection = models.ForeignKey(Collection, null=True, on_delete=models.CASCADE, related_name="samples")
     users = models.ManyToManyField(User, through="analysis.SampleUserLink", related_name="samples")
 
@@ -191,6 +191,8 @@ class DataLink(models.Model):
     data = models.OneToOneField(Data, on_delete=models.CASCADE, related_name="link")
     private = models.BooleanField(default=True)
     collection = models.ForeignKey(Collection, null=True, on_delete=models.SET_NULL)
+    is_annotation = models.BooleanField(default=False)
+    is_multiplexed = models.BooleanField(default=False)
 
 
 
