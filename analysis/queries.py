@@ -223,6 +223,8 @@ class DataType(DjangoObjectType):
     can_edit = graphene.Boolean()
     private = graphene.Boolean()
     size = graphene.Float()
+    is_annotation = graphene.Boolean()
+    is_multiplexed = graphene.Boolean()
     downstream_executions = graphene.List("analysis.queries.ExecutionType")
     users = graphene.List("core.queries.UserType")
     owners = graphene.List("core.queries.UserType")
@@ -238,6 +240,12 @@ class DataType(DjangoObjectType):
     
     def resolve_private(self, info, **kwargs):
         return self.link.private
+    
+    def resolve_is_annotation(self, info, **kwargs):
+        return self.link.is_annotation
+    
+    def resolve_is_multiplexed(self, info, **kwargs):
+        return self.link.is_multiplexed
 
     def resolve_downstream_executions(self, info, **kwargs):
         return Job.objects.filter(execution__upstream_data=self)
