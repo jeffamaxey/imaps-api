@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "core",
     "django_nextflow",
     "analysis",
+    "genomes",
     "peka",
     "django_cleanup.apps.CleanupConfig",
 ]
