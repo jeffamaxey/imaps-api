@@ -1,4 +1,5 @@
 from django_nextflow.models import Data, Execution, Pipeline
+from analysis.annotation import validate_uploaded_sheet
 from core.permissions import does_user_have_permission_on_collection, does_user_have_permission_on_data, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_users_by_collection, readable_collections, readable_data, readable_jobs, readable_samples
 import graphene
 import json
@@ -290,29 +291,9 @@ class UploadDataMutation(graphene.Mutation):
             raise GraphQLError('{"file": ["If file is a directory, it must be a .zip file"]}')
 
         if kwargs.get("is_annotation"):
-            # Load file
-            try:
-                contents = pd.read_csv(kwargs["file"])
-            except:
-                kwargs["file"].seek(0)
-                try:
-                    contents = pd.read_excel(kwargs["file"])
-                except:
-                    raise GraphQLError('{"annotation": ["Could not read file - ensure it is valid CSV or valid Excel"]}')
-
-
-            # Check columns present
-            # Check required columns all filled in
-            # Check sample names are unique
-            # Check collection existence
-            # Check gene is valid
-            # Check usernames are valid
-            # Check species are valid
-            # Check cell lines are valid
-            # Check valid DNA strings
-            # Check collection name validity
-
-
+            problems = validate_uploaded_sheet(kwargs["file"])
+            if problems:
+                raise GraphQLError(json.dumps({"annotation": problems}))
 
 
         data = Data.create_from_upload(
