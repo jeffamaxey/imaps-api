@@ -4,6 +4,7 @@ import pandas as pd
 from collections import Counter
 from core.models import User
 from genomes.data import SPECIES, CELL_LINES, METHODS
+from genomes.models import Gene
 
 REQUIRED_COLUMNS = [
     "Collection Name",
@@ -86,6 +87,15 @@ def validate_uploaded_sheet(upload):
         cells = df.loc[i, "Cell or Tissue"]
         if cells and not pd.isna(cells) and cells not in CELL_LINES:
             problems.append(f"'{cells}' is not a valid cell line (Row {i + 1})")
+    
+    # Protein valid?
+    for i in range(len(df)):
+        protein = df.loc[i, "Protein"]
+        species = df.loc[i, "Species"]
+        if protein and not pd.isna(protein) and species and not pd.isna(species) and species in SPECIES:
+            gene = Gene.objects.filter(species=species, name=protein).first()
+            if not gene:
+                problems.append(f"'{protein}' is not a valid protein for species '{species}' (Row {i + 1})")
 
     
 
@@ -93,7 +103,6 @@ def validate_uploaded_sheet(upload):
 
 
     
-    # Check gene is valid
     # Check collection existence
     # Check collection name validity
     # Check sample name validity
