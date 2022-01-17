@@ -8,6 +8,7 @@ pyjwt==1.7.1
 django_environ
 Pillow
 pandas
+openpyxl
 celery
 sqlalchemy
 django_celery_results

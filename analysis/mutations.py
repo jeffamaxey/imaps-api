@@ -1,5 +1,4 @@
 from django_nextflow.models import Data, Execution, Pipeline
-from analysis.annotation import validate_uploaded_sheet
 from core.permissions import does_user_have_permission_on_collection, does_user_have_permission_on_data, does_user_have_permission_on_job, does_user_have_permission_on_sample, get_users_by_collection, readable_collections, readable_data, readable_jobs, readable_samples
 import graphene
 import json
@@ -11,6 +10,7 @@ from core.arguments import create_mutation_arguments
 from analysis.models import Collection, CollectionUserLink, CollectionGroupLink, DataLink, DataUserLink, Job, JobUserLink, Sample, SampleUserLink
 from analysis.forms import CollectionForm, DataForm, PaperForm, SampleForm
 from analysis.celery import run_pipeline
+from genomes.annotation import validate_uploaded_sheet
 
 class CreateCollectionMutation(graphene.Mutation):
 
