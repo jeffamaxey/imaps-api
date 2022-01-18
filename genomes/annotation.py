@@ -2,7 +2,9 @@
 
 import pandas as pd
 from collections import Counter
+from django.core.exceptions import ValidationError
 from core.models import User
+from analysis.models import Collection, Sample
 from genomes.data import SPECIES, CELL_LINES, METHODS
 from genomes.models import Gene
 
@@ -42,20 +44,44 @@ def validate_uploaded_sheet(upload):
                     problems.append(f"Row {i + 1} is missing a value for required column '{col}'")
     
     # Sample names unique?
-    sample_names = df["Sample Name (Optional)"].values
-    counter = Counter(sample_names)
-    for name, count in counter.items():
-        if count > 1:
-            problems.append(f"{count} rows have the same sample name: {name}")
+    if "Sample Name (Optional)" in df.columns:
+        sample_names = df["Sample Name (Optional)"].values
+        counter = Counter(sample_names)
+        for name, count in counter.items():
+            if count > 1:
+                problems.append(f"{count} rows have the same sample name: {name}")
     
+    # Sample names valid?
+    if "Sample Name (Optional)" in df.columns:
+        name_validators = [field for field in Sample._meta.fields if field.name == "name"][0].validators
+        for i in range(len(df)):
+            sample_name = df.loc[i, "Sample Name (Optional)"]
+            for validator in name_validators:
+                try:
+                    validator(sample_name)
+                except ValidationError as e:
+                    problems.append(f"Sample name '{sample_name}' (Row {i + 1}) doesn't validate: '{e.messages[0]}'")
+    
+    # Collection names valid?
+    if "Collection Name" in df.columns:
+        name_validators = [field for field in Collection._meta.fields if field.name == "name"][0].validators
+        for i in range(len(df)):
+            collection_name = df.loc[i, "Collection Name"]
+            for validator in name_validators:
+                try:
+                    validator(collection_name)
+                except ValidationError as e:
+                    problems.append(f"Collection name '{collection_name}' (Row {i + 1}) doesn't validate: '{e.messages[0]}'")
+
     # Usernames valid?
-    for i in range(len(df)):
-        username = df.loc[i, "Scientist"]
-        pi = df.loc[i, "PI"]
-        if not User.objects.filter(username=username):
-            problems.append(f"There is no user with username '{username}' (Row {i + 1}, Scientist)")
-        if not User.objects.filter(username=pi):
-            problems.append(f"There is no user with username '{pi}' (Row {i + 1}, PI)")
+    if "Scientist" in df.columns and "PI" in df.columns:
+        for i in range(len(df)):
+            username = df.loc[i, "Scientist"]
+            pi = df.loc[i, "PI"]
+            if not User.objects.filter(username=username):
+                problems.append(f"There is no user with username '{username}' (Row {i + 1}, Scientist)")
+            if not User.objects.filter(username=pi):
+                problems.append(f"There is no user with username '{pi}' (Row {i + 1}, PI)")
     
     # DNA valid?
     dna_columns = ["5' Barcode", "3' Barcode", "3' Adapter Sequence"]
@@ -71,31 +97,35 @@ def validate_uploaded_sheet(upload):
                             )
     
     # Method valid?
-    for i in range(len(df)):
-        method = df.loc[i, "Method"]
-        if method and not pd.isna(method) and method not in METHODS:
-            problems.append(f"'{method}' is not a valid method (Row {i + 1})")
+    if "Method" in df.columns:
+        for i in range(len(df)):
+            method = df.loc[i, "Method"]
+            if method and not pd.isna(method) and method not in METHODS:
+                problems.append(f"'{method}' is not a valid method (Row {i + 1})")
     
     # Species valid?
-    for i in range(len(df)):
-        species = df.loc[i, "Species"]
-        if species and not pd.isna(species) and species not in SPECIES:
-            problems.append(f"'{species}' is not a valid species (Row {i + 1})")
+    if "Species" in df.columns:
+        for i in range(len(df)):
+            species = df.loc[i, "Species"]
+            if species and not pd.isna(species) and species not in SPECIES:
+                problems.append(f"'{species}' is not a valid species (Row {i + 1})")
     
     # Cell line valid?
-    for i in range(len(df)):
-        cells = df.loc[i, "Cell or Tissue"]
-        if cells and not pd.isna(cells) and cells not in CELL_LINES:
-            problems.append(f"'{cells}' is not a valid cell line (Row {i + 1})")
+    if "Cell or Tissue" in df.columns:
+        for i in range(len(df)):
+            cells = df.loc[i, "Cell or Tissue"]
+            if cells and not pd.isna(cells) and cells not in CELL_LINES:
+                problems.append(f"'{cells}' is not a valid cell line (Row {i + 1})")
     
     # Protein valid?
-    for i in range(len(df)):
-        protein = df.loc[i, "Protein"]
-        species = df.loc[i, "Species"]
-        if protein and not pd.isna(protein) and species and not pd.isna(species) and species in SPECIES:
-            gene = Gene.objects.filter(species=species, name=protein).first()
-            if not gene:
-                problems.append(f"'{protein}' is not a valid protein for species '{species}' (Row {i + 1})")
+    if "Protein" in df.columns and "Species" in df.columns:
+        for i in range(len(df)):
+            protein = df.loc[i, "Protein"]
+            species = df.loc[i, "Species"]
+            if protein and not pd.isna(protein) and species and not pd.isna(species) and species in SPECIES:
+                gene = Gene.objects.filter(species=species, name=protein).first()
+                if not gene:
+                    problems.append(f"'{protein}' is not a valid protein for species '{species}' (Row {i + 1})")
 
     
 
@@ -104,8 +134,6 @@ def validate_uploaded_sheet(upload):
 
     
     # Check collection existence
-    # Check collection name validity
-    # Check sample name validity
 
 
 def parse_upload(upload):
