@@ -5,6 +5,7 @@ from collections import Counter
 from django.core.exceptions import ValidationError
 from core.models import User
 from analysis.models import Collection, Sample
+from core.permissions import does_user_have_permission_on_collection
 from genomes.data import SPECIES, CELL_LINES, METHODS
 from genomes.models import Gene
 
@@ -23,7 +24,7 @@ REQUIRED_COLUMNS = [
     "Purification Method (Antibody)",
 ]  
 
-def validate_uploaded_sheet(upload):
+def validate_uploaded_sheet(upload, user, ignore_warnings=False):
     try:
         df = parse_upload(upload)
     except: return "Could not read file - ensure it is valid CSV or valid Excel"
@@ -127,9 +128,20 @@ def validate_uploaded_sheet(upload):
                 if not gene:
                     problems.append(f"'{protein}' is not a valid protein for species '{species}' (Row {i + 1})")
 
-    
-
-    return problems
+    # Check collection name access
+    warning_collection_names = set()
+    if "Collection Name" in df.columns:
+        for i in range(len(df)):
+            collection_name = df.loc[i, "Collection Name"]
+            collection = Collection.objects.filter(name=collection_name).first()
+            if collection:
+                if does_user_have_permission_on_collection(user, collection, 2):
+                    warning_collection_names.add(collection.name)
+                else:
+                    problems.append(f"Collection with name '{collection_name}' already exists and you don't have permission to modify it Row {i + 1})")
+    if warning_collection_names and not problems and not ignore_warnings:
+        return problems, f"The following collections already exist, and would have samples added to them if you use this annotation spreadsheet: {', '.join(warning_collection_names)}."
+    return problems, ""
 
 
     

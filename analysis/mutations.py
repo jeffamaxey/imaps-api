@@ -283,15 +283,22 @@ class UploadDataMutation(graphene.Mutation):
         is_multiplexed = graphene.Boolean()
         is_annotation = graphene.Boolean()
         is_directory = graphene.Boolean()
+        ignore_warnings = graphene.Boolean()
 
     data = graphene.Field("analysis.queries.DataType")
 
     def mutate(self, info, **kwargs):
+        if not info.context.user: raise GraphQLError(json.dumps({"error": "Not authorized"}))
+
         if kwargs.get("is_directory") and not kwargs["file"].name.endswith(".zip"):
             raise GraphQLError('{"file": ["If file is a directory, it must be a .zip file"]}')
 
         if kwargs.get("is_annotation"):
-            problems = validate_uploaded_sheet(kwargs["file"])
+            problems, warning = validate_uploaded_sheet(
+                kwargs["file"], info.context.user, kwargs.get("ignore_warnings", False)
+            )
+            if warning:
+                raise GraphQLError(json.dumps({"warning": warning}))
             if problems:
                 raise GraphQLError(json.dumps({"annotation": problems}))
 
