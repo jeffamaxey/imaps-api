@@ -24,6 +24,7 @@ RUN pip install -r requirements.txt
 
 COPY ./core ./core
 COPY ./analysis ./analysis
+COPY ./genomes ./genomes
 COPY ./peka ./peka
 COPY ./manage.py ./manage.py
 
