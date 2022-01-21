@@ -11,6 +11,7 @@ from genomes.data import SPECIES, CELL_LINES, METHODS
 from genomes.models import Gene
 
 REQUIRED_COLUMNS = [
+    "Sample Name",
     "Collection Name",
     "Scientist",
     "PI",
@@ -68,16 +69,16 @@ def check_columns(df):
 
 def check_samples(df):
     problems = []
-    if "Sample Name (Optional)" in df.columns:
-        sample_names = df["Sample Name (Optional)"].values
+    if "Sample Name" in df.columns:
+        sample_names = df["Sample Name"].values
         counter = Counter(sample_names)
         for name, count in counter.items():
             if count > 1:
                 problems.append(f"{count} rows have the same sample name: {name}")
-    if "Sample Name (Optional)" in df.columns:
+    if "Sample Name" in df.columns:
         name_validators = [field for field in Sample._meta.fields if field.name == "name"][0].validators
         for i in range(len(df)):
-            sample_name = df.loc[i, "Sample Name (Optional)"]
+            sample_name = df.loc[i, "Sample Name"]
             for validator in name_validators:
                 try:
                     validator(sample_name)
