@@ -95,7 +95,6 @@ SAMPLE_PROCESS_DATA = [
 ]
 
 PROCESS_FUNCTIONS = {
-    "ULTRAPLEX": ["analysis.celery.annotate_samples_from_ultraplex"],
     "FASTQC": ["analysis.celery.annotate_samples_from_fastqc"],
 }
 

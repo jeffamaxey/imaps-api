@@ -3,7 +3,6 @@ import collections
 import os
 import re
 import time
-from typing import Collection
 import pandas as pd
 import json
 import shutil
@@ -11,7 +10,6 @@ import importlib
 from celery import Celery
 from zipfile import ZipFile
 from django.conf import settings
-
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
 app = Celery("execution")
@@ -50,8 +48,8 @@ def run_pipeline(kwargs, job_id, user_id):
         create_samples(execution, user_id)
         
         for process_execution in execution.process_executions.all():
-            if process_execution.process_name in settings.PROCESS_FUNCTIONS:
-                for funcname in settings.PROCESS_FUNCTIONS[process_execution.process_name]:
+            if process_execution.process_name.split(":")[-1] in settings.PROCESS_FUNCTIONS:
+                for funcname in settings.PROCESS_FUNCTIONS[process_execution.process_name.split(":")[-1]]:
                     module = ".".join(funcname.split(".")[:-1])
                     func = getattr(importlib.import_module(module), funcname.split(".")[-1])
                     func(process_execution)
@@ -75,7 +73,7 @@ def assign_job_parents(job, execution):
             upstream_samples.append(
                 data.upstream_process_execution.execution.job.sample
             )
-        upstream_samples.append(Sample.objects.filter(initiator=data).first())
+        upstream_samples.append(Sample.objects.filter(reads=data).first())
     sample_ids = set([s.id for s in upstream_samples if s])
     if len(sample_ids) == 1:
         job.sample_id = list(sample_ids)[0]
@@ -114,66 +112,65 @@ def create_samples(execution, user_id):
 
     from django_nextflow.models import Data
     from analysis.models import Sample, SampleUserLink
+    from analysis.models import Collection, CollectionUserLink
+    from core.models import User
+    from genomes.models import Gene
+    from core.permissions import does_user_have_permission_on_collection
+
+    
     for process_name in settings.READS_GENERATING_PROCESSES:
+        # Were any data files created by processes of this name?
         for data in Data.objects.filter(
             upstream_process_execution__execution=execution,
             upstream_process_execution__process_name=process_name,
             filetype__in=settings.READS_EXTENSIONS
         ).exclude(filename__endswith="no_match.fastq.gz"):
-            sample = Sample.objects.create(
-                name=data.filename,
-                initiator=data
-            )
+            # Got a reads file that should have a sample
+            sample_name = data.filename
+            for extension in settings.READS_EXTENSIONS:
+                if sample_name.endswith(extension):
+                    sample_name = sample_name[:-len(extension) - 1]
+            if sample_name.startswith("ultraplex_demux_"):
+                sample_name = sample_name[16:]
+            sample = Sample.objects.create(name=sample_name, reads=data)
             SampleUserLink.objects.create(sample=sample, user_id=user_id, permission=3)
 
-
-def annotate_samples_from_ultraplex(process_execution):
-    # Try to get the original spreadsheet
-    from core.models import User
-    from analysis.models import Collection, CollectionUserLink
-    df = None
-    species = {
-        "Hs": "Homo sapiens",
-        "Mm": "Mus musculus",
-        "Sc": "Saccharomyces cerevisiae",
-        "Dr": "Danio rerio",
-        "Rn": "Rattus norvegicus",
-        "Dm": "Drosophila melanogaster",
-        "Ec": "Escherichia coli",
-        "Sa": "Staphyloccocus aureus",
-    }
-    barcodes_csv = process_execution.upstream_data.filter(filetype="csv").first()
-    if barcodes_csv and barcodes_csv.upstream_process_execution:
-        samples_csv = barcodes_csv.upstream_process_execution.upstream_data.filter(filetype="csv").first()
-        if samples_csv:
-            df = pd.read_csv(samples_csv.full_path)
-    if df is None: return  
-    for data in process_execution.downstream_data.all():
-        if data.samples.count():
-            sample = data.samples.first()
-            sample_name = data.filename[:-(len(data.filetype) + 1)]
-            for row in df.iloc:
-                if len(row["SampleName"]) > 3 and row["SampleName"] in sample_name:
-                    collection = Collection.objects.filter(name=row["CollectionName"]).first()
-                    if not collection:
-                        collection = Collection.objects.create(name=row["CollectionName"])
-                        user = User.objects.filter(name=row["Scientist"]).first()
-                        if user:
-                            CollectionUserLink.objects.create(collection=collection, user=user, permission=4)
-                    sample.pi_name = row["PI"]
-                    sample.annotator_name = row["Scientist"]
-                    sample.organism = species.get(row["Species"], row["Species"])
-                    sample.source = row["CellOrTissue"]
-                    sample.collection = collection
+            # Annotate it with meta information
+            sheet = execution.upstream_data.filter(link__is_annotation=True).first()
+            if not sheet: continue
+            df = pd.read_csv(sheet.full_path)
+            for index, row in df.iterrows():
+                if row["Sample Name"] == sample_name:
+                    meta = {key.replace(" (optional)", ""): None if pd.isna(value) else value for key, value in dict(row).items()}
+                    sample.meta = meta
+                    sample.organism = meta.get("Species")
+                    sample.method = meta.get("Method")
+                    sample.source = meta.get("Cell or Tissue")
+                    gene = meta.get("Protein")
+                    sample.gene = Gene.objects.filter(name=gene, species=meta.get("Species")).first()
+                    sample.scientist = User.objects.filter(username=meta.get("Scientist")).first()
+                    sample.pi = User.objects.filter(username=meta.get("PI")).first()
+                    collection = Collection.objects.filter(name=meta["Collection Name"]).first()
+                    if not collection and sample.scientist:
+                        sample.collection = Collection.objects.create(
+                            name=meta["Collection Name"],
+                            description=meta["Collection Name"]
+                        )
+                        CollectionUserLink.objects.create(
+                            collection=sample.collection,
+                            user=sample.scientist, permission=4
+                        )
+                    elif does_user_have_permission_on_collection(User.objects.get(id=user_id), collection, 2):
+                        sample.collection = collection
                     sample.save()
-                    break
 
-
+                
 def annotate_samples_from_fastqc(process_execution):
+
     # Is there a sample associated?
     data_input = process_execution.upstream_data.first()
-    if not data_input or not data_input.samples.count(): return
-    sample = data_input.samples.first()
+    if not data_input or not data_input.sample: return
+    sample = data_input.sample
 
     zip = process_execution.downstream_data.filter(filetype="zip").first()
     if zip:
@@ -181,14 +178,4 @@ def annotate_samples_from_fastqc(process_execution):
         for name in contents.namelist():
             if name.endswith("summary.txt"):
                 sample.qc_pass = contents.read(name).startswith(b"PASS")
-            if name.endswith("fastqc_data.txt"):
-                data = contents.read(name).decode()
-                message = []
-                for query in [
-                    "Total Sequences", "Sequences flagged as poor quality",
-                    "Sequence length"
-                ]:
-                    match = re.search(f"{query}[ \\t](.+)", data)
-                    if match: message.append(match[0].replace("\t", " "))
-                sample.qc_message = "; ".join(message)
     sample.save()

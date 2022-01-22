@@ -80,13 +80,23 @@ class SampleType(DjangoObjectType):
         model = Sample
     
     id = graphene.ID()
+    scientist = graphene.Field("core.queries.UserType")
+    pi = graphene.Field("core.queries.UserType")
     qc_pass = graphene.Boolean()
     is_owner = graphene.Boolean()
     can_share = graphene.Boolean()
     can_edit = graphene.Boolean()
+    meta = graphene.JSONString()
+    
     executions = graphene.List("analysis.queries.ExecutionType")
     data = graphene.List("analysis.queries.DataType")
     all_data = graphene.List("analysis.queries.DataType")
+
+    def resolve_scientist(self, info, **kwargs):
+        return self.scientist
+    
+    def resolve_pi(self, info, **kwargs):
+        return self.pi
 
     def resolve_is_owner(self, info, **kwargs):
         return does_user_have_permission_on_sample(info.context.user, self, 4)
