@@ -1,3 +1,4 @@
+import json
 import graphene
 from graphene.relay.connection import Connection
 from graphene_django import DjangoObjectType
@@ -82,6 +83,8 @@ class SampleType(DjangoObjectType):
     id = graphene.ID()
     scientist = graphene.Field("core.queries.UserType")
     pi = graphene.Field("core.queries.UserType")
+    gene = graphene.Field("genomes.queries.GeneType")
+    meta = graphene.JSONString()
     qc_pass = graphene.Boolean()
     is_owner = graphene.Boolean()
     can_share = graphene.Boolean()
@@ -92,11 +95,8 @@ class SampleType(DjangoObjectType):
     data = graphene.List("analysis.queries.DataType")
     all_data = graphene.List("analysis.queries.DataType")
 
-    def resolve_scientist(self, info, **kwargs):
-        return self.scientist
-    
-    def resolve_pi(self, info, **kwargs):
-        return self.pi
+    def resolve_meta(self, info, **kwargs):
+        return json.loads(self.meta)
 
     def resolve_is_owner(self, info, **kwargs):
         return does_user_have_permission_on_sample(info.context.user, self, 4)

@@ -142,7 +142,7 @@ def create_samples(execution, user_id):
             for index, row in df.iterrows():
                 if row["Sample Name"] == sample_name:
                     meta = {key.replace(" (optional)", ""): None if pd.isna(value) else value for key, value in dict(row).items()}
-                    sample.meta = meta
+                    sample.meta = json.dumps(meta)
                     sample.organism = meta.get("Species")
                     sample.method = meta.get("Method")
                     sample.source = meta.get("Cell or Tissue")
