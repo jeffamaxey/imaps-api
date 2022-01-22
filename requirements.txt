@@ -8,6 +8,8 @@ pyjwt==1.7.1
 django_environ
 Pillow
 pandas
+requests
+tqdm
 openpyxl
 celery
 sqlalchemy
