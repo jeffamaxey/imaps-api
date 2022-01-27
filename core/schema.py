@@ -7,6 +7,7 @@ from core.permissions import does_user_have_permission_on_collection, does_user_
 from core.mutations import *
 from analysis.mutations import *
 from analysis.models import Collection, Sample, Job
+from genomes.models import Species
 from django_nextflow.models import Pipeline
 
 class Query(graphene.ObjectType):
@@ -37,6 +38,8 @@ class Query(graphene.ObjectType):
 
     pipeline = graphene.Field("analysis.queries.PipelineType", id=graphene.ID())
     pipelines = graphene.List("analysis.queries.PipelineType")
+
+    species = graphene.List("genomes.queries.SpeciesType")
 
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
     search_collections = ConnectionField(
@@ -164,6 +167,10 @@ class Query(graphene.ObjectType):
 
     def resolve_pipelines(self, info, **kwargs):
         return Pipeline.objects.exclude(path="")
+    
+
+    def resolve_species(self, info, **kwargs):
+        return Species.objects.all()
     
 
     def resolve_quick_search(self, info, **kwargs):

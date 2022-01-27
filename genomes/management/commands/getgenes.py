@@ -3,7 +3,6 @@ from tqdm import tqdm
 from django.core.management.base import BaseCommand
 from genomes.models import Gene, Species
 from django.db import transaction
-from genomes.data import SPECIES
 
 class Command(BaseCommand):
     help = "Updates genes from ENSEMBL"

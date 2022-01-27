@@ -8,6 +8,7 @@ from graphene_file_upload.scalars import Upload
 from core.models import User, Group
 from core.arguments import create_mutation_arguments
 from analysis.models import Collection, CollectionUserLink, CollectionGroupLink, DataLink, DataUserLink, Job, JobUserLink, Sample, SampleUserLink
+from genomes.models import Species
 from analysis.forms import CollectionForm, DataForm, PaperForm, SampleForm
 from analysis.celery import run_pipeline
 from genomes.annotation import validate_uploaded_sheet
@@ -379,16 +380,23 @@ class RunPipelineMutation(graphene.Mutation):
         pipeline = graphene.ID(required=True)
         inputs = graphene.String()
         dataInputs = graphene.String()
+        species = graphene.String()
 
     execution = graphene.Field("analysis.queries.ExecutionType")
 
     def mutate(self, info, **kwargs):
         pipeline = Pipeline.objects.filter(id=kwargs["pipeline"]).first()
+        species = None
+        if pipeline.link.can_produce_genome and kwargs.get("species"):
+            species = Species.objects.get(id=kwargs["species"])
         job = Job.objects.create(
             pipeline=pipeline,
             params=kwargs["inputs"],
             data_params=kwargs["dataInputs"],
+            species=species
         )
+        print(species)
+        print(species.jobs.all())
         JobUserLink.objects.create(job=job, user=info.context.user, permission=4)
         run_pipeline.apply_async((kwargs, job.id, info.context.user.id), task_id=str(job.id))
         return RunPipelineMutation(execution=job)

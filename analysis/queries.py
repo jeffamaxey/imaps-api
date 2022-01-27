@@ -288,6 +288,10 @@ class PipelineType(DjangoObjectType):
     id = graphene.ID()
     input_schema = graphene.JSONString()
     is_subworkflow = graphene.Boolean()
+    can_produce_genome = graphene.Boolean()
 
     def resolve_is_subworkflow(self, info, **kwargs):
         return "subworkflows" in self.path
+    
+    def resolve_can_produce_genome(self, info, **kwargs):
+        return self.link.can_produce_genome

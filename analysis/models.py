@@ -4,6 +4,8 @@ from django.db import models
 from core.models import User, Group
 from django_nextflow.models import Execution, Pipeline, Data
 
+from genomes.models import Species
+
 class Collection(models.Model):
     """A collection of samples that belong together in some sense, either as
     part of a single paper or to answer a single research question.
@@ -125,6 +127,7 @@ class Job(models.Model):
     params = models.TextField(default="{}")
     data_params = models.TextField(default="{}")
     execution = models.OneToOneField(Execution, null=True, on_delete=models.SET_NULL, related_name="job")
+    species = models.ForeignKey(Species, null=True, on_delete=models.SET_NULL, related_name="jobs")
     sample = models.ForeignKey(Sample, null=True, on_delete=models.SET_NULL, related_name="jobs")
     collection = models.ForeignKey(Collection, null=True, on_delete=models.SET_NULL, related_name="jobs")
     users = models.ManyToManyField(User, through="analysis.JobUserLink", related_name="jobs")
@@ -199,6 +202,16 @@ class DataLink(models.Model):
     collection = models.ForeignKey(Collection, null=True, on_delete=models.SET_NULL)
     is_annotation = models.BooleanField(default=False)
     is_multiplexed = models.BooleanField(default=False)
+
+
+
+class PipelineLink(models.Model):
+
+    class Meta:
+        db_table = "pipeline_links"
+
+    pipeline = models.OneToOneField(Pipeline, on_delete=models.CASCADE, related_name="link")
+    can_produce_genome = models.BooleanField(default=False)
 
 
 
