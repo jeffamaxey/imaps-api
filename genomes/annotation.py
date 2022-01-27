@@ -7,8 +7,8 @@ from django.core.exceptions import ValidationError
 from core.models import User
 from core.permissions import does_user_have_permission_on_collection
 from analysis.models import Collection, Sample
-from genomes.data import SPECIES, CELL_LINES, METHODS
-from genomes.models import Gene
+from genomes.data import CELL_LINES, METHODS
+from genomes.models import Gene, Species
 
 REQUIRED_COLUMNS = [
     "Sample Name",
@@ -99,7 +99,7 @@ def check_collections(df, user, ignore_warnings):
                 if does_user_have_permission_on_collection(user, collection, 2):
                     warning_collection_names.add(collection.name)
                 else:
-                    problems.append(f"Collection with name '{collection_name}' already exists and you don't have permission to modify it Row {i + 1})")
+                    problems.append(f"Collection with name '{collection_name}' already exists and you don't have permission to modify it (Row {i + 1})")
             else:
                 for validator in name_validators:
                     try:
@@ -152,10 +152,11 @@ def check_method(df):
 
 def check_species(df):
     problems = []
+    species_ids = list(Species.objects.all().values_list("id", flat=True))
     if "Species" in df.columns:
         for i in range(len(df)):
             species = df.loc[i, "Species"]
-            if species and not pd.isna(species) and species not in SPECIES:
+            if species and not pd.isna(species) and species not in species_ids:
                 problems.append(f"'{species}' is not a valid species (Row {i + 1})")
     return problems
 
@@ -172,11 +173,12 @@ def check_cell_lines(df):
 
 def check_proteins(df):
     problems = []
+    species_ids = list(Species.objects.all().values_list("id", flat=True))
     if "Protein" in df.columns and "Species" in df.columns:
         for i in range(len(df)):
             protein = df.loc[i, "Protein"]
             species = df.loc[i, "Species"]
-            if protein and not pd.isna(protein) and species and not pd.isna(species) and species in SPECIES:
+            if protein and not pd.isna(protein) and species and not pd.isna(species) and species in species_ids:
                 gene = Gene.objects.filter(species=species, name=protein).first()
                 if not gene:
                     problems.append(f"'{protein}' is not a valid protein for species '{species}' (Row {i + 1})")

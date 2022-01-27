@@ -1,7 +1,7 @@
 import requests
 from tqdm import tqdm
 from django.core.management.base import BaseCommand
-from genomes.models import Gene
+from genomes.models import Gene, Species
 from django.db import transaction
 from genomes.data import SPECIES
 
@@ -21,15 +21,15 @@ class Command(BaseCommand):
         </Query>"""
 
         
-        for code, species in SPECIES.items():
-            self.stdout.write(f"Requesting {species['name']} genes...")
-            resp = requests.get(url + query.format(species["ensembl"]).strip().replace("\n", ""))
+        for species in Species.objects.all():
+            self.stdout.write(f"Requesting {species.name} genes...")
+            resp = requests.get(url + query.format(species.ensembl_id).strip().replace("\n", ""))
             if resp.status_code != 200: continue
             genes = resp.text.splitlines()
             self.stdout.write(f"There are {len(genes)} of them")
             with transaction.atomic():
-                deleted = Gene.objects.filter(species=code).exclude(name__in=genes).delete()[0]
+                deleted = Gene.objects.filter(species=species).exclude(name__in=genes).delete()[0]
                 if deleted:
                     self.stdout.write(f"Deleted {deleted} genes which are no longer present")
                 for gene in tqdm(genes):
-                    Gene.objects.get_or_create(name=gene, species=code)
+                    Gene.objects.get_or_create(name=gene, species=species)
