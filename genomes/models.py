@@ -10,6 +10,7 @@ class Species(models.Model):
     name = models.CharField(max_length=50)
     latin_name = models.CharField(max_length=50)
     ensembl_id = models.CharField(max_length=50)
+    official_version = models.OneToOneField("analysis.Job", null=True, on_delete=models.SET_NULL, related_name="species_official")
 
     def __str__(self):
         return self.name

@@ -39,7 +39,8 @@ class Query(graphene.ObjectType):
     pipeline = graphene.Field("analysis.queries.PipelineType", id=graphene.ID())
     pipelines = graphene.List("analysis.queries.PipelineType")
 
-    species = graphene.List("genomes.queries.SpeciesType")
+    all_species = graphene.List("genomes.queries.SpeciesType")
+    species = graphene.Field("genomes.queries.SpeciesType", id=graphene.String())
 
     quick_search = graphene.Field("core.queries.SearchType", query=graphene.String(required=True))
     search_collections = ConnectionField(
@@ -169,8 +170,12 @@ class Query(graphene.ObjectType):
         return Pipeline.objects.exclude(path="")
     
 
-    def resolve_species(self, info, **kwargs):
+    def resolve_all_species(self, info, **kwargs):
         return Species.objects.all()
+    
+
+    def resolve_species(self, info, **kwargs):
+        return Species.objects.get(id=kwargs["id"])
     
 
     def resolve_quick_search(self, info, **kwargs):
