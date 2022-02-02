@@ -146,6 +146,7 @@ class ExecutionType(DjangoObjectType):
     pipeline = graphene.Field("analysis.queries.PipelineType")
     process_executions = graphene.List("analysis.queries.ProcessExecutionType")
     upstream_data = graphene.List("analysis.queries.DataType")
+    upstream_executions = graphene.List("analysis.queries.ExecutionType")
     owners = graphene.List("core.queries.UserType")
 
     def resolve_can_share(self, info, **kwargs):
@@ -190,6 +191,12 @@ class ExecutionType(DjangoObjectType):
     def resolve_upstream_data(self, info, **kwargs):
         if self.execution:
             return self.execution.upstream_data.all()
+        else: return []
+    
+
+    def resolve_upstream_executions(self, info, **kwargs):
+        if self.execution:
+            return Job.objects.filter(execution__downstream_executions=self.execution)
         else: return []
     
 
