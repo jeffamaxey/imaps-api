@@ -36,6 +36,7 @@ class User(RandomIDModel):
     last_login = models.IntegerField(null=True, default=None)
     created = models.IntegerField(default=time.time)
     name = models.CharField(max_length=50)
+    is_admin = models.BooleanField(default=False)
     image = models.ImageField(default="", upload_to=create_filename)
     password_reset_token = models.CharField(default="", max_length=128)
     password_reset_token_expiry = models.IntegerField(default=0)
