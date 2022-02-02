@@ -380,6 +380,7 @@ class RunPipelineMutation(graphene.Mutation):
         pipeline = graphene.ID(required=True)
         inputs = graphene.String()
         dataInputs = graphene.String()
+        genomeInputs = graphene.String()
         species = graphene.String()
 
     execution = graphene.Field("analysis.queries.ExecutionType")
@@ -393,10 +394,9 @@ class RunPipelineMutation(graphene.Mutation):
             pipeline=pipeline,
             params=kwargs["inputs"],
             data_params=kwargs["dataInputs"],
+            genome_params=kwargs["genomeInputs"],
             species=species
         )
-        print(species)
-        print(species.jobs.all())
         JobUserLink.objects.create(job=job, user=info.context.user, permission=4)
         run_pipeline.apply_async((kwargs, job.id, info.context.user.id), task_id=str(job.id))
         return RunPipelineMutation(execution=job)

@@ -126,6 +126,7 @@ class Job(models.Model):
     private = models.BooleanField(default=True)
     params = models.TextField(default="{}")
     data_params = models.TextField(default="{}")
+    genome_params = models.TextField(default="{}")
     execution = models.OneToOneField(Execution, null=True, on_delete=models.SET_NULL, related_name="job")
     species = models.ForeignKey(Species, null=True, on_delete=models.SET_NULL, related_name="jobs")
     sample = models.ForeignKey(Sample, null=True, on_delete=models.SET_NULL, related_name="jobs")

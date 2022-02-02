@@ -41,6 +41,7 @@ def run_pipeline(kwargs, job_id, user_id):
         execution = pipeline.run(
             params=json.loads(kwargs["inputs"]),
             data_params=json.loads(kwargs["dataInputs"]),
+            execution_params=json.loads(kwargs["genomeInputs"]),
             profile=["iMaps"]
         )
         assign_job_parents(job, execution)

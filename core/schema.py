@@ -35,6 +35,7 @@ class Query(graphene.ObjectType):
         is_demultiplexed=graphene.Boolean(),
         is_multiplexed=graphene.Boolean(),
     )
+    check_annotation = graphene.List("genomes.queries.SpeciesType", id=graphene.ID())
 
     pipeline = graphene.Field("analysis.queries.PipelineType", id=graphene.ID())
     pipelines = graphene.List("analysis.queries.PipelineType")
@@ -158,6 +159,17 @@ class Query(graphene.ObjectType):
         if kwargs.get("is_annotation"):
             data = data.filter(link__is_annotation=True)
         return readable_data(data, info.context.user).distinct()[:kwargs["first"]]
+
+
+    def resolve_check_annotation(self, info, **kwargs):
+        time.sleep(1)
+        data = Data.objects.filter(id=kwargs["id"], link__is_annotation=True).first()
+        if data and does_user_have_permission_on_data(info.context.user, data, 1):
+            df = pd.read_csv(data.full_path)
+            species = sorted(set([row["Species"] for _, row in df.iterrows()]))
+            return [Species.objects.get(id=s) for s in species]
+        raise GraphQLError('{"annotation": "Does not exist"}')
+
     
 
     def resolve_pipeline(self, info, **kwargs):
