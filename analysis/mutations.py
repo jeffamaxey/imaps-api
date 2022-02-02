@@ -382,6 +382,7 @@ class RunPipelineMutation(graphene.Mutation):
         dataInputs = graphene.String()
         genomeInputs = graphene.String()
         species = graphene.String()
+        make_default = graphene.Boolean()
 
     execution = graphene.Field("analysis.queries.ExecutionType")
 
@@ -397,6 +398,9 @@ class RunPipelineMutation(graphene.Mutation):
             genome_params=kwargs["genomeInputs"],
             species=species
         )
+        if pipeline.link.can_produce_genome and info.context.user.is_admin and kwargs.get("make_default"):
+            species.official_version = job
+            species.save()
         JobUserLink.objects.create(job=job, user=info.context.user, permission=4)
         run_pipeline.apply_async((kwargs, job.id, info.context.user.id), task_id=str(job.id))
         return RunPipelineMutation(execution=job)
