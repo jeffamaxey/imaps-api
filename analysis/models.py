@@ -66,7 +66,7 @@ class Sample(models.Model):
     private = models.BooleanField(default=True)
 
     meta = models.TextField(default="{}")
-    organism = models.CharField(max_length=2)
+    species = models.ForeignKey("genomes.Species", null=True, on_delete=models.SET_NULL, related_name="samples")
     method = models.CharField(max_length=20)
     source = models.CharField(max_length=20)
     gene = models.ForeignKey("genomes.Gene", null=True, on_delete=models.SET_NULL, related_name="samples")
@@ -213,6 +213,7 @@ class PipelineLink(models.Model):
 
     pipeline = models.OneToOneField(Pipeline, on_delete=models.CASCADE, related_name="link")
     can_produce_genome = models.BooleanField(default=False)
+    takes_genome = models.BooleanField(default=False)
 
 
 

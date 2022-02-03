@@ -84,6 +84,7 @@ class SampleType(DjangoObjectType):
     scientist = graphene.Field("core.queries.UserType")
     pi = graphene.Field("core.queries.UserType")
     gene = graphene.Field("genomes.queries.GeneType")
+    species = graphene.Field("genomes.queries.SpeciesType")
     meta = graphene.JSONString()
     qc_pass = graphene.Boolean()
     is_owner = graphene.Boolean()
@@ -296,9 +297,13 @@ class PipelineType(DjangoObjectType):
     input_schema = graphene.JSONString()
     is_subworkflow = graphene.Boolean()
     can_produce_genome = graphene.Boolean()
+    takes_genome = graphene.Boolean()
 
     def resolve_is_subworkflow(self, info, **kwargs):
         return "subworkflows" in self.path
     
     def resolve_can_produce_genome(self, info, **kwargs):
         return self.link.can_produce_genome
+    
+    def resolve_takes_genome(self, info, **kwargs):
+        return self.link.takes_genome

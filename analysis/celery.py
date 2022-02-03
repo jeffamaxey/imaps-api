@@ -115,7 +115,7 @@ def create_samples(execution, user_id):
     from analysis.models import Sample, SampleUserLink
     from analysis.models import Collection, CollectionUserLink
     from core.models import User
-    from genomes.models import Gene
+    from genomes.models import Species, Gene
     from core.permissions import does_user_have_permission_on_collection
 
     
@@ -144,7 +144,7 @@ def create_samples(execution, user_id):
                 if row["Sample Name"] == sample_name:
                     meta = {key.replace(" (optional)", ""): None if pd.isna(value) else value for key, value in dict(row).items()}
                     sample.meta = json.dumps(meta)
-                    sample.organism = meta.get("Species")
+                    sample.species = Species.objects.filter(id=meta.get("Species")).first()
                     sample.method = meta.get("Method")
                     sample.source = meta.get("Cell or Tissue")
                     gene = meta.get("Protein")
