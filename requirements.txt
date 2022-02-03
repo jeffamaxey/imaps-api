@@ -14,4 +14,4 @@ openpyxl
 celery
 sqlalchemy
 django_celery_results
-django_nextflow==0.4
+django_nextflow==0.5
