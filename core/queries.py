@@ -134,7 +134,8 @@ class SearchType(graphene.ObjectType):
     def resolve_samples(self, info, **kwargs):
         return readable_samples(
             Sample.objects.filter(name__icontains=self["query"])
-          | Sample.objects.filter(organism__icontains=self["query"]),
+          | Sample.objects.filter(species__name__icontains=self["query"])
+          | Sample.objects.filter(species__latin_name__icontains=self["query"]),
           info.context.user
         ).distinct()[:25]
     
@@ -281,7 +282,7 @@ class SearchType(graphene.ObjectType):
     def resolve_samples(self, info, **kwargs):
         return readable_samples(
             Sample.objects.filter(name__icontains=self["query"])
-          | Sample.objects.filter(organism__icontains=self["query"]),
+          | Sample.objects.filter(species__icontains=self["query"]),
           info.context.user
         ).distinct()
     

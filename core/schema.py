@@ -224,7 +224,7 @@ class Query(graphene.ObjectType):
             }.get(kwargs["created"], 0)
             samples = samples.filter(created__gte=timestamp)
         if "species" in kwargs:
-            samples = samples.filter(organism__icontains=kwargs["species"])
+            samples = samples.filter(species__name__icontains=kwargs["species"]) | samples.filter(species__latin_name__icontains=kwargs["species"])
         if "owner" in kwargs:
             samples = samples.filter(
                 collection__users__name__icontains=kwargs["owner"],
