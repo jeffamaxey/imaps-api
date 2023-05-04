@@ -97,9 +97,10 @@ class UpdateImageFormTests(TestCase):
     
     def tearDown(self):
         for f in os.listdir("uploads"):
-            if f not in self.files_at_start:
-                if os.path.exists(os.path.join("uploads", f)):
-                    os.remove(os.path.join("uploads", f))
+            if f not in self.files_at_start and os.path.exists(
+                os.path.join("uploads", f)
+            ):
+                os.remove(os.path.join("uploads", f))
 
 
     def test_form_can_update_image(self):

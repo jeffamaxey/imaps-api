@@ -19,7 +19,7 @@ def get_groups_by_user(user, permission, exact=True):
     """Gets all groups which have a link with a particular user, matching a
     given permission."""
 
-    permssion_arg = f"usergrouplink__permission"
+    permssion_arg = "usergrouplink__permission"
     if not exact: permssion_arg += "__gte"
     return Group.objects.filter(**{
         "usergrouplink__user": user, permssion_arg: permission
@@ -30,7 +30,7 @@ def get_users_by_group(group, permission, exact=True):
     """Gets all users which have a link with a particular group, matching a
     given permission."""
 
-    permssion_arg = f"usergrouplink__permission"
+    permssion_arg = "usergrouplink__permission"
     if not exact: permssion_arg += "__gte"
     return User.objects.filter(**{
         "usergrouplink__group": group, permssion_arg: permission
@@ -41,7 +41,7 @@ def get_collections_by_user(user, permission, exact=True):
     """Gets all collections which have a direct link with a particular user,
     matching a given permission."""
 
-    permssion_arg = f"collectionuserlink__permission"
+    permssion_arg = "collectionuserlink__permission"
     if not exact: permssion_arg += "__gte"
     return Collection.objects.filter(**{
         "collectionuserlink__user": user, permssion_arg: permission
@@ -52,7 +52,7 @@ def get_users_by_collection(collection, permission, exact=True):
     """Gets all users which have a direct link with a particular collection,
     matching a given permission."""
 
-    permssion_arg = f"collectionuserlink__permission"
+    permssion_arg = "collectionuserlink__permission"
     if not exact: permssion_arg += "__gte"
     return User.objects.filter(**{
         "collectionuserlink__collection": collection, permssion_arg: permission
@@ -63,7 +63,7 @@ def get_collections_by_group(group, permission, exact=True):
     """Gets all collections which have a link with a particular group, matching
     a given permission."""
 
-    permssion_arg = f"collectiongrouplink__permission"
+    permssion_arg = "collectiongrouplink__permission"
     if not exact: permssion_arg += "__gte"
     return Collection.objects.filter(**{
         "collectiongrouplink__group": group, permssion_arg: permission
@@ -74,7 +74,7 @@ def get_groups_by_collection(collection, permission, exact=True):
     """Gets all groups which have a link with a particular collection, matching
     a given permission."""
 
-    permssion_arg = f"collectiongrouplink__permission"
+    permssion_arg = "collectiongrouplink__permission"
     if not exact: permssion_arg += "__gte"
     return Group.objects.filter(**{
         "collectiongrouplink__collection": collection, permssion_arg: permission
@@ -85,7 +85,7 @@ def get_samples_by_user(user, permission, exact=True):
     """Gets all samples which have a link with a particular user, matching a
     given permission."""
 
-    permssion_arg = f"sampleuserlink__permission"
+    permssion_arg = "sampleuserlink__permission"
     if not exact: permssion_arg += "__gte"
     return Sample.objects.filter(**{
         "sampleuserlink__user": user, permssion_arg: permission
@@ -96,7 +96,7 @@ def get_users_by_sample(sample, permission, exact=True):
     """Gets all users which have a link with a particular sample, matching a
     given permission."""
 
-    permssion_arg = f"sampleuserlink__permission"
+    permssion_arg = "sampleuserlink__permission"
     if not exact: permssion_arg += "__gte"
     return User.objects.filter(**{
         "sampleuserlink__sample": sample, permssion_arg: permission
@@ -107,7 +107,7 @@ def get_jobs_by_user(user, permission, exact=True):
     """Gets all jobs which have a link with a particular user, matching a
     given permission."""
 
-    permssion_arg = f"jobuserlink__permission"
+    permssion_arg = "jobuserlink__permission"
     if not exact: permssion_arg += "__gte"
     return Job.objects.filter(**{
         "jobuserlink__user": user, permssion_arg: permission
@@ -118,7 +118,7 @@ def get_users_by_job(job, permission, exact=True):
     """Gets all users which have a link with a particular job, matching a
     given permission."""
 
-    permssion_arg = f"jobuserlink__permission"
+    permssion_arg = "jobuserlink__permission"
     if not exact: permssion_arg += "__gte"
     return User.objects.filter(**{
         "jobuserlink__job": job, permssion_arg: permission
@@ -129,7 +129,7 @@ def get_data_by_user(user, permission, exact=True):
     """Gets all data files which have a link with a particular user, matching a
     given permission."""
 
-    permssion_arg = f"datauserlink__permission"
+    permssion_arg = "datauserlink__permission"
     if not exact: permssion_arg += "__gte"
     return Data.objects.filter(**{
         "datauserlink__user": user, permssion_arg: permission
@@ -140,7 +140,7 @@ def get_users_by_data(data, permission, exact=True):
     """Gets all users which have a link with a particular data file, matching a
     given permission."""
 
-    permssion_arg = f"datauserlink__permission"
+    permssion_arg = "datauserlink__permission"
     if not exact: permssion_arg += "__gte"
     return User.objects.filter(**{
         "datauserlink__data": data, permssion_arg: permission
@@ -158,11 +158,13 @@ def does_user_have_permission_on_collection(user, collection, permission):
     if CollectionUserLink.objects.filter(
         collection=collection, user=user, permission__gte=permission
     ).count() > 0: return True
-    for group in get_groups_by_user(user, permission=2, exact=False):
-        if CollectionGroupLink.objects.filter(
+    return any(
+        CollectionGroupLink.objects.filter(
             collection=collection, group=group, permission__gte=permission
-        ).count() > 0: return True
-    return False
+        ).count()
+        > 0
+        for group in get_groups_by_user(user, permission=2, exact=False)
+    )
 
 
 def does_user_have_permission_on_sample(user, sample, permission):

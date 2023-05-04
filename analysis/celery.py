@@ -77,7 +77,7 @@ def assign_job_parents(job, execution):
                 data.upstream_process_execution.execution.job.sample
             )
         upstream_samples.append(Sample.objects.filter(reads=data).first())
-    sample_ids = set([s.id for s in upstream_samples if s])
+    sample_ids = {s.id for s in upstream_samples if s}
     if len(sample_ids) == 1:
         job.sample_id = list(sample_ids)[0]
         job.save()
@@ -93,7 +93,7 @@ def assign_job_parents(job, execution):
                         data.upstream_process_execution.execution.job.sample.collection
                     ) 
             upstream_collections.append(data.link.collection)
-        collection_ids = set([c.id for c in upstream_collections if c])
+        collection_ids = {c.id for c in upstream_collections if c}
         if len(collection_ids) == 1:
             job.collection_id = list(collection_ids)[0]
             job.save()
@@ -175,8 +175,7 @@ def annotate_samples_from_fastqc(process_execution):
     if not data_input or not data_input.sample: return
     sample = data_input.sample
 
-    zip = process_execution.downstream_data.filter(filetype="zip").first()
-    if zip:
+    if zip := process_execution.downstream_data.filter(filetype="zip").first():
         contents = ZipFile(zip.full_path)
         for name in contents.namelist():
             if name.endswith("summary.txt"):

@@ -93,7 +93,7 @@ class UpdateUserImageForm(ModelForm):
         """Save the uploaded image."""
         
         image = self.data.get("image")
-        if not (self.instance.image and not image):
+        if not self.instance.image or image:
             self.instance.image = self.data.get("image")
         if self.instance.image and not image:
             self.instance.image = ""

@@ -58,9 +58,10 @@ class UserImageTests(TestCase):
     
     def tearDown(self):
         for f in os.listdir("uploads"):
-            if f not in self.files_at_start:
-                if os.path.exists(os.path.join("uploads", f)):
-                    os.remove(os.path.join("uploads", f))
+            if f not in self.files_at_start and os.path.exists(
+                os.path.join("uploads", f)
+            ):
+                os.remove(os.path.join("uploads", f))
 
 
     def test_can_set_image(self):

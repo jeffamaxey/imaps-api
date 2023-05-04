@@ -76,8 +76,7 @@ class Query(graphene.ObjectType):
         token = info.context.COOKIES.get("imaps_refresh_token")
         if not token:
             raise GraphQLError(json.dumps({"token": "No refresh token supplied"}))
-        user = User.from_token(token)
-        if user:
+        if user := User.from_token(token):
             info.context.imaps_refresh_token = user.make_jwt(31536000)
             return user.make_jwt(900)
         raise GraphQLError(json.dumps({"token": "Refresh token not valid"}))
@@ -166,15 +165,15 @@ class Query(graphene.ObjectType):
         data = Data.objects.filter(id=kwargs["id"], link__is_annotation=True).first()
         if data and does_user_have_permission_on_data(info.context.user, data, 1):
             df = pd.read_csv(data.full_path)
-            species = sorted(set([row["Species"] for _, row in df.iterrows()]))
+            species = sorted({row["Species"] for _, row in df.iterrows()})
             return [Species.objects.get(id=s) for s in species]
         raise GraphQLError('{"annotation": "Does not exist"}')
 
     
 
     def resolve_pipeline(self, info, **kwargs):
-        pipeline = Pipeline.objects.filter(id=kwargs["id"]).first()
-        if pipeline: return pipeline
+        if pipeline := Pipeline.objects.filter(id=kwargs["id"]).first():
+            return pipeline
         raise GraphQLError('{"command": "Does not exist"}')
     
 
@@ -191,8 +190,7 @@ class Query(graphene.ObjectType):
     
 
     def resolve_quick_search(self, info, **kwargs):
-        if len(kwargs["query"]) < 3: return None
-        return kwargs
+        return None if len(kwargs["query"]) < 3 else kwargs
     
 
     def resolve_search_collections(self, info, **kwargs):

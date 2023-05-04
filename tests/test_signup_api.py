@@ -36,7 +36,7 @@ class SignupTests(FunctionalTest):
         # An access token has been returned
         access_token = result["data"]["signup"]["accessToken"]
         payload = access_token.split(".")[1]
-        payload = json.loads(base64.b64decode(payload + "==="))
+        payload = json.loads(base64.b64decode(f"{payload}==="))
         self.assertEqual(payload["sub"], new_user.id)
         self.assertLess(time.time() - payload["iat"], 10)
         self.assertLess(time.time() - payload["expires"] - 900, 10)
@@ -47,7 +47,7 @@ class SignupTests(FunctionalTest):
         self.assertLess(abs(time.time() + 31536000 - cookie.expires), 10)
         imaps_refresh_token = cookie.value
         payload = imaps_refresh_token.split(".")[1]
-        payload = json.loads(base64.b64decode(payload + "==="))
+        payload = json.loads(base64.b64decode(f"{payload}==="))
         self.assertEqual(payload["sub"], new_user.id)
         self.assertLess(time.time() - payload["iat"], 10)
         self.assertLess(time.time() - payload["expires"] - 31536000, 10)

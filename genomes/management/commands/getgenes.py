@@ -19,7 +19,7 @@ class Command(BaseCommand):
             </Dataset>
         </Query>"""
 
-        
+
         for species in Species.objects.all():
             self.stdout.write(f"Requesting {species.name} genes...")
             resp = requests.get(url + query.format(species.ensembl_id).strip().replace("\n", ""))
@@ -27,8 +27,11 @@ class Command(BaseCommand):
             genes = resp.text.splitlines()
             self.stdout.write(f"There are {len(genes)} of them")
             with transaction.atomic():
-                deleted = Gene.objects.filter(species=species).exclude(name__in=genes).delete()[0]
-                if deleted:
+                if (
+                    deleted := Gene.objects.filter(species=species)
+                    .exclude(name__in=genes)
+                    .delete()[0]
+                ):
                     self.stdout.write(f"Deleted {deleted} genes which are no longer present")
                 for gene in tqdm(genes):
                     Gene.objects.get_or_create(name=gene, species=species)

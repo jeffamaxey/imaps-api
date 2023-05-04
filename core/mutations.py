@@ -47,8 +47,7 @@ class LoginMutation(graphene.Mutation):
 
     def mutate(self, info, **kwargs):
         time.sleep(1)
-        user = User.objects.filter(username=kwargs["username"]).first()
-        if user:
+        if user := User.objects.filter(username=kwargs["username"]).first():
             if check_password(kwargs["password"], user.password):
                 info.context.imaps_refresh_token = user.make_jwt(31536000)
                 info.context.user = user
@@ -103,8 +102,7 @@ class ResetPasswordMutation(graphene.Mutation):
     success = graphene.Boolean()
 
     def mutate(self, info, **kwargs):
-        matches = User.objects.filter(password_reset_token=kwargs["token"])
-        if matches:
+        if matches := User.objects.filter(password_reset_token=kwargs["token"]):
             user = matches.first()
             if user.password_reset_token_expiry < time.time():
                 raise GraphQLError(json.dumps({"token": ["Token has expired"]}))
@@ -180,14 +178,22 @@ class DeleteUserMutation(graphene.Mutation):
         if info.context.user:
             for group in groups_run_by_user(info.context.user):
                 if group_admins(group).count() == 1:
-                    raise GraphQLError(json.dumps({"user": [
-                        "You are the only admin of " + group.name
-                    ]}))
+                    raise GraphQLError(
+                        json.dumps(
+                            {"user": [f"You are the only admin of {group.name}"]}
+                        )
+                    )
             for collection in collections_owned_by_user(info.context.user):
                 if collection_owners(collection).count() == 1:
-                    raise GraphQLError(json.dumps({"user": [
-                        "You are the only owner of collection: " + collection.name
-                    ]}))
+                    raise GraphQLError(
+                        json.dumps(
+                            {
+                                "user": [
+                                    f"You are the only owner of collection: {collection.name}"
+                                ]
+                            }
+                        )
+                    )
             '''for execution in executions_owned_by_user(info.context.user):
                 if execution_owners(execution).count() == 1:
                     raise GraphQLError(json.dumps({"user": [
@@ -388,8 +394,8 @@ class InviteUserToGroupMutation(graphene.Mutation):
             raise GraphQLError('{"group": ["Not an admin"]}')
         user = User.objects.filter(id=kwargs["user"]).first()
         if not user: raise GraphQLError('{"user": ["Does not exist"]}')
-        link = UserGroupLink.objects.filter(user=user, group=group).first()
-        if link: raise GraphQLError('{"user": ["Already connected"]}')
+        if link := UserGroupLink.objects.filter(user=user, group=group).first():
+            raise GraphQLError('{"user": ["Already connected"]}')
         UserGroupLink.objects.create(user=user, group=group, permission=1)
         return InviteUserToGroupMutation(user=user, group=group)
 

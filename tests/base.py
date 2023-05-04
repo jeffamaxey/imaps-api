@@ -11,7 +11,7 @@ from core.models import User
 class FunctionalTest(LiveServerTestCase):
 
     def setUp(self):
-        self.client = kirjava.Client(self.live_server_url + "/graphql")
+        self.client = kirjava.Client(f"{self.live_server_url}/graphql")
         self.client.headers["Accept"] = "application/json"
         self.client.headers["Content-Type"] = "application/json"
         self.files_at_start = os.listdir("uploads")
@@ -25,9 +25,10 @@ class FunctionalTest(LiveServerTestCase):
 
     def tearDown(self):
         for f in os.listdir("uploads"):
-            if f not in self.files_at_start:
-                if os.path.exists(os.path.join("uploads", f)):
-                    os.remove(os.path.join("uploads", f))
+            if f not in self.files_at_start and os.path.exists(
+                os.path.join("uploads", f)
+            ):
+                os.remove(os.path.join("uploads", f))
     
 
     def check_query_error(self, query, message="does not exist"):

@@ -184,15 +184,11 @@ class ExecutionType(DjangoObjectType):
     
 
     def resolve_process_executions(self, info, **kwargs):
-        if self.execution:
-            return self.execution.process_executions.all()
-        else: return []
+        return self.execution.process_executions.all() if self.execution else []
     
 
     def resolve_upstream_data(self, info, **kwargs):
-        if self.execution:
-            return self.execution.upstream_data.all()
-        else: return []
+        return self.execution.upstream_data.all() if self.execution else []
     
 
     def resolve_upstream_executions(self, info, **kwargs):

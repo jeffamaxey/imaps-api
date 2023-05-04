@@ -39,10 +39,7 @@ def validate_uploaded_sheet(upload, user, ignore_warnings=False):
     problems += check_species(df)
     problems += check_cell_lines(df)
     problems += check_proteins(df)
-    if warnings:
-        return [], warnings
-    else:
-        return problems, ""
+    return ([], warnings) if warnings else (problems, "")
 
 
 def parse_upload(upload):
@@ -55,8 +52,9 @@ def parse_upload(upload):
 
 def check_columns(df):
     problems = []
-    missing_columns = [col for col in REQUIRED_COLUMNS if col not in df.columns]
-    if missing_columns:
+    if missing_columns := [
+        col for col in REQUIRED_COLUMNS if col not in df.columns
+    ]:
         problems.append(f"The following required columns were not found: {', '.join(missing_columns)}")
     for i in range(len(df)):
         for col in REQUIRED_COLUMNS:
@@ -72,9 +70,11 @@ def check_samples(df):
     if "Sample Name" in df.columns:
         sample_names = df["Sample Name"].values
         counter = Counter(sample_names)
-        for name, count in counter.items():
-            if count > 1:
-                problems.append(f"{count} rows have the same sample name: {name}")
+        problems.extend(
+            f"{count} rows have the same sample name: {name}"
+            for name, count in counter.items()
+            if count > 1
+        )
     if "Sample Name" in df.columns:
         name_validators = [field for field in Sample._meta.fields if field.name == "name"][0].validators
         for i in range(len(df)):
@@ -94,8 +94,9 @@ def check_collections(df, user, ignore_warnings):
         name_validators = [field for field in Collection._meta.fields if field.name == "name"][0].validators
         for i in range(len(df)):
             collection_name = df.loc[i, "Collection Name"]
-            collection = Collection.objects.filter(name=collection_name).first()
-            if collection:
+            if collection := Collection.objects.filter(
+                name=collection_name
+            ).first():
                 if does_user_have_permission_on_collection(user, collection, 2):
                     warning_collection_names.add(collection.name)
                 else:
@@ -132,11 +133,17 @@ def check_dna(df):
             for dna_column in dna_columns:
                 if dna_column in column:
                     value = df.loc[i, column]
-                    if value and not pd.isna(value):
-                        if not isinstance(value, str) or any(c not in "GCATN" for c in value):
-                            problems.append(
-                                f"'{value}' is not valid DNA (Row {i + 1}, {column})"
-                            )
+                    if (
+                        value
+                        and not pd.isna(value)
+                        and (
+                            not isinstance(value, str)
+                            or any(c not in "GCATN" for c in value)
+                        )
+                    ):
+                        problems.append(
+                            f"'{value}' is not valid DNA (Row {i + 1}, {column})"
+                        )
     return problems
 
 

@@ -25,7 +25,7 @@ class AccessTokenTests(FunctionalTest):
         # An access token has been returned
         access_token = result["data"]["accessToken"]
         payload = access_token.split(".")[1]
-        payload = json.loads(base64.b64decode(payload + "==="))
+        payload = json.loads(base64.b64decode(f"{payload}==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
         self.assertLess(time.time() - payload["expires"] - 900, 10)
@@ -36,7 +36,7 @@ class AccessTokenTests(FunctionalTest):
         self.assertLess(time.time() - cookie.expires - 31536000, 10)
         imaps_refresh_token = cookie.value
         payload = imaps_refresh_token.split(".")[1]
-        payload = json.loads(base64.b64decode(payload + "==="))
+        payload = json.loads(base64.b64decode(f"{payload}==="))
         self.assertEqual(payload["sub"], self.user.id)
         self.assertLess(time.time() - payload["iat"], 10)
         self.assertLess(time.time() - payload["expires"] - 31536000, 10)

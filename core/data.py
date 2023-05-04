@@ -13,17 +13,15 @@ def return_data(request, id, name):
     token = request.COOKIES.get("imaps_refresh_token")
     user = User.from_token(token)
     data = Data.objects.get(id=id)
-    #if does_user_have_permission_on_data(user, data, 1) and data.filename == name:
-    if data and data.filename == name:
-        actual_name = f"{name}.zip" if data.is_directory else name
-        actual_full_path = f"{data.full_path}.zip" if data.is_directory else data.full_path
-        response = HttpResponse()
-        response["Content-Disposition"] = "attachment; filename={0}".format(actual_name)
-        if settings.SERVE_FILES:
-            with open(actual_full_path, "rb") as f:
-                response.content = f.read()
-        else:
-            response["X-Accel-Redirect"] = "/internal" + actual_full_path
-        return response
-    else:
+    if not data or data.filename != name:
         raise Http404
+    actual_name = f"{name}.zip" if data.is_directory else name
+    actual_full_path = f"{data.full_path}.zip" if data.is_directory else data.full_path
+    response = HttpResponse()
+    response["Content-Disposition"] = "attachment; filename={0}".format(actual_name)
+    if settings.SERVE_FILES:
+        with open(actual_full_path, "rb") as f:
+            response.content = f.read()
+    else:
+        response["X-Accel-Redirect"] = f"/internal{actual_full_path}"
+    return response
